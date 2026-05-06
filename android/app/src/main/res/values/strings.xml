@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Gulf Sathyadhara</string>
+    <string name="title_activity_main">Gulf Sathyadhara</string>
+    <string name="package_name">com.gulfsathyadhara.app</string>
+    <string name="custom_url_scheme">com.gulfsathyadhara.app</string>
+</resources>

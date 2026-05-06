@@ -1,0 +1,1 @@
+self.__NEXT_FONT_MANIFEST="{\"pages\":{},\"app\":{\"/Users/apple/magazine/app/layout\":[\"static/media/e4af272ccee01ff0-s.p.woff2\",\"static/media/5c0c2bcbaa4149ca-s.p.woff2\",\"static/media/c1d65dfc8520bfad-s.p.woff2\",\"static/media/eaead17c7dbfcd5d-s.p.woff2\"]},\"appUsingSizeAdjust\":true,\"pagesUsingSizeAdjust\":false}"

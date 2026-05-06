@@ -1,0 +1,8 @@
+{
+  "appId": "com.gulfsathyadhara.app",
+  "appName": "Gulf Sathyadhara",
+  "webDir": "out",
+  "android": {
+    "allowMixedContent": false
+  }
+}
