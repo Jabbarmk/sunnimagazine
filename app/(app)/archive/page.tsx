@@ -1,28 +1,41 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import clsx from "clsx";
-import { magazines } from "@/lib/data";
-import { LogoBar } from "@/components/TopBar";
+import { getMagazines } from "@/lib/api";
+import type { Magazine } from "@/lib/data";
+import { BackBar } from "@/components/TopBar";
 import { SmallCover } from "@/components/MagazineCover";
 import BottomNav from "@/components/BottomNav";
 
 export default function ArchivePage() {
-  const years = useMemo(() => {
-    const unique = Array.from(new Set(magazines.map((m) => m.year)));
-    return unique.sort((a, b) => Number(b) - Number(a));
+  const [magazines, setMagazines] = useState<Magazine[]>([]);
+  const [year, setYear] = useState<string>("");
+
+  useEffect(() => {
+    const MONTHS: Record<string, number> = {
+      january:1,february:2,march:3,april:4,may:5,june:6,
+      july:7,august:8,september:9,october:10,november:11,december:12,
+    };
+    getMagazines().then((data) => {
+      const all = [...data].sort((a, b) => {
+        const yearDiff = Number(b.year) - Number(a.year);
+        if (yearDiff !== 0) return yearDiff;
+        return (MONTHS[b.month.toLowerCase()] ?? 0) - (MONTHS[a.month.toLowerCase()] ?? 0);
+      });
+      setMagazines(all);
+      const years = Array.from(new Set(all.map((m) => m.year)));
+      if (years.length) setYear(years[0]);
+    });
   }, []);
-  const [year, setYear] = useState<string>(years[0] ?? "2025");
+
+  const years = Array.from(new Set(magazines.map((m) => m.year))).sort((a, b) => Number(b) - Number(a));
   const items = magazines.filter((m) => m.year === year);
 
   return (
     <>
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <LogoBar />
-        <div className="px-5 mt-4 mb-3">
-          <h1 className="font-serif text-[26px] text-ink leading-none">The Magazine</h1>
-          <p className="text-[12px] text-muted mt-1.5">Every issue, in one place</p>
-        </div>
+        <BackBar title="The Magazine" subtitle="Every issue, in one place" />
 
         <div className="flex gap-2 px-5 mb-4 overflow-x-auto no-scrollbar">
           {years.map((y) => (

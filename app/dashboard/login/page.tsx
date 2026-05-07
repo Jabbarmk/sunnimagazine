@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/lib/auth";
+import { loginAdmin } from "@/lib/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -10,9 +10,10 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) { setError("Please enter email and password."); return; }
-    if (login(email, password)) {
+    const ok = await loginAdmin(email, password);
+    if (ok) {
       router.push("/dashboard");
     } else {
       setError("Invalid email or password.");

@@ -11,6 +11,8 @@ export type Article = {
   hero: string;
   paragraphs: string[];
   inlineImage?: string;
+  inlineImage2?: string;
+  bottomImage?: string;
   pullQuote?: string;
 };
 

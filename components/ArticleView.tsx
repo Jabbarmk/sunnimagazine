@@ -5,19 +5,27 @@ import Link from "next/link";
 import { ArticleBar } from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
 import { hasMalayalam } from "@/lib/text";
-import { getArticle, getArticles } from "@/lib/store";
+import { getArticle, getArticles, getGallery } from "@/lib/api";
+import type { GalleryImage } from "@/lib/store";
 import type { Article } from "@/lib/data";
 
 export default function ArticleView({ id }: { id: string }) {
   const [article, setArticle] = useState<Article | null>(null);
   const [related, setRelated] = useState<Article[]>([]);
+  const [gallery, setGallery] = useState<GalleryImage[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   useEffect(() => {
     if (!id) return;
-    const a = getArticle(id);
-    if (!a) return;
-    setArticle(a);
-    setRelated(getArticles().filter((x) => x.id !== a.id && x.magazineId === a.magazineId).slice(0, 3));
+    getArticle(id).then((a) => {
+      if (!a) return;
+      setArticle(a);
+      getArticles().then((all) => {
+        setRelated(all.filter((x) => x.id !== a.id && x.magazineId === a.magazineId).slice(0, 3));
+      });
+      getGallery(id).then(setGallery);
+      setGalleryIndex(0);
+    }).catch(() => {});
   }, [id]);
 
   if (!article) {
@@ -68,7 +76,11 @@ export default function ArticleView({ id }: { id: string }) {
               {i === 1 && article.inlineImage && (
                 <figure className="-mx-1 my-6">
                   <img src={article.inlineImage} alt="" className="w-full h-[220px] object-cover rounded-xl" />
-                  <figcaption className="text-[11px] italic text-muted mt-2">Photograph by the author.</figcaption>
+                </figure>
+              )}
+              {i === 3 && article.inlineImage2 && (
+                <figure className="-mx-1 my-6">
+                  <img src={article.inlineImage2} alt="" className="w-full h-[220px] object-cover rounded-xl" />
                 </figure>
               )}
               {i === 2 && article.pullQuote && (
@@ -79,6 +91,45 @@ export default function ArticleView({ id }: { id: string }) {
             </div>
           ))}
         </article>
+
+        {gallery.length > 0 && (
+          <div className="pb-6">
+            <div className="px-5 mb-3">
+              <h3 className="font-serif text-[18px] text-ink">Photos</h3>
+            </div>
+            <div className="px-5">
+              <div className="relative w-full rounded-2xl overflow-hidden bg-gray-100" style={{ aspectRatio: "4/3" }}>
+                <img
+                  src={gallery[galleryIndex].url}
+                  alt=""
+                  className="w-full h-full object-cover transition-opacity duration-300"
+                />
+                {gallery.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setGalleryIndex((i) => (i - 1 + gallery.length) % gallery.length)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center text-[16px]"
+                    >‹</button>
+                    <button
+                      onClick={() => setGalleryIndex((i) => (i + 1) % gallery.length)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center text-[16px]"
+                    >›</button>
+                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                      {gallery.map((_, i) => (
+                        <button key={i} onClick={() => setGalleryIndex(i)}>
+                          <span className={`block rounded-full transition-all duration-300 ${
+                            i === galleryIndex ? "w-4 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/50"
+                          }`} />
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+              <p className="text-[11px] text-muted mt-2 text-center">{galleryIndex + 1} / {gallery.length}</p>
+            </div>
+          </div>
+        )}
 
         {related.length > 0 && (
           <div className="pb-6">
@@ -100,6 +151,20 @@ export default function ArticleView({ id }: { id: string }) {
             </div>
           </div>
         )}
+
+        {article.bottomImage && (
+          <div className="px-5 pb-6">
+            <img src={article.bottomImage} alt="" className="w-full rounded-2xl object-cover" />
+          </div>
+        )}
+
+        <div className="px-5 pb-10">
+          <Link href="/">
+            <button className="w-full py-3.5 rounded-2xl border-2 border-gold text-gold font-semibold text-[15px] tracking-wide hover:bg-gold hover:text-white transition-colors">
+              More Topics
+            </button>
+          </Link>
+        </div>
       </div>
       <BottomNav />
     </>

@@ -1,42 +1,51 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { getMagazine, saveMagazine } from "@/lib/store";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getMagazine, saveMagazine } from "@/lib/api";
+import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 
-export default function EditMagazinePage({ params }: { params: { id: string } }) {
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const YEARS = Array.from({ length: 10 }, (_, i) => String(new Date().getFullYear() + 2 - i));
+
+function EditMagazineForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") ?? "";
   const [form, setForm] = useState<{
     id: string; title: string; month: string; year: string; cover: string; description: string;
   } | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const m = getMagazine(params.id);
-    if (!m) { router.push("/dashboard/magazines"); return; }
-    setForm({ id: m.id, title: m.title, month: m.month, year: m.year, cover: m.cover, description: m.description });
-  }, [params.id]);
+    getMagazine(id).then((m) => {
+      if (!m) { router.push("/dashboard/magazines"); return; }
+      setForm({ id: m.id, title: m.title, month: m.month, year: m.year, cover: m.cover, description: m.description });
+    });
+  }, [id]);
 
   if (!form) return <div className="text-gray-400 text-[13px]">Loading…</div>;
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => f ? { ...f, [k]: e.target.value } : f);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.title || !form.month || !form.year) { setError("Title, Month, Year are required."); return; }
-    const orig = getMagazine(form.id)!;
-    saveMagazine({ ...orig, title: form.title, month: form.month, year: form.year, cover: form.cover, description: form.description });
-    router.push("/dashboard/magazines");
+    try {
+      const orig = await getMagazine(form.id);
+      await saveMagazine({ ...orig, title: form.title, month: form.month, year: form.year, cover: form.cover, description: form.description });
+      router.push("/dashboard/magazines");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to save.");
+    }
   };
-
-  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
   return (
     <div className="max-w-xl">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 text-[20px]">←</button>
         <h1 className="text-[22px] font-semibold text-gray-900">Edit Magazine</h1>
-        <span className="text-[12px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded">{form.id}</span>
+        <span className="text-[12px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded font-mono">{form.id}</span>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
@@ -47,8 +56,8 @@ export default function EditMagazinePage({ params }: { params: { id: string } })
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-blue-400 font-malayalam" />
           </Row>
           <Row label="വിവരണം (Description)">
-            <input value={form.description} onChange={set("description")} lang="ml"
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-blue-400 font-malayalam" />
+            <textarea value={form.description} onChange={set("description")} lang="ml" rows={3}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-blue-400 font-malayalam resize-y" />
           </Row>
         </div>
 
@@ -59,17 +68,18 @@ export default function EditMagazinePage({ params }: { params: { id: string } })
               <Row label="Month">
                 <select value={form.month} onChange={set("month")}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400 bg-white">
-                  {months.map((m) => <option key={m} value={m}>{m}</option>)}
+                  {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </Row>
               <Row label="Year">
-                <input value={form.year} onChange={set("year")}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
+                <select value={form.year} onChange={set("year")}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400 bg-white">
+                  {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
               </Row>
             </div>
-            <Row label="Cover Image URL">
-              <input value={form.cover} onChange={set("cover")} placeholder="https://..."
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
+            <Row label="Cover Image">
+              <ImageUpload value={form.cover} onChange={(v) => setForm((f) => f ? { ...f, cover: v } : f)} />
             </Row>
           </div>
         </div>
@@ -88,6 +98,14 @@ export default function EditMagazinePage({ params }: { params: { id: string } })
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EditMagazinePage() {
+  return (
+    <Suspense fallback={<div className="text-gray-400 text-[13px]">Loading…</div>}>
+      <EditMagazineForm />
+    </Suspense>
   );
 }
 

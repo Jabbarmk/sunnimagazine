@@ -2,18 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMagazines, deleteMagazine, getArticles } from "@/lib/store";
+import { getMagazines, deleteMagazine, getArticles } from "@/lib/api";
 import type { Magazine } from "@/lib/data";
+import type { Article } from "@/lib/data";
 
 export default function MagazinesPage() {
   const [magazines, setMagazines] = useState<Magazine[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
 
-  const load = () => setMagazines(getMagazines());
+  const load = () => {
+    getMagazines().then(setMagazines);
+    getArticles().then(setArticles);
+  };
   useEffect(() => { load(); }, []);
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("ഈ ലക്കം ഇല്ലാതാക്കണോ?")) return;
-    deleteMagazine(id);
+    await deleteMagazine(id);
     load();
   };
 
@@ -34,7 +39,7 @@ export default function MagazinesPage() {
 
       <div className="grid grid-cols-1 gap-3">
         {magazines.map((m) => {
-          const articleCount = getArticles().filter((a) => a.magazineId === m.id).length;
+          const articleCount = articles.filter((a) => a.magazineId === m.id).length;
           return (
             <div key={m.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
               <img
@@ -49,7 +54,7 @@ export default function MagazinesPage() {
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Link
-                  href={`/dashboard/magazines/${m.id}/edit`}
+                  href={`/dashboard/magazines/edit?id=${m.id}`}
                   className="px-3 py-1.5 text-[12px] border border-gray-200 rounded-lg hover:bg-gray-100 text-gray-600"
                 >
                   Edit

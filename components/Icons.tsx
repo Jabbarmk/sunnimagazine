@@ -100,6 +100,23 @@ export const ArrowRight = (p: IconProps) => (
   </svg>
 );
 
+export const Palette = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="9" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="9" cy="15" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="15" r="1.5" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const X = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+);
+
 export const Star = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
   <svg {...base(p)} fill={filled ? "currentColor" : "none"}>
     <path d="M12 3l2.6 5.3 5.9.9-4.2 4.1 1 5.9L12 16.9 6.7 19.2l1-5.9L3.5 9.2l5.9-.9z" />

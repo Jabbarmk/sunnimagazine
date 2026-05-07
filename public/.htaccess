@@ -1,0 +1,17 @@
+Options -MultiViews
+RewriteEngine On
+RewriteBase /
+
+# Allow _next/static assets to pass through directly
+RewriteRule ^_next/(.*)$ _next/$1 [L]
+
+# Serve existing files and directories directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Try with .html extension first (Next.js static export)
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+)$ $1.html [L]
+
+# Fallback to index.html for client-side routing
+RewriteRule ^ index.html [QSA,L]

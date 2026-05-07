@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getArticles, deleteArticle } from "@/lib/store";
+import { getArticles, deleteArticle } from "@/lib/api";
 import type { Article } from "@/lib/data";
 
 export default function ArticlesPage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [search, setSearch] = useState("");
 
-  const load = () => setArticles(getArticles());
+  const load = () => { getArticles().then(setArticles); };
 
   useEffect(() => { load(); }, []);
 
@@ -20,9 +20,9 @@ export default function ArticlesPage() {
       a.category.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("ഈ ലേഖനം ഇല്ലാതാക്കണോ?")) return;
-    deleteArticle(id);
+    await deleteArticle(id);
     load();
   };
 
@@ -85,7 +85,7 @@ export default function ArticlesPage() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2 justify-end">
                     <Link
-                      href={`/dashboard/articles/${a.id}/edit`}
+                      href={`/dashboard/articles/edit?id=${a.id}`}
                       className="px-3 py-1 text-[12px] border border-gray-200 rounded-lg hover:bg-gray-100 text-gray-600"
                     >
                       Edit

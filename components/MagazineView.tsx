@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { BackBar } from "@/components/TopBar";
 import ArticleRow from "@/components/ArticleRow";
 import BottomNav from "@/components/BottomNav";
-import { getMagazine, getArticles } from "@/lib/store";
+import { getMagazine, getArticles } from "@/lib/api";
 import type { Magazine, Article } from "@/lib/data";
 
 export default function MagazineView({ id }: { id: string }) {
@@ -13,10 +13,11 @@ export default function MagazineView({ id }: { id: string }) {
 
   useEffect(() => {
     if (!id) return;
-    const m = getMagazine(id);
-    if (!m) return;
-    setMagazine(m);
-    setItems(getArticles().filter((a) => a.magazineId === m.id));
+    getMagazine(id).then((m) => {
+      if (!m) return;
+      setMagazine(m);
+      getArticles().then((all) => setItems(all.filter((a) => a.magazineId === m.id)));
+    });
   }, [id]);
 
   if (!magazine) {
