@@ -48,7 +48,7 @@ export default function VideosPage() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg">
+      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
         <LogoBar />
 
         <div className="px-5 mt-4 mb-4">

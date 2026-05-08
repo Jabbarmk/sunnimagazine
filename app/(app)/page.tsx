@@ -38,7 +38,7 @@ export default function Home() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-4">
         <LogoBar />
         <BannerSlider />
         {latest && (

@@ -16,7 +16,7 @@ const tabs = [
 export default function BottomNav() {
   const pathname = usePathname() || "/";
   return (
-    <nav className="sticky bottom-0 left-0 right-0 z-20 bg-surface/95 backdrop-blur border-t border-line">
+    <nav className="fixed bottom-0 left-0 right-0 z-20 bg-surface/95 backdrop-blur border-t border-line md:sticky md:left-auto md:right-auto">
       <div className="flex items-center justify-around px-2 py-2 pb-3">
         {tabs.map((t) => {
           const active = t.match(pathname);

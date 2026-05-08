@@ -25,9 +25,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-bg">
-      <div className="flex-1 flex flex-col items-center justify-center px-8">
-        <img src="/logo.png" alt="Gulf Sathyadhara" className="w-[55%] h-auto object-contain mb-10" />
+    <div className="flex-1 flex flex-col bg-bg overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center px-8 py-4">
+        <img src="/logo.png" alt="Gulf Sathyadhara" className="w-[50%] h-auto object-contain mb-6" />
 
         <div className="w-full space-y-3">
           <div>

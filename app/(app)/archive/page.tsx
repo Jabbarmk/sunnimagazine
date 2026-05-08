@@ -34,7 +34,7 @@ export default function ArchivePage() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
         <BackBar title="The Magazine" subtitle="Every issue, in one place" />
 
         <div className="flex gap-2 px-5 mb-4 overflow-x-auto no-scrollbar">

@@ -25,7 +25,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
         <LogoBar />
         <div className="flex flex-col items-center mt-4 px-5">
           <div className="w-[96px] h-[96px] rounded-full p-[3px] bg-gradient-to-br from-gold to-gold/40">
