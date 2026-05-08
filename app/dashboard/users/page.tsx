@@ -33,6 +33,7 @@ const STATUS_META: Record<SubStatus, { label: string; badge: string; row: string
 const EMPTY: Omit<AppUser, "id"> = {
   name: "", email: "", password: "", mobile: "", location: "",
   photo: "", subscriptionFrom: "", subscriptionTo: "",
+  referredBy: "", referralMobile: "",
 };
 
 type FilterTab = "all" | SubStatus;
@@ -59,7 +60,8 @@ export default function UsersPage() {
     setEditId(u.id);
     setForm({ name: u.name, email: u.email, password: "", mobile: u.mobile,
               location: u.location, photo: u.photo,
-              subscriptionFrom: u.subscriptionFrom, subscriptionTo: u.subscriptionTo });
+              subscriptionFrom: u.subscriptionFrom, subscriptionTo: u.subscriptionTo,
+              referredBy: u.referredBy ?? "", referralMobile: u.referralMobile ?? "" });
     setFe({}); setSaveError(""); setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -85,6 +87,7 @@ export default function UsersPage() {
         mobile: form.mobile.trim(), location: form.location.trim(),
         photo: form.photo, subscriptionFrom: form.subscriptionFrom,
         subscriptionTo: form.subscriptionTo,
+        referredBy: form.referredBy.trim(), referralMobile: form.referralMobile.trim(),
       });
       resetForm(); reload();
     } catch (e: unknown) {
@@ -187,6 +190,15 @@ export default function UsersPage() {
               <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Subscription To</label>
               <input value={form.subscriptionTo} onChange={set("subscriptionTo")} type="date" className={inp("subscriptionTo")} />
             </div>
+
+            <div>
+              <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Referred By</label>
+              <input value={form.referredBy} onChange={set("referredBy")} placeholder="Referrer name" className={inp("referredBy")} />
+            </div>
+            <div>
+              <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Referral Mobile No.</label>
+              <input value={form.referralMobile} onChange={set("referralMobile")} placeholder="+91 98765 43210" className={inp("referralMobile")} />
+            </div>
           </div>
 
           {saveError && <p className="text-[13px] text-red-500 bg-red-50 px-3 py-2 rounded-lg mt-4">{saveError}</p>}
@@ -268,6 +280,13 @@ export default function UsersPage() {
                       {u.subscriptionFrom && <>From: {u.subscriptionFrom}</>}
                       {u.subscriptionFrom && u.subscriptionTo && " · "}
                       {u.subscriptionTo && <>To: {u.subscriptionTo}</>}
+                    </div>
+                  )}
+                  {(u.referredBy || u.referralMobile) && (
+                    <div className="text-[10px] text-blue-500 mt-0.5">
+                      {u.referredBy && <>Ref: {u.referredBy}</>}
+                      {u.referredBy && u.referralMobile && " · "}
+                      {u.referralMobile && <>{u.referralMobile}</>}
                     </div>
                   )}
                 </div>

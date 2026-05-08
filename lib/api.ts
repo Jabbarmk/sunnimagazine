@@ -95,6 +95,17 @@ export const getVideos = () => get<any[]>("/videos");
 export const saveVideo = (v: any) => post("/videos", v);
 export const deleteVideo = (id: string) => del(`/videos/${id}`);
 
+// ── News Categories ───────────────────────────────────
+export const getNewsCategories = () => get<any[]>("/news-categories");
+export const saveNewsCategory = (c: any) => post("/news-categories", c);
+export const deleteNewsCategory = (id: string) => del(`/news-categories/${id}`);
+
+// ── News ──────────────────────────────────────────────
+export const getNews = () => get<any[]>("/news");
+export const getNewsItem = (id: string) => get<any>(`/news/${id}`);
+export const saveNewsItem = (n: any) => post("/news", n);
+export const deleteNewsItem = (id: string) => del(`/news/${id}`);
+
 // ── Auth ──────────────────────────────────────────────────
 export async function loginAdmin(email: string, password: string): Promise<boolean> {
   const res = await fetch("/api/auth", {

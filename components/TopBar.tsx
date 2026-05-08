@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Share, Bookmark, User, X, ChevronRight } from "./Icons";
 import { useBookmarks } from "@/lib/bookmarks";
 import { useState } from "react";
+import Link from "next/link";
 import clsx from "clsx";
 
 function ProfileSheet({ onClose }: { onClose: () => void }) {
@@ -76,22 +77,18 @@ function ProfileSheet({ onClose }: { onClose: () => void }) {
 }
 
 export function LogoBar() {
-  const [showProfile, setShowProfile] = useState(false);
   return (
-    <div>
-      <div className="pt-5 pb-3">
-        <div className="relative flex items-center justify-center">
-          <img src="/logo.png" alt="Gulf Sathyadhara" className="w-[60%] h-auto object-contain" />
-          <button
-            aria-label="Profile"
-            onClick={() => setShowProfile(true)}
-            className="absolute right-5 w-9 h-9 rounded-xl bg-surface shadow-card flex items-center justify-center text-ink"
-          >
-            <User size={18} />
-          </button>
-        </div>
+    <div className="pt-5 pb-3">
+      <div className="relative flex items-center justify-center">
+        <img src="/logo.png" alt="Gulf Sathyadhara" className="w-[60%] h-auto object-contain" />
+        <Link
+          href="/profile"
+          aria-label="Profile"
+          className="absolute right-5 w-9 h-9 rounded-xl bg-surface shadow-card flex items-center justify-center text-ink"
+        >
+          <User size={18} />
+        </Link>
       </div>
-      {showProfile && <ProfileSheet onClose={() => setShowProfile(false)} />}
     </div>
   );
 }

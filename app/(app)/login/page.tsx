@@ -2,12 +2,30 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { skipLogin } from "@/lib/auth";
+import { skipLogin, loginAppUser } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSignIn = async () => {
+    if (!identifier.trim() || !password.trim()) {
+      setError("Please enter your mobile/email and password.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    const ok = await loginAppUser(identifier.trim(), password.trim());
+    setLoading(false);
+    if (ok) {
+      router.push("/");
+    } else {
+      setError("Invalid mobile/email or password.");
+    }
+  };
 
   const goHome = () => {
     skipLogin();
@@ -21,12 +39,12 @@ export default function LoginPage() {
 
         <div className="w-full space-y-3">
           <div>
-            <label className="block text-[12px] text-muted mb-1.5">Username</label>
+            <label className="block text-[12px] text-muted mb-1.5">Mobile / Email</label>
             <input
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              value={identifier}
+              onChange={(e) => { setIdentifier(e.target.value); setError(""); }}
+              placeholder="Mobile number or email"
               className="w-full px-4 py-3 rounded-xl bg-surface shadow-card text-[14px] text-ink outline-none border border-transparent focus:border-gold/50 transition-colors"
             />
           </div>
@@ -35,18 +53,23 @@ export default function LoginPage() {
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); setError(""); }}
               placeholder="••••••••"
               className="w-full px-4 py-3 rounded-xl bg-surface shadow-card text-[14px] text-ink outline-none border border-transparent focus:border-gold/50 transition-colors"
-              onKeyDown={(e) => e.key === "Enter" && goHome()}
+              onKeyDown={(e) => e.key === "Enter" && handleSignIn()}
             />
           </div>
 
+          {error && (
+            <p className="text-[12px] text-accent bg-accent/10 px-3 py-2 rounded-xl">{error}</p>
+          )}
+
           <button
-            onClick={goHome}
-            className="w-full py-3.5 rounded-xl bg-ink text-bg text-[15px] font-semibold mt-2 active:opacity-80 transition-opacity"
+            onClick={handleSignIn}
+            disabled={loading}
+            className="w-full py-3.5 rounded-xl bg-ink text-bg text-[15px] font-semibold mt-2 active:opacity-80 transition-opacity disabled:opacity-60"
           >
-            Sign In
+            {loading ? "Signing in…" : "Sign In"}
           </button>
         </div>
 

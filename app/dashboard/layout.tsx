@@ -85,6 +85,12 @@ const VideoIcon = () => (
     <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>
   </svg>
 );
+const NewspaperIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/>
+    <line x1="16" y1="8" x2="10" y2="8"/><line x1="16" y1="12" x2="10" y2="12"/><line x1="16" y1="16" x2="10" y2="16"/>
+  </svg>
+);
 const LogOutIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -102,6 +108,7 @@ const nav = [
   { href: "/dashboard/slider", label: "Slider", Icon: SlidersIcon },
   { href: "/dashboard/galleries", label: "Galleries", Icon: ImageIcon },
   { href: "/dashboard/videos", label: "Videos", Icon: VideoIcon },
+  { href: "/dashboard/news", label: "News & Blogs", Icon: NewspaperIcon },
   { href: "/dashboard/artcategories", label: "Art Categories", Icon: PaletteIcon },
   { href: "/dashboard/art", label: "Art", Icon: BrushIcon },
   { href: "/dashboard/users", label: "Users", Icon: UsersIcon },

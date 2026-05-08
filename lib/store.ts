@@ -29,6 +29,8 @@ export type AppUser = {
   photo: string;
   subscriptionFrom: string;
   subscriptionTo: string;
+  referredBy: string;
+  referralMobile: string;
 };
 
 export type UserWriting = {
@@ -66,6 +68,18 @@ export type Video = {
   categoryName: string;
   caption: string;
   link: string;
+};
+
+export type NewsCategory = { id: string; name: string };
+export type NewsItem = {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  title: string;
+  description: string;
+  image: string;
+  source: string;
+  publishedAt: string;
 };
 
 const ART_KEY = "gs_articles_v1";

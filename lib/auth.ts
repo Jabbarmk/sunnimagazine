@@ -1,4 +1,5 @@
 const AUTH_KEY = "gs_auth_v1";
+const APP_USER_KEY = "gs_app_user_v1";
 const ADMIN_EMAIL = "admin@gulfsathyadhara.com";
 const ADMIN_PASSWORD = "admin123";
 
@@ -28,4 +29,38 @@ export function getAuthState(): "auth" | "skip" | null {
 export function isAuthenticated(): boolean {
   const s = getAuthState();
   return s === "auth" || s === "skip";
+}
+
+export type StoredUser = {
+  id: string; name: string; email: string; mobile: string;
+  location: string; photo: string;
+  subscriptionFrom: string; subscriptionTo: string;
+  referredBy: string; referralMobile: string;
+};
+
+export async function loginAppUser(identifier: string, password: string): Promise<boolean> {
+  const res = await fetch("/api/app-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identifier, password }),
+  });
+  if (!res.ok) return false;
+  const user = await res.json();
+  localStorage.setItem(AUTH_KEY, "auth");
+  localStorage.setItem(APP_USER_KEY, JSON.stringify(user));
+  return true;
+}
+
+export function getAppUser(): StoredUser | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(APP_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+export function clearAppUser(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(APP_USER_KEY);
+  localStorage.setItem(AUTH_KEY, "skip");
 }

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMagazines, getArticles } from "@/lib/api";
+import { getMagazines, getNews } from "@/lib/api";
 import type { Magazine } from "@/lib/data";
-import type { Article } from "@/lib/data";
+import type { NewsItem } from "@/lib/store";
 import { LogoBar } from "@/components/TopBar";
 import SectionHeader from "@/components/SectionHeader";
 import { HeroCover, SmallCover } from "@/components/MagazineCover";
@@ -26,11 +26,11 @@ function sortByDate(list: Magazine[]): Magazine[] {
 
 export default function Home() {
   const [magazines, setMagazines] = useState<Magazine[]>([]);
-  const [newsArticles, setNewsArticles] = useState<Article[]>([]);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
 
   useEffect(() => {
     getMagazines().then((mags) => setMagazines(sortByDate(mags)));
-    getArticles().then((articles) => setNewsArticles(articles.slice(0, 5)));
+    getNews().then((items) => setNewsItems(items.slice(0, 5)));
   }, []);
 
   const latest = magazines[0];
@@ -58,24 +58,25 @@ export default function Home() {
           </>
         )}
         {/* News & Blogs */}
-        {newsArticles.length > 0 && (
+        {newsItems.length > 0 && (
           <div className="mt-6 mb-2">
-            <SectionHeader title="News & Blogs" href="/archive" actionLabel="View All" />
-            <div className="px-5 space-y-3">
-              {newsArticles.map((a) => (
-                <Link key={a.id} href={`/article?id=${a.id}`}>
+            <SectionHeader title="News & Blogs" href="/news" actionLabel="View All" />
+            <div className="px-5 space-y-0">
+              {newsItems.map((item) => (
+                <Link key={item.id} href={`/newsdetail?id=${item.id}`}>
                   <div className="flex gap-3 items-start py-3 border-b border-line last:border-0">
-                    {a.hero && (
-                      <img src={a.hero} alt={a.title} className="w-20 h-16 object-cover rounded-xl flex-shrink-0" />
-                    )}
+                    {item.image ? (
+                      <img src={item.image} alt={item.title} className="w-20 h-16 object-cover rounded-xl flex-shrink-0" />
+                    ) : null}
                     <div className="flex-1 min-w-0">
-                      {a.category && (
-                        <span className="text-[9px] tracking-[0.2em] uppercase text-gold font-medium">{a.category}</span>
+                      {item.categoryName && (
+                        <span className="text-[9px] tracking-[0.2em] uppercase text-gold font-medium">{item.categoryName}</span>
                       )}
-                      <p className="font-serif text-[14px] text-ink leading-snug mt-0.5 line-clamp-2">{a.title}</p>
-                      {a.date && (
-                        <span className="text-[11px] text-muted mt-1 block">{a.date}</span>
-                      )}
+                      <p className="font-serif text-[14px] text-ink leading-snug mt-0.5 line-clamp-2">{item.title}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {item.publishedAt && <span className="text-[11px] text-muted">{item.publishedAt}</span>}
+                        {item.source && <span className="text-[11px] text-muted">· {item.source}</span>}
+                      </div>
                     </div>
                   </div>
                 </Link>

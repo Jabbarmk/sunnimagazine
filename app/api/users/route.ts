@@ -7,18 +7,22 @@ export async function GET() {
     ...r,
     subscriptionFrom: r.subscription_from,
     subscriptionTo: r.subscription_to,
+    referredBy: r.referred_by ?? "",
+    referralMobile: r.referral_mobile ?? "",
   })));
 }
 
 export async function POST(req: Request) {
   const b = await req.json();
   await db.query(
-    `INSERT INTO app_users (id,name,email,password,mobile,location,photo,subscription_from,subscription_to)
-     VALUES (?,?,?,?,?,?,?,?,?)
+    `INSERT INTO app_users (id,name,email,password,mobile,location,photo,subscription_from,subscription_to,referred_by,referral_mobile)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)
      ON DUPLICATE KEY UPDATE name=VALUES(name),email=VALUES(email),password=VALUES(password),
        mobile=VALUES(mobile),location=VALUES(location),photo=VALUES(photo),
-       subscription_from=VALUES(subscription_from),subscription_to=VALUES(subscription_to)`,
-    [b.id, b.name, b.email, b.password, b.mobile, b.location, b.photo, b.subscriptionFrom, b.subscriptionTo]
+       subscription_from=VALUES(subscription_from),subscription_to=VALUES(subscription_to),
+       referred_by=VALUES(referred_by),referral_mobile=VALUES(referral_mobile)`,
+    [b.id, b.name, b.email, b.password, b.mobile, b.location, b.photo,
+     b.subscriptionFrom, b.subscriptionTo, b.referredBy, b.referralMobile]
   );
   return NextResponse.json({ ok: true });
 }

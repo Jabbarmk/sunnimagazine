@@ -91,7 +91,9 @@ CREATE TABLE IF NOT EXISTS app_users (
   location VARCHAR(255),
   photo MEDIUMTEXT,
   subscription_from VARCHAR(100),
-  subscription_to VARCHAR(100)
+  subscription_to VARCHAR(100),
+  referred_by VARCHAR(255),
+  referral_mobile VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS user_writings (
@@ -127,6 +129,23 @@ CREATE TABLE IF NOT EXISTS videos (
   category_name VARCHAR(255),
   caption TEXT,
   link TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS news_categories (
+  id VARCHAR(100) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS news (
+  id VARCHAR(100) PRIMARY KEY,
+  category_id VARCHAR(100),
+  category_name VARCHAR(255),
+  title TEXT NOT NULL,
+  description MEDIUMTEXT,
+  image MEDIUMTEXT,
+  source VARCHAR(500),
+  published_at VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
