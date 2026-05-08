@@ -257,7 +257,7 @@ function SendWritingsModal({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Fixed send button */}
-      <div className="px-4 py-3 flex-shrink-0 border-t border-line">
+      <div className="px-4 pt-3 pb-20 md:pb-4 flex-shrink-0 border-t border-line">
         <button onClick={handleSubmit} disabled={sending}
           className="w-full py-3 rounded-2xl bg-ink text-bg font-medium text-[14px] disabled:opacity-60">
           {sending ? "Sending…" : "Send"}
