@@ -27,6 +27,19 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const b = await req.json();
+
+  if (b.email) {
+    const [dup] = await db.query("SELECT id FROM app_users WHERE email=? AND id!=?", [b.email, b.id]);
+    if ((dup as any[]).length > 0)
+      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+  }
+
+  if (b.mobile) {
+    const [dup] = await db.query("SELECT id FROM app_users WHERE mobile=? AND id!=?", [b.mobile, b.id]);
+    if ((dup as any[]).length > 0)
+      return NextResponse.json({ error: "Mobile number already registered" }, { status: 409 });
+  }
+
   await db.query(
     `INSERT INTO app_users (id,name,email,password,mobile,location,photo,subscription_from,subscription_to,referred_by,referral_mobile,is_active)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,1)

@@ -12,7 +12,10 @@ async function post(path: string, body: unknown): Promise<void> {
   const res = await fetch(`${base}/api${path}`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`POST ${path} failed: ${res.status}`);
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || `POST ${path} failed: ${res.status}`);
+  }
 }
 
 async function del(path: string): Promise<void> {
