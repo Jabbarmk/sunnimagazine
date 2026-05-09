@@ -24,6 +24,7 @@ export type Magazine = {
   cover: string;
   description: string;
   articleIds: string[];
+  isPublished?: boolean;
 };
 
 export type Video = {

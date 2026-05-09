@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS magazines (
   cover MEDIUMTEXT,
   description TEXT,
   article_ids JSON,
+  is_published TINYINT(1) DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -93,7 +94,20 @@ CREATE TABLE IF NOT EXISTS app_users (
   subscription_from VARCHAR(100),
   subscription_to VARCHAR(100),
   referred_by VARCHAR(255),
-  referral_mobile VARCHAR(50)
+  referral_mobile VARCHAR(50),
+  is_active TINYINT(1) DEFAULT 1,
+  deleted_at TIMESTAMP NULL DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_subscriptions (
+  id VARCHAR(100) PRIMARY KEY,
+  user_id VARCHAR(100) NOT NULL,
+  amount_aed DECIMAL(10,2) DEFAULT 0,
+  from_month VARCHAR(20),
+  to_month VARCHAR(20),
+  paid_date DATE NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS user_writings (
@@ -115,7 +129,8 @@ CREATE TABLE IF NOT EXISTS email_settings (
   username VARCHAR(255),
   password VARCHAR(255),
   from_name VARCHAR(255),
-  admin_email VARCHAR(255)
+  admin_email VARCHAR(255),
+  whatsapp_template TEXT
 );
 
 CREATE TABLE IF NOT EXISTS video_categories (
@@ -129,6 +144,15 @@ CREATE TABLE IF NOT EXISTS videos (
   category_name VARCHAR(255),
   caption TEXT,
   link TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS events (
+  id VARCHAR(100) PRIMARY KEY,
+  title VARCHAR(500),
+  description MEDIUMTEXT,
+  poster MEDIUMTEXT,
+  event_date VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -149,6 +173,13 @@ CREATE TABLE IF NOT EXISTS news (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS ticker (
+  id INT PRIMARY KEY DEFAULT 1,
+  text TEXT,
+  is_enabled TINYINT(1) DEFAULT 0,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 -- Default admin credentials (email: admin@gulfsathyadhara.com  password: admin123)
 CREATE TABLE IF NOT EXISTS admins (
   id INT PRIMARY KEY AUTO_INCREMENT,
@@ -157,3 +188,12 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 
 INSERT IGNORE INTO admins (email, password) VALUES ('admin@gulfsathyadhara.com', 'admin123');
+
+-- ── ALTER statements for upgrading existing databases ─────────────────────────
+-- Run these if the tables already exist and you need to add the new columns:
+--
+-- ALTER TABLE app_users ADD COLUMN IF NOT EXISTS is_active TINYINT(1) DEFAULT 1;
+-- ALTER TABLE app_users ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP NULL DEFAULT NULL;
+-- ALTER TABLE app_users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+-- ALTER TABLE email_settings ADD COLUMN IF NOT EXISTS whatsapp_template TEXT;
+-- ALTER TABLE slides ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0;

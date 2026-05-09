@@ -25,17 +25,20 @@ export default function AuthorsPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) { setError("Name is required."); return; }
+    const name = form.name.trim();
+    if (!name) { setError("Name is required."); return; }
+    if (authors.some((a) => a.id !== editId && a.name.toLowerCase() === name.toLowerCase())) {
+      setError("An author with this name already exists.");
+      return;
+    }
     const id = editId ?? "author_" + Date.now();
-    await saveAuthor({ id, name: form.name.trim(), avatar: form.avatar });
-    resetForm();
-    reload();
+    await saveAuthor({ id, name, avatar: form.avatar });
+    resetForm(); reload();
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this author?")) return;
-    await deleteAuthor(id);
-    reload();
+    await deleteAuthor(id); reload();
   };
 
   return (
@@ -45,7 +48,6 @@ export default function AuthorsPage() {
         <p className="text-[13px] text-gray-500 mt-1">{authors.length} authors</p>
       </div>
 
-      {/* Add / Edit form */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
         <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-4">
           {editId ? "Edit Author" : "Add Author"}
@@ -55,7 +57,7 @@ export default function AuthorsPage() {
             <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Name</label>
             <input
               value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); setError(""); }}
               placeholder="Author name"
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400"
             />
@@ -64,19 +66,15 @@ export default function AuthorsPage() {
             <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Avatar</label>
             <ImageUpload value={form.avatar} onChange={(v) => setForm((f) => ({ ...f, avatar: v }))} />
           </div>
-          {error && <p className="text-[13px] text-red-500">{error}</p>}
+          {error && <p className="text-[13px] text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
           <div className="flex gap-2 pt-1">
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors"
-            >
+            <button onClick={handleSave}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors">
               {editId ? "Save Changes" : "Add Author"}
             </button>
             {editId && (
-              <button
-                onClick={resetForm}
-                className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-[13px] hover:bg-gray-50"
-              >
+              <button onClick={resetForm}
+                className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-[13px] hover:bg-gray-50">
                 Cancel
               </button>
             )}
@@ -84,7 +82,6 @@ export default function AuthorsPage() {
         </div>
       </div>
 
-      {/* List */}
       <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
         {authors.length === 0 && (
           <div className="px-4 py-8 text-center text-[13px] text-gray-400">No authors yet</div>
@@ -99,18 +96,8 @@ export default function AuthorsPage() {
               </div>
             )}
             <span className="flex-1 text-[13px] text-gray-800">{a.name}</span>
-            <button
-              onClick={() => handleEdit(a)}
-              className="text-[12px] text-gray-400 hover:text-gray-700"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => handleDelete(a.id)}
-              className="text-[12px] text-red-400 hover:text-red-600"
-            >
-              Delete
-            </button>
+            <button onClick={() => handleEdit(a)} className="text-[12px] text-gray-400 hover:text-gray-700">Edit</button>
+            <button onClick={() => handleDelete(a.id)} className="text-[12px] text-red-400 hover:text-red-600">Delete</button>
           </div>
         ))}
       </div>

@@ -35,9 +35,11 @@ export const deleteArticle = (id: string) => del(`/articles/${id}`);
 
 // ── Magazines ─────────────────────────────────────────────
 export const getMagazines = () => get<any[]>("/magazines");
+export const getMagazinesDashboard = () => get<any[]>("/magazines?all=1");
 export const getMagazine = (id: string) => get<any>(`/magazines/${id}`);
 export const saveMagazine = (m: any) => post("/magazines", m);
 export const deleteMagazine = (id: string) => del(`/magazines/${id}`);
+export const publishMagazine = (id: string, published: boolean) => put(`/magazines/${id}`, { isPublished: published });
 
 // ── Categories ────────────────────────────────────────────
 export const getCategories = () => get<any[]>("/categories");
@@ -72,8 +74,16 @@ export const deleteArt = (id: string) => del(`/arts/${id}`);
 
 // ── App Users ─────────────────────────────────────────────
 export const getAppUsers = () => get<any[]>("/users");
+export const getDeletedUsers = () => get<any[]>("/users?deleted=1");
 export const saveAppUser = (u: any) => post("/users", u);
+export const toggleUserActive = (id: string, isActive: boolean) => put(`/users/${id}`, { isActive });
+export const softDeleteUser = (id: string) => put(`/users/${id}`, { softDelete: true });
 export const deleteAppUser = (id: string) => del(`/users/${id}`);
+
+// ── User Subscriptions ────────────────────────────────────
+export const getUserSubscriptions = (userId: string) => get<any[]>(`/user-subscriptions?userId=${userId}`);
+export const saveUserSubscription = (s: any) => post("/user-subscriptions", s);
+export const deleteUserSubscription = (id: string) => del(`/user-subscriptions/${id}`);
 
 // ── User Writings ─────────────────────────────────────────
 export const getUserWritings = () => get<any[]>("/user-writings");
@@ -95,6 +105,12 @@ export const getVideos = () => get<any[]>("/videos");
 export const saveVideo = (v: any) => post("/videos", v);
 export const deleteVideo = (id: string) => del(`/videos/${id}`);
 
+// ── Events ────────────────────────────────────────────
+export const getEvents = () => get<any[]>("/events");
+export const getEvent = (id: string) => get<any>(`/events/${id}`);
+export const saveEvent = (e: any) => post("/events", e);
+export const deleteEvent = (id: string) => del(`/events/${id}`);
+
 // ── News Categories ───────────────────────────────────
 export const getNewsCategories = () => get<any[]>("/news-categories");
 export const saveNewsCategory = (c: any) => post("/news-categories", c);
@@ -105,6 +121,10 @@ export const getNews = () => get<any[]>("/news");
 export const getNewsItem = (id: string) => get<any>(`/news/${id}`);
 export const saveNewsItem = (n: any) => post("/news", n);
 export const deleteNewsItem = (id: string) => del(`/news/${id}`);
+
+// ── Ticker ────────────────────────────────────────────────
+export const getTicker = () => get<{ text: string; isEnabled: boolean }>("/ticker");
+export const saveTicker = (t: { text: string; isEnabled: boolean }) => post("/ticker", t);
 
 // ── Auth ──────────────────────────────────────────────────
 export async function loginAdmin(email: string, password: string): Promise<boolean> {

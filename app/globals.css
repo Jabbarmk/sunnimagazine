@@ -40,3 +40,29 @@ body {
   background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 55%);
   pointer-events: none;
 }
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+.ticker-scroll {
+  display: inline-block;
+  animation: ticker-scroll 22s linear infinite;
+  white-space: nowrap;
+}
+.ticker-scroll-fast {
+  animation-duration: 14s;
+}
+.ticker-scroll-slow {
+  animation-duration: 32s;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}

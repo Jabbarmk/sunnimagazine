@@ -15,20 +15,22 @@ export default function ArtCategoriesPage() {
 
   const reset = () => { setName(""); setEditId(null); setError(""); };
 
+  const isDuplicate = (n: string, excludeId?: string) =>
+    cats.some((c) => c.id !== excludeId && c.name.toLowerCase() === n.toLowerCase());
+
   const handleEdit = (c: ArtCategory) => { setEditId(c.id); setName(c.name); setError(""); };
 
   const handleSave = async () => {
-    if (!name.trim()) { setError("Name is required"); return; }
-    const id = editId ?? "ac_" + Date.now();
-    await saveArtCategory({ id, name: name.trim() });
-    reset();
-    reload();
+    const n = name.trim();
+    if (!n) { setError("Name is required."); return; }
+    if (isDuplicate(n, editId ?? undefined)) { setError("This category already exists."); return; }
+    await saveArtCategory({ id: editId ?? "ac_" + Date.now(), name: n });
+    reset(); reload();
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this art category?")) return;
-    await deleteArtCategory(id);
-    reload();
+    await deleteArtCategory(id); reload();
   };
 
   return (
@@ -46,13 +48,12 @@ export default function ArtCategoriesPage() {
           <input
             value={name}
             onChange={(e) => { setName(e.target.value); setError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && handleSave()}
             placeholder="Category name"
             className={`flex-1 px-3 py-2 border rounded-lg text-[13px] outline-none ${error ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-blue-400"}`}
           />
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors"
-          >
+          <button onClick={handleSave}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors">
             {editId ? "Save" : "Add"}
           </button>
           {editId && (

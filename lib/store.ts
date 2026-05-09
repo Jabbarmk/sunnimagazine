@@ -31,6 +31,18 @@ export type AppUser = {
   subscriptionTo: string;
   referredBy: string;
   referralMobile: string;
+  isActive: boolean;
+  deletedAt: string | null;
+};
+
+export type UserSubscription = {
+  id: string;
+  userId: string;
+  amountAed: number;
+  fromMonth: string;
+  toMonth: string;
+  paidDate: string;
+  createdAt?: string;
 };
 
 export type UserWriting = {
@@ -52,6 +64,7 @@ export type EmailSettings = {
   password: string;
   fromName: string;
   adminEmail: string;
+  whatsappTemplate: string;
 };
 
 const seedCategories: Category[] = [
@@ -68,6 +81,14 @@ export type Video = {
   categoryName: string;
   caption: string;
   link: string;
+};
+
+export type EventItem = {
+  id: string;
+  title: string;
+  description: string;
+  poster: string;
+  eventDate: string;
 };
 
 export type NewsCategory = { id: string; name: string };
@@ -272,7 +293,7 @@ export function deleteUserWriting(id: string): void {
   writeJSON(WRITINGS_KEY, getUserWritings().filter((w) => w.id !== id));
 }
 
-const EMPTY_EMAIL: EmailSettings = { host: "", port: "587", username: "", password: "", fromName: "", adminEmail: "" };
+const EMPTY_EMAIL: EmailSettings = { host: "", port: "587", username: "", password: "", fromName: "", adminEmail: "", whatsappTemplate: "" };
 export function getEmailSettings(): EmailSettings {
   if (typeof window === "undefined") return EMPTY_EMAIL;
   try {

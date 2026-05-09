@@ -6,6 +6,7 @@ import {
   getVideoCategories, saveVideoCategory, deleteVideoCategory,
 } from "@/lib/api";
 import type { Video, VideoCategory } from "@/lib/store";
+import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
 
 function extractYouTubeId(link: string): string | null {
   const patterns = [
@@ -31,6 +32,7 @@ const EMPTY_VIDEO = { categoryId: "", caption: "", link: "" };
 export default function VideosPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [cats, setCats] = useState<VideoCategory[]>([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(EMPTY_VIDEO);
   const [editId, setEditId] = useState<string | null>(null);
   const [fe, setFe] = useState<Record<string, string>>({});
@@ -40,8 +42,14 @@ export default function VideosPage() {
   const [newCatName, setNewCatName] = useState("");
   const [catError, setCatError] = useState("");
 
-  const reload = () => { getVideos().then(setVideos); getVideoCategories().then(setCats); };
-  useEffect(reload, []);
+  const reload = async () => {
+    setLoading(true);
+    try {
+      const [vids, catData] = await Promise.all([getVideos(), getVideoCategories()]);
+      setVideos(vids); setCats(catData);
+    } finally { setLoading(false); }
+  };
+  useEffect(() => { reload(); }, []);
 
   const reset = () => { setForm(EMPTY_VIDEO); setEditId(null); setFe({}); setSaveError(""); };
 
@@ -76,8 +84,11 @@ export default function VideosPage() {
   };
 
   const handleAddCat = async () => {
-    if (!newCatName.trim()) { setCatError("Name is required"); return; }
-    await saveVideoCategory({ id: "vcat_" + Date.now(), name: newCatName.trim() });
+    const name = newCatName.trim();
+    if (!name) { setCatError("Name is required"); return; }
+    const dup = cats.some((c) => c.name.toLowerCase() === name.toLowerCase());
+    if (dup) { setCatError("Category already exists"); return; }
+    await saveVideoCategory({ id: "vcat_" + Date.now(), name });
     setNewCatName(""); setCatError(""); reload();
   };
 
@@ -172,7 +183,8 @@ export default function VideosPage() {
       </div>
 
       {/* List */}
-      <div className="space-y-3">
+      {loading && <SkeletonRows count={3} hasImage />}
+      {!loading && <div className="space-y-3">
         {videos.length === 0 && (
           <div className="bg-white rounded-xl border border-gray-200 px-4 py-8 text-center text-[13px] text-gray-400">
             No videos yet. Add one above.
@@ -196,7 +208,7 @@ export default function VideosPage() {
             </div>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 }

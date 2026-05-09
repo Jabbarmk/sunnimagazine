@@ -109,7 +109,14 @@ export default function NewMagazinePage() {
                 </select>
               </Row>
             </div>
-            <Row label="Cover Image" hint="Leave blank for placeholder">
+            <Row label="Cover Image" hint="Portrait/vertical ratio recommended">
+              {cover && (
+                <div className="flex justify-center mb-3">
+                  <img src={cover} alt="cover preview"
+                    className="w-36 object-cover rounded-xl shadow-md border border-gray-200"
+                    style={{ aspectRatio: "3/4" }} />
+                </div>
+              )}
               <ImageUpload value={cover} onChange={setCover} />
             </Row>
           </div>
