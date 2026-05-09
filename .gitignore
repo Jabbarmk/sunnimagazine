@@ -17,3 +17,9 @@ android/local.properties
 # Env
 .env
 .env.local
+
+# Build artifacts
+deploy.zip
+deploy.tar.gz
+out.zip
+tsconfig.tsbuildinfo
