@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useEffect } from "react";
-import { logout, isAuthenticated } from "@/lib/auth";
+import { dashboardLogout, isDashboardAuthenticated } from "@/lib/auth";
 
 const GridIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -145,13 +145,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const isLoginPage = pathname.includes("/dashboard/login");
 
   useEffect(() => {
-    if (!isLoginPage && !isAuthenticated()) {
+    if (!isLoginPage && !isDashboardAuthenticated()) {
       router.replace("/dashboard/login/");
     }
   }, [isLoginPage]);
 
   const handleLogout = () => {
-    logout();
+    dashboardLogout();
     router.push("/dashboard/login/");
   };
 

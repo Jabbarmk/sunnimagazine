@@ -91,4 +91,5 @@ ALTER TABLE `app_users`
   ADD COLUMN IF NOT EXISTS `deleted_at` timestamp NULL DEFAULT NULL;
 
 ALTER TABLE `email_settings`
+  ADD COLUMN IF NOT EXISTS `whatsapp_template` text DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS `signup_email_template` text DEFAULT NULL;

@@ -136,7 +136,7 @@ export async function loginAdmin(email: string, password: string): Promise<boole
     body: JSON.stringify({ email, password }),
   });
   if (res.ok) {
-    localStorage.setItem("gs_auth_v1", "auth");
+    localStorage.setItem("gs_dashboard_auth_v1", "admin");
     return true;
   }
   return false;
