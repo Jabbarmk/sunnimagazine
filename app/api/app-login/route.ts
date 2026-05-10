@@ -7,7 +7,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Required" }, { status: 400 });
   }
   const [rows] = await db.query(
-    "SELECT * FROM app_users WHERE (email=? OR mobile=?) AND password=? LIMIT 1",
+    `SELECT id,name,email,mobile,location,photo,subscription_from,subscription_to,referred_by,referral_mobile
+     FROM app_users
+     WHERE (email=? OR mobile=?) AND password=? AND is_active=1 AND deleted_at IS NULL
+     LIMIT 1`,
     [identifier, identifier, password]
   );
   const u = (rows as any[])[0];

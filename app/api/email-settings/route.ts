@@ -4,22 +4,25 @@ import db from "@/lib/db";
 export async function GET() {
   const [rows] = await db.query("SELECT * FROM email_settings WHERE id=1");
   const r = (rows as any[])[0];
-  if (!r) return NextResponse.json({ host:"",port:"587",username:"",password:"",fromName:"",adminEmail:"",whatsappTemplate:"" });
+  if (!r) return NextResponse.json({ host:"",port:"587",username:"",password:"",fromName:"",adminEmail:"",whatsappTemplate:"",signupEmailTemplate:"" });
   return NextResponse.json({
     host: r.host, port: r.port, username: r.username,
     password: r.password, fromName: r.from_name, adminEmail: r.admin_email,
     whatsappTemplate: r.whatsapp_template ?? "",
+    signupEmailTemplate: r.signup_email_template ?? "",
   });
 }
 
 export async function POST(req: Request) {
   const b = await req.json();
   await db.query(
-    `INSERT INTO email_settings (id,host,port,username,password,from_name,admin_email,whatsapp_template) VALUES (1,?,?,?,?,?,?,?)
+    `INSERT INTO email_settings (id,host,port,username,password,from_name,admin_email,whatsapp_template,signup_email_template)
+     VALUES (1,?,?,?,?,?,?,?,?)
      ON DUPLICATE KEY UPDATE host=VALUES(host),port=VALUES(port),username=VALUES(username),
        password=VALUES(password),from_name=VALUES(from_name),admin_email=VALUES(admin_email),
-       whatsapp_template=VALUES(whatsapp_template)`,
-    [b.host, b.port, b.username, b.password, b.fromName, b.adminEmail, b.whatsappTemplate || null]
+       whatsapp_template=VALUES(whatsapp_template),signup_email_template=VALUES(signup_email_template)`,
+    [b.host, b.port, b.username, b.password, b.fromName, b.adminEmail,
+     b.whatsappTemplate || null, b.signupEmailTemplate || null]
   );
   return NextResponse.json({ ok: true });
 }

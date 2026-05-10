@@ -5,8 +5,11 @@ import { getEmailSettings, saveEmailSettings, getTicker, saveTicker } from "@/li
 import type { EmailSettings } from "@/lib/store";
 
 const EMPTY: EmailSettings = {
-  host: "", port: "587", username: "", password: "", fromName: "", adminEmail: "", whatsappTemplate: "",
+  host: "", port: "587", username: "", password: "", fromName: "", adminEmail: "", whatsappTemplate: "", signupEmailTemplate: "",
 };
+
+const DEFAULT_SIGNUP_TEMPLATE =
+  "Your registration is successful. About Gulf Sathyadhara Subscription, our sales team will contact you soon.";
 
 const DEFAULT_WA_TEMPLATE =
   "പ്രിയ {name},\n\nതാങ്കളുടെ Gulf Sathyadhara സബ്സ്ക്രിപ്ഷൻ {expiry} ന് അവസാനിക്കുന്നു.\n\nസബ്സ്ക്രിപ്ഷൻ തുക: AED {amount}\n\nദയവായി ഉടൻ പുതുക്കുക.\n\nനന്ദി,\nGulf Sathyadhara Team";
@@ -99,6 +102,34 @@ export default function SettingsPage() {
             </button>
             {tickerSaved && <span className="text-[12px] text-green-600 font-medium">✓ Saved</span>}
           </div>
+        </div>
+      </div>
+
+      {/* ── Signup Email Template ──────────────────────────── */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-[18px] font-semibold text-gray-900">Signup Welcome Email</h2>
+          <p className="text-[13px] text-gray-500 mt-1">
+            Sent to new users when they register. Use{" "}
+            <code className="text-[11px] bg-gray-100 px-1 rounded">{"{name}"}</code>,{" "}
+            <code className="text-[11px] bg-gray-100 px-1 rounded">{"{email}"}</code>,{" "}
+            <code className="text-[11px] bg-gray-100 px-1 rounded">{"{mobile}"}</code> as placeholders.
+          </p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+          <textarea
+            value={form.signupEmailTemplate}
+            onChange={set("signupEmailTemplate")}
+            placeholder={DEFAULT_SIGNUP_TEMPLATE}
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400 resize-y"
+          />
+          <button
+            onClick={() => setForm((f) => ({ ...f, signupEmailTemplate: DEFAULT_SIGNUP_TEMPLATE }))}
+            className="text-[12px] text-blue-500 hover:text-blue-700"
+          >
+            Load default template
+          </button>
         </div>
       </div>
 

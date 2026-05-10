@@ -65,6 +65,7 @@ export type EmailSettings = {
   fromName: string;
   adminEmail: string;
   whatsappTemplate: string;
+  signupEmailTemplate: string;
 };
 
 const seedCategories: Category[] = [

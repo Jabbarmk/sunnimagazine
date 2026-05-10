@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import ArticleView from "@/components/ArticleView";
 import BottomNav from "@/components/BottomNav";
+import { isAuthenticated } from "@/lib/auth";
 
 function ArticleInner() {
   const params = useSearchParams();
@@ -11,6 +12,16 @@ function ArticleInner() {
 }
 
 export default function ArticlePage() {
+  const router = useRouter();
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated()) router.replace("/login");
+    else setAuthed(true);
+  }, [router]);
+
+  if (!authed) return null;
+
   return (
     <Suspense fallback={
       <>

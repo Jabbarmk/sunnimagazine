@@ -10,15 +10,51 @@ import type { Magazine, Article } from "@/lib/data";
 export default function MagazineView({ id }: { id: string }) {
   const [magazine, setMagazine] = useState<Magazine | null>(null);
   const [items, setItems] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-    getMagazine(id).then((m) => {
-      if (!m) return;
-      setMagazine(m);
-      getArticles().then((all) => setItems(all.filter((a) => a.magazineId === m.id)));
-    });
+    getMagazine(id)
+      .then((m) => {
+        if (!m) { setLoading(false); return; }
+        setMagazine(m);
+        return getArticles().then((all) => setItems(all.filter((a) => a.magazineId === m.id)));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [id]);
+
+  if (loading) {
+    return (
+      <>
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-line">
+            <div className="w-5 h-4 rounded skeleton-shimmer" />
+            <div className="h-4 w-36 rounded skeleton-shimmer" />
+          </div>
+          <div className="w-full h-[260px] skeleton-shimmer" />
+          <div className="px-5 pt-5 pb-2 space-y-2">
+            <div className="h-3 w-14 rounded skeleton-shimmer" />
+            <div className="h-6 w-52 rounded skeleton-shimmer" />
+            <div className="h-3 w-full rounded skeleton-shimmer" />
+            <div className="h-3 w-4/5 rounded skeleton-shimmer" />
+          </div>
+          <div className="mt-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-3 px-4 py-4 border-t border-line">
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 rounded skeleton-shimmer" style={{ width: "70%" }} />
+                  <div className="h-3 rounded skeleton-shimmer" style={{ width: "40%" }} />
+                </div>
+                <div className="w-14 h-10 rounded-lg skeleton-shimmer flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <BottomNav />
+      </>
+    );
+  }
 
   if (!magazine) {
     return (

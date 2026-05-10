@@ -89,3 +89,6 @@ ALTER TABLE `app_users`
   ADD COLUMN IF NOT EXISTS `referred_by` varchar(255) DEFAULT '',
   ADD COLUMN IF NOT EXISTS `referral_mobile` varchar(50) DEFAULT '',
   ADD COLUMN IF NOT EXISTS `deleted_at` timestamp NULL DEFAULT NULL;
+
+ALTER TABLE `email_settings`
+  ADD COLUMN IF NOT EXISTS `signup_email_template` text DEFAULT NULL;

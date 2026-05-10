@@ -7,6 +7,7 @@ import { getNewsItem } from "@/lib/api";
 import type { NewsItem } from "@/lib/store";
 import BottomNav from "@/components/BottomNav";
 import { ChevronLeft } from "@/components/Icons";
+import { isAuthenticated } from "@/lib/auth";
 
 function NewsDetailInner() {
   const params = useSearchParams();
@@ -34,7 +35,23 @@ function NewsDetailInner() {
   if (!item) {
     return (
       <>
-        <div className="flex-1 flex items-center justify-center text-muted text-[14px]">Loading…</div>
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg">
+          <div className="w-full h-[280px] skeleton-shimmer" />
+          <div className="px-5 pt-5 space-y-3">
+            <div className="h-7 rounded skeleton-shimmer w-5/6" />
+            <div className="h-7 rounded skeleton-shimmer w-3/4" />
+            <div className="flex gap-2 mt-3">
+              <div className="h-3 w-20 rounded skeleton-shimmer" />
+              <div className="h-3 w-24 rounded skeleton-shimmer" />
+            </div>
+            <div className="h-px bg-gold/20 my-4" />
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-3 rounded skeleton-shimmer" style={{ width: `${85 + (i % 3) * 5}%` }} />
+              ))}
+            </div>
+          </div>
+        </div>
         <BottomNav />
       </>
     );
@@ -117,15 +134,32 @@ function NewsDetailInner() {
   );
 }
 
-export default function NewsDetailPage() {
+function AuthGuardedDetail() {
+  const router = useRouter();
+  const [authed, setAuthed] = useState(false);
+  useEffect(() => {
+    if (!isAuthenticated()) router.replace("/login");
+    else setAuthed(true);
+  }, [router]);
+  if (!authed) return null;
   return (
     <Suspense fallback={
       <>
-        <div className="flex-1 flex items-center justify-center text-muted text-[14px]">Loading…</div>
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg">
+          <div className="w-full h-[280px] skeleton-shimmer" />
+          <div className="px-5 pt-5 space-y-3">
+            <div className="h-7 rounded skeleton-shimmer w-5/6" />
+            <div className="h-7 rounded skeleton-shimmer w-3/4" />
+          </div>
+        </div>
         <BottomNav />
       </>
     }>
       <NewsDetailInner />
     </Suspense>
   );
+}
+
+export default function NewsDetailPage() {
+  return <AuthGuardedDetail />;
 }

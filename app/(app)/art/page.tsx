@@ -12,12 +12,15 @@ export default function ArtPage() {
   const [arts, setArts] = useState<Art[]>([]);
   const [magazineTitle, setMagazineTitle] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getMagazines().then((magazines) => {
-      if (magazines.length > 0) setMagazineTitle(magazines[0].title);
-    });
-    getArts().then(setArts);
+    Promise.all([getMagazines(), getArts()])
+      .then(([magazines, artData]) => {
+        if (magazines.length > 0) setMagazineTitle(magazines[0].title);
+        setArts(artData);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -37,7 +40,23 @@ export default function ArtPage() {
         <div className="w-9 h-9" />
       </div>
 
-      {arts.length === 0 ? (
+      {loading ? (
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-2xl overflow-hidden space-y-0">
+              <div className="px-4 pt-4 pb-2">
+                <div className="h-2.5 w-20 rounded skeleton-shimmer" />
+                <div className="h-6 w-40 rounded skeleton-shimmer mt-2" />
+              </div>
+              <div className="w-full h-[200px] skeleton-shimmer" />
+              <div className="px-4 pt-3 pb-4 space-y-2">
+                <div className="h-3 rounded skeleton-shimmer w-full" />
+                <div className="h-3 rounded skeleton-shimmer w-4/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : arts.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-[13px] text-muted">No art items for this issue.</p>
         </div>

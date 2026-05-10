@@ -81,7 +81,16 @@ export default function LoginPage() {
         </button>
       </div>
 
-      <div className="pb-8 text-center">
+      <div className="pb-8 text-center space-y-2">
+        <p className="text-[13px] text-muted">
+          New here?{" "}
+          <button
+            onClick={() => router.push("/signup")}
+            className="text-gold font-medium underline underline-offset-2"
+          >
+            Create an account
+          </button>
+        </p>
         <p className="text-[11px] text-subtle">© 2025 Gulf Sathyadhara</p>
       </div>
     </div>

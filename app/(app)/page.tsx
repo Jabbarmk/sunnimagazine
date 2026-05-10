@@ -57,16 +57,52 @@ export default function Home() {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [ticker, setTicker] = useState<{ text: string; isEnabled: boolean }>({ text: "", isEnabled: false });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getMagazines().then((mags) => setMagazines(sortByDate(mags)));
-    getNews().then((items) => setNewsItems(items.slice(0, 5)));
-    getEvents().then(setEvents);
-    getTicker().then(setTicker);
+    Promise.all([getMagazines(), getNews(), getEvents(), getTicker()])
+      .then(([mags, news, evts, tick]) => {
+        setMagazines(sortByDate(mags));
+        setNewsItems(news.slice(0, 5));
+        setEvents(evts);
+        setTicker(tick);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const latest = magazines[0];
   const older = magazines.slice(1, 5);
+
+  if (loading) {
+    return (
+      <>
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-4">
+          <LogoBar />
+          <div className="px-5 mt-3">
+            <div className="w-full h-[300px] rounded-2xl skeleton-shimmer" />
+          </div>
+          <div className="px-5 mt-5 grid grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-[180px] rounded-2xl skeleton-shimmer" />
+            ))}
+          </div>
+          <div className="px-5 mt-6 space-y-0">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-3 py-3.5 border-b border-line">
+                <div className="w-20 h-16 rounded-xl skeleton-shimmer flex-shrink-0" />
+                <div className="flex-1 space-y-2 pt-1">
+                  <div className="h-2.5 rounded skeleton-shimmer w-16" />
+                  <div className="h-3 rounded skeleton-shimmer w-full" />
+                  <div className="h-3 rounded skeleton-shimmer w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <BottomNav />
+      </>
+    );
+  }
 
   return (
     <>

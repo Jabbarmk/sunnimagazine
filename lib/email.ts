@@ -70,6 +70,49 @@ export async function sendWritingEmails(settings: EmailSettings, writing: UserWr
   if (errors.length) throw new Error(errors.join("; "));
 }
 
+const DEFAULT_SIGNUP_TEMPLATE =
+  "Your registration is successful. About Gulf Sathyadhara Subscription, our sales team will contact you soon.";
+
+export async function sendSignupEmails(
+  settings: EmailSettings,
+  name: string,
+  email: string,
+  mobile: string,
+): Promise<void> {
+  if (!settings.host || !settings.username || !settings.password) return;
+  const errors: string[] = [];
+
+  const templateBody = (settings.signupEmailTemplate || DEFAULT_SIGNUP_TEMPLATE)
+    .replace(/\{name\}/g, name)
+    .replace(/\{email\}/g, email)
+    .replace(/\{mobile\}/g, mobile);
+
+  try {
+    await send(
+      settings,
+      email,
+      "Registration Successful — Gulf Sathyadhara",
+      `<p>Dear ${name},</p><p>${templateBody.replace(/\n/g, "<br/>")}</p><br><p>— Gulf Sathyadhara Team</p>`
+    );
+  } catch (e) { errors.push(String(e)); }
+
+  if (settings.adminEmail) {
+    try {
+      await send(
+        settings,
+        settings.adminEmail,
+        `New Registration — ${name}`,
+        `<h3>New User Registration</h3>
+<p><b>Name:</b> ${name}</p>
+<p><b>Email:</b> ${email}</p>
+<p><b>Mobile:</b> ${mobile || "—"}</p>`
+      );
+    } catch (e) { errors.push(String(e)); }
+  }
+
+  if (errors.length) throw new Error(errors.join("; "));
+}
+
 function fmtMonth(val: string): string {
   if (!val) return "";
   const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];

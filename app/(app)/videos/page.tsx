@@ -37,10 +37,12 @@ export default function VideosPage() {
   const [cats, setCats] = useState<VideoCategory[]>([]);
   const [activeTab, setActiveTab] = useState("All");
   const [playing, setPlaying] = useState<Video | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getVideos().then(setVideos);
-    getVideoCategories().then(setCats);
+    Promise.all([getVideos(), getVideoCategories()])
+      .then(([vids, catData]) => { setVideos(vids); setCats(catData); })
+      .finally(() => setLoading(false));
   }, []);
 
   const tabs = ["All", ...cats.map((c) => c.name)];
@@ -74,7 +76,17 @@ export default function VideosPage() {
         )}
 
         {/* Grid */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-2 gap-3 px-4 pb-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="space-y-2">
+                <div className="w-full rounded-xl skeleton-shimmer" style={{ aspectRatio: "9/16" }} />
+                <div className="h-2.5 rounded skeleton-shimmer w-16" />
+                <div className="h-3 rounded skeleton-shimmer w-full" />
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex-1 flex items-center justify-center py-20">
             <p className="text-[13px] text-muted">No videos yet.</p>
           </div>

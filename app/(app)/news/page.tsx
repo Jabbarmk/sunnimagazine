@@ -2,20 +2,30 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getNews, getNewsCategories } from "@/lib/api";
 import type { NewsItem, NewsCategory } from "@/lib/store";
 import { LogoBar } from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
+import { isAuthenticated } from "@/lib/auth";
 
 export default function NewsPage() {
+  const router = useRouter();
+  const [authed, setAuthed] = useState(false);
   const [items, setItems] = useState<NewsItem[]>([]);
   const [cats, setCats] = useState<NewsCategory[]>([]);
   const [activeTab, setActiveTab] = useState("All");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getNews().then(setItems);
-    getNewsCategories().then(setCats);
-  }, []);
+    if (!isAuthenticated()) { router.replace("/login"); return; }
+    setAuthed(true);
+    Promise.all([getNews(), getNewsCategories()])
+      .then(([news, catData]) => { setItems(news); setCats(catData); })
+      .finally(() => setLoading(false));
+  }, [router]);
+
+  if (!authed) return null;
 
   const tabs = ["All", ...cats.map((c) => c.name)];
   const filtered = activeTab === "All" ? items : items.filter((n) => n.categoryName === activeTab);
@@ -46,7 +56,21 @@ export default function NewsPage() {
           </div>
         )}
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="px-5 space-y-0 pb-6">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex gap-3 py-3.5 border-b border-line">
+                <div className="w-20 h-16 rounded-xl skeleton-shimmer flex-shrink-0" />
+                <div className="flex-1 space-y-2 pt-1">
+                  <div className="h-2.5 rounded skeleton-shimmer w-16" />
+                  <div className="h-3 rounded skeleton-shimmer w-full" />
+                  <div className="h-3 rounded skeleton-shimmer w-3/4" />
+                  <div className="h-2.5 rounded skeleton-shimmer w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center py-20">
             <p className="text-[13px] text-muted">No news yet.</p>
           </div>
