@@ -294,7 +294,7 @@ export function deleteUserWriting(id: string): void {
   writeJSON(WRITINGS_KEY, getUserWritings().filter((w) => w.id !== id));
 }
 
-const EMPTY_EMAIL: EmailSettings = { host: "", port: "587", username: "", password: "", fromName: "", adminEmail: "", whatsappTemplate: "" };
+const EMPTY_EMAIL: EmailSettings = { host: "", port: "587", username: "", password: "", fromName: "", adminEmail: "", whatsappTemplate: "", signupEmailTemplate: "" };
 export function getEmailSettings(): EmailSettings {
   if (typeof window === "undefined") return EMPTY_EMAIL;
   try {
