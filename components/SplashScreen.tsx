@@ -23,7 +23,7 @@ export default function SplashScreen() {
 
   const handleLogin = () => {
     dismiss();
-    setTimeout(() => router.push("/dashboard/login"), 380);
+    setTimeout(() => router.push("/login"), 380);
   };
 
   if (!visible) return null;
