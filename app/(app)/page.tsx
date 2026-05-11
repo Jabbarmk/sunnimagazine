@@ -109,13 +109,13 @@ export default function Home() {
       <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-4">
         <LogoBar />
         <TickerBar text={ticker.text} isEnabled={ticker.isEnabled} />
-        <BannerSlider />
         {latest && (
           <>
             <SectionHeader title="പുതിയ ലക്കം" href={`/magazine?id=${latest.id}`} />
             <HeroCover magazine={latest} />
           </>
         )}
+        <BannerSlider />
         {older.length > 0 && (
           <>
             <SectionHeader title="Old Prints" href="/archive" actionLabel="View All" />
