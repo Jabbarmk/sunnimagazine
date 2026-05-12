@@ -70,7 +70,7 @@ export default function MagazineView({ id }: { id: string }) {
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <BackBar title={magazine.title} subtitle={`${magazine.month} ${magazine.year}`} />
         <div className="relative mt-1">
-          <img src={magazine.cover} alt={magazine.title} className="w-full h-[260px] object-cover" />
+          <img src={magazine.cover} alt={magazine.title} className="w-full h-[100px] object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent" />
         </div>
         <div className="px-5 pt-5 pb-2">

@@ -41,7 +41,7 @@ export default function BannerSlider() {
   if (slides.length === 0) return null;
 
   return (
-    <div className="mx-5 mb-4">
+    <div className="mx-5 mt-5 mb-4">
       <div
         className="relative w-full h-[180px] rounded-2xl overflow-hidden cursor-pointer"
         onTouchStart={onTouchStart}

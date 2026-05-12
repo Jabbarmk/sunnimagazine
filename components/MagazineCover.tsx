@@ -10,15 +10,13 @@ export function HeroCover({ magazine }: { magazine: Magazine }) {
           alt={magazine.title}
           className="w-full h-auto block"
         />
-        <span className="absolute top-3 left-3 z-[1] text-[9px] tracking-[0.22em] uppercase bg-gold text-white px-2.5 py-1 rounded-full font-medium shadow-card">
+        <span className="absolute bottom-14 left-3 z-[1] text-[9px] tracking-[0.22em] uppercase bg-gold text-white px-2.5 py-1 rounded-full font-medium shadow-card">
           Latest Issue
         </span>
-      </div>
-      <div className="flex items-center gap-3 mt-3 pl-1">
-        <span className="inline-block w-[3px] h-4 bg-gold rounded-sm" />
-        <span className="text-[13px] text-muted">
-          {magazine.month} {magazine.year}
-        </span>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <span className="inline-block w-[3px] h-5 bg-gold rounded-sm" />
+          <span className="text-[16px] text-ink font-bold">{magazine.month} {magazine.year}</span>
+        </div>
       </div>
     </Link>
   );

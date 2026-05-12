@@ -18,7 +18,7 @@ export default function SectionHeader({
         className={
           ml
             ? "font-malayalam font-bold text-[20px] text-ink leading-none"
-            : "font-serif text-[20px] text-ink leading-none"
+            : "font-sans text-[20px] text-ink leading-none"
         }
       >
         {title}
