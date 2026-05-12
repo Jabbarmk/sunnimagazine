@@ -151,11 +151,11 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
                     <img src={article.inlineImage2} alt="" className="w-full h-[220px] object-cover rounded-xl" />
                   </figure>
                 )}
-                {i === 2 && article.pullQuote && (
-                  <blockquote className="border-l-[3px] border-gold pl-4 my-6 font-serif text-[19px] italic text-ink leading-snug">
-                    "{article.pullQuote}"
+                {article.pullQuotes?.filter(q => q.afterParagraph === i + 1).map((q, qi) => (
+                  <blockquote key={qi} className="border-l-[3px] border-gold pl-4 my-6 font-serif text-[19px] italic text-ink leading-snug">
+                    "{q.text}"
                   </blockquote>
-                )}
+                ))}
               </div>
             );
           })}

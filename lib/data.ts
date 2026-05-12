@@ -1,3 +1,8 @@
+export type PullQuote = {
+  text: string;
+  afterParagraph: number;
+};
+
 export type Article = {
   id: string;
   magazineId: string;
@@ -13,7 +18,7 @@ export type Article = {
   inlineImage?: string;
   inlineImage2?: string;
   bottomImage?: string;
-  pullQuote?: string;
+  pullQuotes?: PullQuote[];
 };
 
 export type Magazine = {
@@ -142,7 +147,7 @@ export const articles: Article[] = [
     hero: img("art-handmade", 1200, 900),
     paragraphs: [...malayalamStory, ...lorem.slice(0, 2)],
     inlineImage: img("art-handmade-2", 1200, 800),
-    pullQuote: "The reward is not the object, though the object is good. The reward is the hour.",
+    pullQuotes: [{ text: "The reward is not the object, though the object is good. The reward is the hour.", afterParagraph: 3 }],
   },
   {
     id: "a2",
@@ -183,7 +188,7 @@ export const articles: Article[] = [
     readTime: "4 min read",
     hero: img("art-dinner", 1200, 900),
     paragraphs: lorem.slice(0, 3),
-    pullQuote: "A table is a room inside a room.",
+    pullQuotes: [{ text: "A table is a room inside a room.", afterParagraph: 3 }],
   },
   {
     id: "a5",
@@ -211,7 +216,7 @@ export const articles: Article[] = [
     hero: img("art-road", 1200, 900),
     paragraphs: lorem,
     inlineImage: img("art-road-2", 1200, 800),
-    pullQuote: "Distance is a kind of attention.",
+    pullQuotes: [{ text: "Distance is a kind of attention.", afterParagraph: 3 }],
   },
   {
     id: "a7",

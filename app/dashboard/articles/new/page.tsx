@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { saveArticle, getMagazines, getCategories, getAuthors, getArticles } from "@/lib/api";
 import type { Category, Author } from "@/lib/store";
-import type { Magazine } from "@/lib/data";
+import type { Magazine, PullQuote } from "@/lib/data";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 
 const EMPTY = {
   id: "", magazineId: "", title: "", caption: "", category: "",
   author: "", avatar: "", date: "", readTime: "", hero: "",
-  paragraphsRaw: "", inlineImage: "", inlineImage2: "", bottomImage: "", pullQuote: "",
+  paragraphsRaw: "", inlineImage: "", inlineImage2: "", bottomImage: "",
 };
 
 type FE = Record<string, string>;
@@ -18,6 +18,7 @@ type FE = Record<string, string>;
 export default function NewArticlePage() {
   const router = useRouter();
   const [form, setForm] = useState(EMPTY);
+  const [pullQuotes, setPullQuotes] = useState<PullQuote[]>([]);
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
@@ -79,7 +80,7 @@ export default function NewArticlePage() {
         inlineImage: form.inlineImage || undefined,
         inlineImage2: form.inlineImage2 || undefined,
         bottomImage: form.bottomImage || undefined,
-        pullQuote: form.pullQuote || undefined,
+        pullQuotes: pullQuotes.filter(q => q.text.trim()),
       });
       router.push("/dashboard/articles");
     } catch (e: unknown) {
@@ -131,10 +132,49 @@ export default function NewArticlePage() {
                 {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
               </select>
             </Row>
-            <Row label="ഉദ്ധൃതി (Pull Quote)" hint="Optional">
-              <input value={form.pullQuote} onChange={set("pullQuote")} placeholder="ഒരു പ്രധാന ഉദ്ധൃതി..." lang="ml"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-blue-400 font-malayalam" />
-            </Row>
+            <div>
+              <label className="block text-[12px] font-medium text-gray-700 mb-1.5">
+                ഉദ്ധൃതി (Pull Quotes) <span className="text-gray-400 font-normal">— Optional, multiple allowed</span>
+              </label>
+              <div className="space-y-2">
+                {pullQuotes.map((q, idx) => (
+                  <div key={idx} className="flex gap-2 items-start border border-gray-200 rounded-lg p-3">
+                    <div className="flex-1 space-y-2">
+                      <textarea
+                        value={q.text}
+                        onChange={(e) => setPullQuotes(prev => prev.map((x, i) => i === idx ? { ...x, text: e.target.value } : x))}
+                        placeholder="ഉദ്ധൃതി ടെക്സ്റ്റ്..."
+                        rows={2}
+                        lang="ml"
+                        className="w-full px-2 py-1.5 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-400 font-malayalam resize-none"
+                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-gray-500 whitespace-nowrap">After paragraph</span>
+                        <input
+                          type="number"
+                          min={1}
+                          value={q.afterParagraph}
+                          onChange={(e) => setPullQuotes(prev => prev.map((x, i) => i === idx ? { ...x, afterParagraph: Math.max(1, Number(e.target.value)) } : x))}
+                          className="w-16 px-2 py-1 border border-gray-200 rounded text-[13px] outline-none focus:border-blue-400"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPullQuotes(prev => prev.filter((_, i) => i !== idx))}
+                      className="text-gray-300 hover:text-red-400 text-[16px] mt-0.5 flex-shrink-0"
+                    >✕</button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setPullQuotes(prev => [...prev, { text: "", afterParagraph: 3 }])}
+                  className="flex items-center gap-1.5 text-[12px] text-blue-500 hover:text-blue-700 font-medium"
+                >
+                  <span className="text-[16px] leading-none">+</span> Add Pull Quote
+                </button>
+              </div>
+            </div>
             <Row label="ഖണ്ഡികകൾ (Paragraphs)" hint="Separate paragraphs with a blank line">
               <textarea value={form.paragraphsRaw} onChange={set("paragraphsRaw")}
                 placeholder={"ആദ്യ ഖണ്ഡിക...\n\nരണ്ടാം ഖണ്ഡിക..."} rows={10} lang="ml"
