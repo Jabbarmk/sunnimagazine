@@ -57,7 +57,9 @@ export default function NewsPage() {
         )}
 
         {loading ? (
-          <div className="px-5 space-y-0 pb-6">
+          <div className="pb-6">
+            <div className="loading-bar w-full mb-4" />
+            <div className="px-5 space-y-0">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex gap-3 py-3.5 border-b border-line">
                 <div className="w-20 h-16 rounded-xl skeleton-shimmer flex-shrink-0" />
@@ -69,6 +71,7 @@ export default function NewsPage() {
                 </div>
               </div>
             ))}
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex items-center justify-center py-20">

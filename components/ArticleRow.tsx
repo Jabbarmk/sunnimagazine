@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Article } from "@/lib/data";
 import { ChevronRight, Bookmark, ImageIcon } from "./Icons";
+import ImgWithFallback from "./ImgWithFallback";
 import { useBookmarks } from "@/lib/bookmarks";
 import { hasMalayalam } from "@/lib/text";
 import clsx from "clsx";
@@ -25,10 +26,7 @@ export default function ArticleRow({
       className="flex items-center gap-3 px-5 py-3 active:bg-line/40"
     >
       <div className="relative w-[72px] h-[72px] rounded-xl overflow-hidden flex-shrink-0 shadow-card bg-surface flex items-center justify-center text-muted">
-        {article.hero
-          ? <img src={article.hero} alt="" className="w-full h-full object-cover" />
-          : <ImageIcon size={24} />
-        }
+        <ImgWithFallback src={article.hero} className="w-full h-full object-cover" fallback={<ImageIcon size={24} />} />
       </div>
       <div className="flex-1 min-w-0">
         <div

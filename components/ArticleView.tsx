@@ -8,6 +8,7 @@ import { hasMalayalam } from "@/lib/text";
 import { getArticle, getArticles, getGallery } from "@/lib/api";
 import { useBookmarks } from "@/lib/bookmarks";
 import { Bookmark, User, ImageIcon } from "@/components/Icons";
+import ImgWithFallback from "@/components/ImgWithFallback";
 import type { GalleryImage } from "@/lib/store";
 import type { Article } from "@/lib/data";
 
@@ -40,6 +41,44 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
     }
   }, [scrollToPara, article]);
 
+  const [loadingArticle, setLoadingArticle] = useState(true);
+
+  useEffect(() => {
+    if (id) setLoadingArticle(true);
+  }, [id]);
+
+  useEffect(() => {
+    if (article || id === "") setLoadingArticle(false);
+  }, [article, id]);
+
+  if (loadingArticle && !article) {
+    return (
+      <>
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
+          <div className="loading-bar w-full" />
+          <div className="w-full h-[320px] skeleton-shimmer" />
+          <div className="px-5 pt-5 pb-2 space-y-3">
+            <div className="h-3 w-20 rounded skeleton-shimmer" />
+            <div className="h-7 rounded skeleton-shimmer w-full" />
+            <div className="h-7 rounded skeleton-shimmer w-4/5" />
+            <div className="h-px bg-gold/20 my-4" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full skeleton-shimmer flex-shrink-0" />
+              <div className="space-y-1.5 flex-1">
+                <div className="h-3 w-28 rounded skeleton-shimmer" />
+                <div className="h-2.5 w-36 rounded skeleton-shimmer" />
+              </div>
+            </div>
+          </div>
+          <div className="px-5 pt-4 space-y-2">
+            {[1,2,3,4,5,6].map(i => <div key={i} className="h-3 rounded skeleton-shimmer" style={{ width: `${75 + (i % 4) * 6}%` }} />)}
+          </div>
+        </div>
+        <BottomNav />
+      </>
+    );
+  }
+
   if (!article) {
     return (
       <>
@@ -54,10 +93,8 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
       <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
         <div className="relative">
           <ArticleBar articleId={article.id} />
-          {article.hero
-            ? <img src={article.hero} alt={article.title} className="w-full h-[320px] object-cover" />
-            : <div className="w-full h-[320px] bg-surface flex items-center justify-center text-muted"><ImageIcon size={40} /></div>
-          }
+          <ImgWithFallback src={article.hero} alt={article.title} className="w-full h-[320px] object-cover"
+            fallback={<div className="w-full h-[320px] bg-surface flex items-center justify-center text-muted"><ImageIcon size={40} /></div>} />
           <div className="absolute bottom-3 left-5">
             <span className={hasMalayalam(article.category)
               ? "inline-block font-malayalam font-semibold text-[11px] bg-gold text-white px-2.5 py-1 rounded-full"
@@ -76,10 +113,8 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
           <p className="text-[15px] text-muted italic mt-3 leading-snug">{article.caption}</p>
           <div className="h-px bg-gold/50 my-5" />
           <div className="flex items-center gap-3">
-            {article.avatar
-              ? <img src={article.avatar} alt={article.author} className="w-10 h-10 rounded-full object-cover" />
-              : <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-muted flex-shrink-0"><User size={18} /></div>
-            }
+            <ImgWithFallback src={article.avatar} alt={article.author} className="w-10 h-10 rounded-full object-cover"
+              fallback={<div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-muted flex-shrink-0"><User size={18} /></div>} />
             <div className="flex-1">
               <div className="text-[13px] font-medium text-ink">{article.author}</div>
               <div className="text-[11px] text-muted">{article.date} · {article.readTime}</div>
@@ -174,10 +209,8 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
               {related.map((r) => (
                 <Link key={r.id} href={`/article?id=${r.id}`} className="flex-shrink-0 w-[200px]">
                   <div className="rounded-xl overflow-hidden shadow-card">
-                    {r.hero
-                      ? <img src={r.hero} className="w-full h-[120px] object-cover" alt="" />
-                      : <div className="w-full h-[120px] bg-surface flex items-center justify-center text-muted"><ImageIcon size={28} /></div>
-                    }
+                    <ImgWithFallback src={r.hero} className="w-full h-[120px] object-cover"
+                      fallback={<div className="w-full h-[120px] bg-surface flex items-center justify-center text-muted"><ImageIcon size={28} /></div>} />
                   </div>
                   <div className="mt-2">
                     <div className="text-[8px] tracking-[0.22em] text-gold">{r.category}</div>

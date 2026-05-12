@@ -51,6 +51,17 @@ export async function getVideoCategoriesDB(): Promise<VideoCategory[]> {
   return rows as any[];
 }
 
+export async function getEventDB(id: string): Promise<EventItem | null> {
+  try {
+    const [rows] = await db.query("SELECT * FROM events WHERE id=?", [id]);
+    const r = (rows as any[])[0];
+    if (!r) return null;
+    return { id: r.id, title: r.title, description: r.description, poster: r.poster, eventDate: r.event_date };
+  } catch {
+    return null;
+  }
+}
+
 export async function getArtsDB(): Promise<Art[]> {
   const [rows] = await db.query("SELECT * FROM arts ORDER BY created_at DESC");
   return (rows as any[]).map((r) => ({

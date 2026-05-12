@@ -6,6 +6,7 @@ import { getArtCategories, getEmailSettings, saveUserWriting } from "@/lib/api";
 import { sendWritingEmails } from "@/lib/email";
 import type { Art, ArtCategory, UserWriting } from "@/lib/store";
 import { ChevronLeft, X, User } from "@/components/Icons";
+import ImgWithFallback from "@/components/ImgWithFallback";
 
 function ArtCard({ art }: { art: Art }) {
   return (
@@ -25,12 +26,9 @@ function ArtCard({ art }: { art: Art }) {
       )}
       {art.authorName && (
         <div className="flex items-center gap-2.5 px-4 pt-3">
-          {art.authorAvatar ? (
-            <img src={art.authorAvatar} alt={art.authorName}
-              className="w-7 h-7 rounded-full object-cover border border-line flex-shrink-0" />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-surface flex items-center justify-center text-muted flex-shrink-0"><User size={14} /></div>
-          )}
+          <ImgWithFallback src={art.authorAvatar} alt={art.authorName}
+            className="w-7 h-7 rounded-full object-cover border border-line flex-shrink-0"
+            fallback={<div className="w-7 h-7 rounded-full bg-surface flex items-center justify-center text-muted flex-shrink-0"><User size={14} /></div>} />
           <span className="text-[11px] text-muted">{art.authorName}</span>
         </div>
       )}

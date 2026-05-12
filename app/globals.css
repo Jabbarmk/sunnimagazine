@@ -62,7 +62,20 @@ body {
   100% { background-position: 400px 0; }
 }
 .skeleton-shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #ede9e0 25%, #dfd9cc 50%, #ede9e0 75%);
   background-size: 800px 100%;
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes loading-bar-fill {
+  0%   { width: 0%; opacity: 1; }
+  70%  { width: 80%; opacity: 1; }
+  90%  { width: 95%; opacity: 1; }
+  100% { width: 100%; opacity: 0; }
+}
+.loading-bar {
+  height: 2px;
+  background: linear-gradient(90deg, #B08A3A, #D4AF6A, #B08A3A);
+  animation: loading-bar-fill 2.5s ease-out forwards;
+  flex-shrink: 0;
 }
