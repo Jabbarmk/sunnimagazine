@@ -62,6 +62,11 @@ export async function getEventDB(id: string): Promise<EventItem | null> {
   }
 }
 
+export async function getNewsCategoriesDB(): Promise<{ id: string; name: string }[]> {
+  const [rows] = await db.query("SELECT * FROM news_categories ORDER BY name");
+  return rows as any[];
+}
+
 export async function getArtsDB(): Promise<Art[]> {
   const [rows] = await db.query("SELECT * FROM arts ORDER BY created_at DESC");
   return (rows as any[]).map((r) => ({

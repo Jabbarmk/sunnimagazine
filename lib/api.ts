@@ -3,7 +3,7 @@
 const base = typeof window !== "undefined" ? "" : (process.env.NEXT_PUBLIC_API_URL || "");
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${base}/api${path}`, { cache: "no-store" });
+  const res = await fetch(`${base}/api${path}`, { next: { revalidate: 120 } });
   if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`);
   return res.json();
 }
