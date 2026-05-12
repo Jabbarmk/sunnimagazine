@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { Home, Film, Book, Bookmark, User } from "./Icons";
+import { Home, Film, Book, Bookmark, Newspaper } from "./Icons";
 
 const tabs = [
   { href: "/", label: "Home", icon: Home, match: (p: string) => p === "/" },
   { href: "/videos", label: "Videos", icon: Film, match: (p: string) => p.startsWith("/videos") },
   { href: "/archive", label: "Magazine", icon: Book, match: (p: string) => p.startsWith("/archive") || p.startsWith("/magazine") },
   { href: "/bookmarks", label: "Saved", icon: Bookmark, match: (p: string) => p.startsWith("/bookmarks") },
-  { href: "/profile", label: "Profile", icon: User, match: (p: string) => p.startsWith("/profile") },
+  { href: "/news", label: "News", icon: Newspaper, match: (p: string) => p.startsWith("/news") },
 ];
 
 export default function BottomNav() {

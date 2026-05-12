@@ -123,6 +123,14 @@ export const Star = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
   </svg>
 );
 
+export const Newspaper = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 4h16v16H4z" rx="2" />
+    <path d="M4 4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4z" />
+    <path d="M8 9h8M8 13h5M8 17h3" />
+  </svg>
+);
+
 export const ImageIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <rect x="3" y="3" width="18" height="18" rx="2" />
