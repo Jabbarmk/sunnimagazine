@@ -2,6 +2,9 @@
   "permissions": {
     "allow": [
       "PowerShell(git -C \"d:\\\\Projects\\\\sunnimagazine\" ls-files)"
+    ],
+    "additionalDirectories": [
+      "c:\\xampp\\htdocs\\smatex2\\app\\views\\offerletters"
     ]
   }
 }
