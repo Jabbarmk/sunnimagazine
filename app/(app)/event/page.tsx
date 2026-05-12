@@ -6,7 +6,6 @@ import { getEvent } from "@/lib/api";
 import type { EventItem } from "@/lib/store";
 import BottomNav from "@/components/BottomNav";
 import { ChevronLeft } from "@/components/Icons";
-import { isAuthenticated } from "@/lib/auth";
 
 function EventDetail() {
   const router = useRouter();
@@ -94,16 +93,6 @@ function EventDetail() {
 }
 
 export default function EventPage() {
-  const router = useRouter();
-  const [authed, setAuthed] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated()) router.replace("/login");
-    else setAuthed(true);
-  }, [router]);
-
-  if (!authed) return null;
-
   return (
     <Suspense fallback={
       <>
