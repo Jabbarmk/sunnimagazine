@@ -27,7 +27,7 @@ export default function MagazineView({ id }: { id: string }) {
   if (loading) {
     return (
       <>
-        <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
           <div className="flex items-center gap-3 px-4 py-3 border-b border-line">
             <div className="w-5 h-4 rounded skeleton-shimmer" />
             <div className="h-4 w-36 rounded skeleton-shimmer" />
@@ -67,7 +67,7 @@ export default function MagazineView({ id }: { id: string }) {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
         <BackBar title={magazine.title} subtitle={`${magazine.month} ${magazine.year}`} />
         <div className="relative mt-1">
           <img src={magazine.cover} alt={magazine.title} className="w-full h-[100px] object-cover" />

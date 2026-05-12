@@ -51,7 +51,7 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg">
+      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
         <div className="relative">
           <ArticleBar articleId={article.id} />
           <img src={article.hero} alt={article.title} className="w-full h-[320px] object-cover" />

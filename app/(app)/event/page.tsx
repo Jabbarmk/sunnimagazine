@@ -26,7 +26,7 @@ function EventDetail() {
   if (loading) {
     return (
       <>
-        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg">
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
           <div className="flex items-center gap-3 px-5 pt-5 pb-3">
             <div className="w-9 h-9 rounded-xl skeleton-shimmer flex-shrink-0" />
             <div className="h-5 w-48 rounded skeleton-shimmer" />

@@ -230,7 +230,7 @@ export default function ArtPageClient({ arts, magazineTitle }: { arts: Art[]; ma
           <p className="text-[13px] text-muted">No art items for this issue.</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 pb-16 md:pb-4 space-y-4">
           {arts.map((art) => <ArtCard key={art.id} art={art} />)}
         </div>
       )}
