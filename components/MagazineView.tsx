@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { BackBar } from "@/components/TopBar";
 import { Book } from "@/components/Icons";
 import ImgWithFallback from "@/components/ImgWithFallback";
@@ -29,7 +30,7 @@ export default function MagazineView({ id }: { id: string }) {
   if (loading) {
     return (
       <>
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-[94px] md:pb-[30px]">
           <div className="loading-bar w-full" />
           <div className="flex items-center gap-3 px-4 py-3 border-b border-line">
             <div className="w-5 h-4 rounded skeleton-shimmer" />
@@ -70,7 +71,7 @@ export default function MagazineView({ id }: { id: string }) {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-[94px] md:pb-[30px]">
         <BackBar title={magazine.title} subtitle={`${magazine.month} ${magazine.year}`} />
         <div className="relative mt-1">
           <ImgWithFallback src={magazine.cover} alt={magazine.title} className="w-full h-[100px] object-cover"
@@ -93,6 +94,13 @@ export default function MagazineView({ id }: { id: string }) {
               <ArticleRow article={a} />
             </div>
           ))}
+        </div>
+        <div className="px-5 pt-4 pb-6">
+          <Link href={`/art?magazineId=${magazine.id}`}>
+            <button className="w-full py-3.5 rounded-2xl border-2 border-gold text-gold font-semibold text-[15px] tracking-wide hover:bg-gold hover:text-white transition-colors">
+              ചിത്ര കല
+            </button>
+          </Link>
         </div>
       </div>
       <BottomNav />

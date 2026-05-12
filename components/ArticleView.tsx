@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArticleBar } from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
 import { hasMalayalam } from "@/lib/text";
+import { renderInline } from "@/lib/renderInline";
 import { getArticle, getArticles, getGallery } from "@/lib/api";
 import { useBookmarks } from "@/lib/bookmarks";
 import { Bookmark, User, ImageIcon } from "@/components/Icons";
@@ -54,7 +55,7 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
   if (loadingArticle && !article) {
     return (
       <>
-        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-[94px] md:pb-[30px]">
           <div className="loading-bar w-full" />
           <div className="w-full h-[320px] skeleton-shimmer" />
           <div className="px-5 pt-5 pb-2 space-y-3">
@@ -90,7 +91,7 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
+      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-[94px] md:pb-[30px]">
         <div className="relative">
           <ArticleBar articleId={article.id} />
           <ImgWithFallback src={article.hero} alt={article.title} className="w-full h-[320px] object-cover"
@@ -131,7 +132,7 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
                   className={hasMalayalam(p) ? "font-malayalam mb-5 leading-[1.9] pr-6" : "font-body mb-5 pr-6"}
                   style={bookmarked ? { borderLeft: "2px solid #B08A3A", paddingLeft: "10px" } : {}}
                 >
-                  {p}
+                  {renderInline(p)}
                 </p>
                 <button
                   onClick={() => togglePara(article.id, article.title, i, p)}

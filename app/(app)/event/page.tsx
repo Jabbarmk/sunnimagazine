@@ -27,7 +27,7 @@ export default async function EventPage({ searchParams }: { searchParams: { id?:
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
+      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-[94px] md:pb-[30px]">
         <div className="flex items-center gap-3 px-5 pt-5 pb-3 flex-shrink-0">
           <BackButton />
           {event.title && (

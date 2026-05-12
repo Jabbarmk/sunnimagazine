@@ -10,7 +10,7 @@ export default async function ArchivePage() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-[94px] md:pb-[30px]">
         <BackBar title="The Magazine" subtitle="Every issue, in one place" />
         <ArchiveClient magazines={magazines} />
       </div>

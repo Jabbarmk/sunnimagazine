@@ -32,7 +32,7 @@ export default function NewsPage() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
+      <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-[94px] md:pb-[30px]">
         <LogoBar />
 
         <div className="px-5 mt-4 mb-4">

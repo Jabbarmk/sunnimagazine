@@ -6,6 +6,7 @@ import { getArticle, saveArticle, getMagazines, getCategories, getAuthors } from
 import type { Category, Author } from "@/lib/store";
 import type { Magazine, PullQuote } from "@/lib/data";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
+import ParagraphEditor from "@/components/ParagraphEditor";
 
 function EditArticleForm() {
   const router = useRouter();
@@ -172,13 +173,7 @@ function EditArticleForm() {
               </div>
             </div>
             <Row label="ഖണ്ഡികകൾ (Paragraphs)" hint="Separate paragraphs with a blank line">
-              <textarea
-                value={form.paragraphsRaw}
-                onChange={set("paragraphsRaw")}
-                rows={10}
-                lang="ml"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-blue-400 resize-y font-malayalam leading-[1.9]"
-              />
+              <ParagraphEditor value={form.paragraphsRaw} onChange={(v) => setForm((f) => f ? { ...f, paragraphsRaw: v } : f)} />
             </Row>
           </div>
         </div>

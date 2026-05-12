@@ -54,7 +54,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <>
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
+        <div className="flex-1 overflow-y-auto no-scrollbar pb-[94px] md:pb-[30px]">
           <LogoBar />
           <div className="flex flex-col items-center mt-10 px-5">
             <div className="w-20 h-20 rounded-full bg-surface shadow-card flex items-center justify-center text-[32px] text-muted mb-4">
@@ -82,7 +82,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-[94px] md:pb-[30px]">
         <LogoBar />
 
         {/* Avatar + name */}

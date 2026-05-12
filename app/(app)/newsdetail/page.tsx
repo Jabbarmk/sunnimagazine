@@ -35,7 +35,7 @@ function NewsDetailInner() {
   if (!item) {
     return (
       <>
-        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-[94px] md:pb-[30px]">
           <div className="w-full h-[280px] skeleton-shimmer" />
           <div className="px-5 pt-5 space-y-3">
             <div className="h-7 rounded skeleton-shimmer w-5/6" />
@@ -145,7 +145,7 @@ function AuthGuardedDetail() {
   return (
     <Suspense fallback={
       <>
-        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
+        <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-[94px] md:pb-[30px]">
           <div className="w-full h-[280px] skeleton-shimmer" />
           <div className="px-5 pt-5 space-y-3">
             <div className="h-7 rounded skeleton-shimmer w-5/6" />

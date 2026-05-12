@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getArtCategories, getEmailSettings, saveUserWriting } from "@/lib/api";
 import { sendWritingEmails } from "@/lib/email";
 import type { Art, ArtCategory, UserWriting } from "@/lib/store";
+import Link from "next/link";
 import { ChevronLeft, X, User } from "@/components/Icons";
 import ImgWithFallback from "@/components/ImgWithFallback";
 
@@ -58,6 +59,22 @@ function compressImage(dataUrl: string): Promise<string> {
     img.src = dataUrl;
   });
 }
+
+function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-[13px] font-semibold text-ink">
+        {label}
+        {hint && <span className="text-muted font-normal ml-1">({hint})</span>}
+      </label>
+      {children}
+      {error && <p className="text-[12px] text-red-500 mt-1">{error}</p>}
+    </div>
+  );
+}
+
+const baseInput = "w-full px-4 py-3 rounded-xl text-[14px] text-ink bg-bg border outline-none transition-colors placeholder:text-muted/60";
+const fieldCls = (err?: string) => `${baseInput} ${err ? "border-red-400 focus:border-red-400" : "border-line focus:border-gold"}`;
 
 function SendWritingsModal({ onClose }: { onClose: () => void }) {
   const [artCats, setArtCats] = useState<ArtCategory[]>([]);
@@ -120,84 +137,128 @@ function SendWritingsModal({ onClose }: { onClose: () => void }) {
       const emailSettings = await getEmailSettings();
       await sendWritingEmails(emailSettings, writing);
     } catch {
-      // email failed but submission saved — still show success
+      // email failed but submission saved
     }
     setSending(false);
     setSent(true);
   };
 
-  const inp = (k: string) =>
-    `w-full px-3 py-2 border rounded-xl text-[13px] bg-bg outline-none text-ink ${errors[k] ? "border-accent" : "border-line focus:border-gold"}`;
-
   if (sent) {
     return (
-      <div className="absolute inset-0 z-50 bg-bg flex flex-col items-center justify-center px-6">
-        <div className="w-14 h-14 rounded-full bg-gold/15 flex items-center justify-center mb-3 text-[28px]">✓</div>
-        <h2 className="font-serif text-[20px] text-ink mb-1.5">Submitted!</h2>
-        <p className="text-[13px] text-muted text-center mb-5">Your writing has been received. We'll review it and get back to you.</p>
-        <button onClick={onClose} className="px-8 py-2.5 bg-ink text-bg rounded-2xl text-[13px] font-medium">Done</button>
+      <div className="absolute inset-0 z-50 bg-bg flex flex-col items-center justify-center px-8">
+        <div className="w-16 h-16 rounded-full bg-gold/15 flex items-center justify-center mb-4">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B08A3A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <h2 className="font-serif text-[24px] text-ink mb-2">Submitted!</h2>
+        <p className="text-[14px] text-muted text-center leading-relaxed mb-8">
+          Your writing has been received. We'll review it and get back to you.
+        </p>
+        <button onClick={onClose} className="px-10 py-3.5 bg-ink text-bg rounded-2xl text-[14px] font-semibold tracking-wide">
+          Done
+        </button>
       </div>
     );
   }
 
   return (
     <div className="absolute inset-0 z-50 bg-bg flex flex-col">
-      <div className="flex items-center justify-between px-4 pt-4 pb-2 flex-shrink-0 border-b border-line">
-        <div className="font-serif text-[17px] text-ink">Send Your Writing</div>
-        <button onClick={onClose}
-          className="w-8 h-8 rounded-xl bg-surface shadow-card flex items-center justify-center text-ink">
+      {/* Header */}
+      <div className="flex items-start justify-between px-5 pt-5 pb-4 flex-shrink-0">
+        <div>
+          <h2 className="font-serif text-[22px] text-ink leading-tight">Send Your Writing</h2>
+          <p className="text-[12px] text-muted mt-1">Share your piece with our editors</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-9 h-9 rounded-xl bg-surface shadow-card flex items-center justify-center text-ink flex-shrink-0 mt-0.5"
+        >
           <X size={16} />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3 space-y-3">
-        <div>
-          <label className="block text-[10px] font-semibold text-muted mb-1 uppercase tracking-wider">Name *</label>
-          <input value={form.name} onChange={set("name")} placeholder="Your full name" className={inp("name")} />
-          {errors.name && <p className="text-[10px] text-accent mt-0.5">{errors.name}</p>}
+      <div className="h-px bg-line flex-shrink-0" />
+
+      {/* Fields */}
+      <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Name" error={errors.name}>
+            <input
+              value={form.name}
+              onChange={set("name")}
+              placeholder="Full name"
+              className={fieldCls(errors.name)}
+            />
+          </Field>
+          <Field label="Email" error={errors.email}>
+            <input
+              value={form.email}
+              onChange={set("email")}
+              type="email"
+              placeholder="your@email.com"
+              className={fieldCls(errors.email)}
+            />
+          </Field>
         </div>
-        <div>
-          <label className="block text-[10px] font-semibold text-muted mb-1 uppercase tracking-wider">Email *</label>
-          <input value={form.email} onChange={set("email")} type="email" placeholder="your@email.com" className={inp("email")} />
-          {errors.email && <p className="text-[10px] text-accent mt-0.5">{errors.email}</p>}
-        </div>
-        <div>
-          <label className="block text-[10px] font-semibold text-muted mb-1 uppercase tracking-wider">Category *</label>
-          <select value={form.artCategoryId} onChange={set("artCategoryId")} className={inp("artCategoryId")}>
-            <option value="">Select category</option>
+
+        <Field label="Category" error={errors.artCategoryId}>
+          <select
+            value={form.artCategoryId}
+            onChange={set("artCategoryId")}
+            className={`${fieldCls(errors.artCategoryId)} bg-bg`}
+          >
+            <option value="">Select a category…</option>
             {artCats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          {errors.artCategoryId && <p className="text-[10px] text-accent mt-0.5">{errors.artCategoryId}</p>}
-        </div>
-        <div>
-          <label className="block text-[10px] font-semibold text-muted mb-1 uppercase tracking-wider">Your Writing *</label>
-          <textarea value={form.description} onChange={set("description")} placeholder="Write your piece here…"
-            rows={4} className={`${inp("description")} resize-none`} />
-          {errors.description && <p className="text-[10px] text-accent mt-0.5">{errors.description}</p>}
-        </div>
-        <div>
-          <label className="block text-[10px] font-semibold text-muted mb-1 uppercase tracking-wider">Image (optional)</label>
+        </Field>
+
+        <Field label="Your Writing" error={errors.description}>
+          <textarea
+            value={form.description}
+            onChange={set("description")}
+            placeholder="Write your piece here…"
+            rows={6}
+            lang="ml"
+            className={`${fieldCls(errors.description)} resize-none leading-relaxed`}
+          />
+        </Field>
+
+        <Field label="Image" hint="optional">
           {form.image ? (
             <div className="relative rounded-xl overflow-hidden">
               <img src={form.image} alt="" className="w-full aspect-[16/7] object-cover block" />
-              <button onClick={() => setForm((f) => ({ ...f, image: "" }))}
-                className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center">
-                <X size={12} />
+              <button
+                onClick={() => setForm((f) => ({ ...f, image: "" }))}
+                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center"
+              >
+                <X size={13} />
               </button>
             </div>
           ) : (
-            <label className="flex items-center justify-center px-4 py-2.5 border border-dashed border-line rounded-xl cursor-pointer">
-              <span className="text-[12px] text-muted">+ Choose image</span>
+            <label className="flex flex-col items-center justify-center gap-1.5 py-6 border border-dashed border-line rounded-xl cursor-pointer hover:border-gold/50 transition-colors">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted">
+                <rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              <span className="text-[13px] text-muted">Tap to choose image</span>
               <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
             </label>
           )}
-        </div>
-        {emailError && <p className="text-[11px] text-accent bg-accent/10 px-3 py-1.5 rounded-xl">{emailError}</p>}
-      </div>
-      <div className="px-4 pt-3 pb-20 md:pb-4 flex-shrink-0 border-t border-line">
-        <button onClick={handleSubmit} disabled={sending}
-          className="w-full py-3 rounded-2xl bg-ink text-bg font-medium text-[14px] disabled:opacity-60">
-          {sending ? "Sending…" : "Send"}
+        </Field>
+
+        <button
+          onClick={handleSubmit}
+          disabled={sending}
+          className="w-full py-4 rounded-2xl bg-gold text-white font-semibold text-[15px] tracking-wide disabled:opacity-60 transition-opacity"
+        >
+          {sending ? "Sending…" : "Submit Writing"}
         </button>
+
+        {emailError && (
+          <p className="text-[13px] text-red-500 bg-red-50 px-4 py-3 rounded-xl border border-red-100">
+            {emailError}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -209,6 +270,7 @@ export default function ArtPageClient({ arts, magazineTitle }: { arts: Art[]; ma
 
   return (
     <div className="flex flex-col min-h-full">
+      {/* Header */}
       <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
         <button
           onClick={() => router.back()}
@@ -217,29 +279,31 @@ export default function ArtPageClient({ arts, magazineTitle }: { arts: Art[]; ma
           <ChevronLeft size={18} />
         </button>
         <div className="text-center">
-          <div className="font-serif text-[18px] leading-none text-ink">Art</div>
+          <div className="font-serif text-[18px] leading-none text-ink">ചിത്ര കല</div>
           {magazineTitle && <div className="text-[11px] text-gold mt-0.5">{magazineTitle}</div>}
         </div>
         <div className="w-9 h-9" />
       </div>
 
-      {arts.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-[13px] text-muted">No art items for this issue.</p>
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto px-4 pb-16 md:pb-4 space-y-4">
-          {arts.map((art) => <ArtCard key={art.id} art={art} />)}
-        </div>
-      )}
-
-      <div className="px-4 py-3 flex-shrink-0">
+      <div className="flex-1 overflow-y-auto px-4 pb-[94px] md:pb-[30px] space-y-4">
+        {arts.length === 0 ? (
+          <div className="flex items-center justify-center py-20">
+            <p className="text-[13px] text-muted">No art items for this issue.</p>
+          </div>
+        ) : (
+          arts.map((art) => <ArtCard key={art.id} art={art} />)
+        )}
         <button
           onClick={() => setShowModal(true)}
-          className="w-full py-3 rounded-2xl bg-gold/15 border border-gold/30 text-gold font-medium text-[14px] tracking-wide"
+          className="w-full py-4 rounded-2xl bg-gold text-white font-semibold text-[15px] tracking-wide hover:bg-gold/90 transition-colors"
         >
           Send Your Writings
         </button>
+        <Link href="/">
+          <button className="w-full py-3.5 rounded-2xl border-2 border-gold text-gold font-semibold text-[15px] tracking-wide hover:bg-gold hover:text-white transition-colors">
+            More Topics
+          </button>
+        </Link>
       </div>
 
       {showModal && <SendWritingsModal onClose={() => setShowModal(false)} />}

@@ -18,7 +18,7 @@ export default function BookmarksPage() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-0">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-[94px] md:pb-[30px]">
         <LogoBar />
         <div className="px-5 mt-4 mb-4">
           <h1 className="font-serif text-[26px] text-ink leading-none">Bookmarks</h1>
