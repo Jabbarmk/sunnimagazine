@@ -91,7 +91,9 @@ export default async function Home() {
                   <div className="flex gap-3 items-start py-3 border-b border-line last:border-0">
                     {item.image ? (
                       <img src={item.image} alt={item.title} className="w-20 h-16 object-cover rounded-xl flex-shrink-0" />
-                    ) : null}
+                    ) : (
+                      <div className="w-20 h-16 bg-surface rounded-xl flex-shrink-0 flex items-center justify-center text-muted text-[22px]">📰</div>
+                    )}
                     <div className="flex-1 min-w-0">
                       {item.categoryName && (
                         <span className="text-[9px] tracking-[0.2em] uppercase text-gold font-medium">{item.categoryName}</span>
