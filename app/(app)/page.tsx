@@ -1,10 +1,8 @@
-"use client";
+export const revalidate = 60;
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMagazines, getNews, getEvents, getTicker } from "@/lib/api";
+import { getMagazinesDB, getNewsDB, getEventsDB, getTickerDB } from "@/lib/queries";
 import type { Magazine } from "@/lib/data";
-import type { NewsItem, EventItem } from "@/lib/store";
 import { LogoBar } from "@/components/TopBar";
 import SectionHeader from "@/components/SectionHeader";
 import { HeroCover, SmallCover } from "@/components/MagazineCover";
@@ -52,57 +50,15 @@ function TickerBar({ text, isEnabled }: { text: string; isEnabled: boolean }) {
   );
 }
 
-export default function Home() {
-  const [magazines, setMagazines] = useState<Magazine[]>([]);
-  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [ticker, setTicker] = useState<{ text: string; isEnabled: boolean }>({ text: "", isEnabled: false });
-  const [loading, setLoading] = useState(true);
+export default async function Home() {
+  const [mags, newsItems, events, ticker] = await Promise.all([
+    getMagazinesDB(), getNewsDB(), getEventsDB(), getTickerDB(),
+  ]);
 
-  useEffect(() => {
-    Promise.all([getMagazines(), getNews(), getEvents(), getTicker()])
-      .then(([mags, news, evts, tick]) => {
-        setMagazines(sortByDate(mags));
-        setNewsItems(news.slice(0, 5));
-        setEvents(evts);
-        setTicker(tick);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
+  const magazines = sortByDate(mags);
   const latest = magazines[0];
   const older = magazines.slice(1, 5);
-
-  if (loading) {
-    return (
-      <>
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-16 md:pb-4">
-          <LogoBar />
-          <div className="px-5 mt-3">
-            <div className="w-full h-[300px] rounded-2xl skeleton-shimmer" />
-          </div>
-          <div className="px-5 mt-5 grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-[180px] rounded-2xl skeleton-shimmer" />
-            ))}
-          </div>
-          <div className="px-5 mt-6 space-y-0">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-3 py-3.5 border-b border-line">
-                <div className="w-20 h-16 rounded-xl skeleton-shimmer flex-shrink-0" />
-                <div className="flex-1 space-y-2 pt-1">
-                  <div className="h-2.5 rounded skeleton-shimmer w-16" />
-                  <div className="h-3 rounded skeleton-shimmer w-full" />
-                  <div className="h-3 rounded skeleton-shimmer w-3/4" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <BottomNav />
-      </>
-    );
-  }
+  const news = newsItems.slice(0, 5);
 
   return (
     <>
@@ -126,12 +82,11 @@ export default function Home() {
             </div>
           </>
         )}
-        {/* News & Blogs */}
-        {newsItems.length > 0 && (
+        {news.length > 0 && (
           <div className="mt-6 mb-2">
             <SectionHeader title="News & Blogs" href="/news" actionLabel="View All" />
             <div className="px-5 space-y-0">
-              {newsItems.map((item) => (
+              {news.map((item) => (
                 <Link key={item.id} href={`/newsdetail?id=${item.id}`}>
                   <div className="flex gap-3 items-start py-3 border-b border-line last:border-0">
                     {item.image ? (
@@ -153,7 +108,6 @@ export default function Home() {
             </div>
           </div>
         )}
-        {/* Events slider */}
         {events.length > 0 && (
           <div className="mt-6 mb-4">
             <SectionHeader title="Upcoming Events" />
