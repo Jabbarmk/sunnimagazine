@@ -8,7 +8,8 @@ import { isAuthenticated } from "@/lib/auth";
 
 function ArticleInner() {
   const params = useSearchParams();
-  return <ArticleView id={params.get("id") ?? ""} />;
+  const para = params.get("para");
+  return <ArticleView id={params.get("id") ?? ""} scrollToPara={para !== null ? Number(para) : undefined} />;
 }
 
 export default function ArticlePage() {

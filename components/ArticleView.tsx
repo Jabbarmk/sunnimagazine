@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArticleBar } from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
 import { hasMalayalam } from "@/lib/text";
 import { getArticle, getArticles, getGallery } from "@/lib/api";
+import { useBookmarks } from "@/lib/bookmarks";
+import { Bookmark } from "@/components/Icons";
 import type { GalleryImage } from "@/lib/store";
 import type { Article } from "@/lib/data";
 
-export default function ArticleView({ id }: { id: string }) {
+export default function ArticleView({ id, scrollToPara }: { id: string; scrollToPara?: number }) {
   const [article, setArticle] = useState<Article | null>(null);
+  const { hasPara, togglePara } = useBookmarks();
+  const paraRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [related, setRelated] = useState<Article[]>([]);
   const [gallery, setGallery] = useState<GalleryImage[]>([]);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -27,6 +31,14 @@ export default function ArticleView({ id }: { id: string }) {
       setGalleryIndex(0);
     }).catch(() => {});
   }, [id]);
+
+  useEffect(() => {
+    if (scrollToPara !== undefined && article && paraRefs.current[scrollToPara]) {
+      setTimeout(() => {
+        paraRefs.current[scrollToPara]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+  }, [scrollToPara, article]);
 
   if (!article) {
     return (
@@ -70,26 +82,42 @@ export default function ArticleView({ id }: { id: string }) {
         </div>
 
         <article className="px-5 pt-6 pb-8 text-[15.5px] leading-[1.8] text-[#2a2a2d]">
-          {article.paragraphs.map((p, i) => (
-            <div key={i}>
-              <p className={hasMalayalam(p) ? "font-malayalam mb-5 leading-[1.9]" : "font-body mb-5"}>{p}</p>
-              {i === 1 && article.inlineImage && (
-                <figure className="-mx-1 my-6">
-                  <img src={article.inlineImage} alt="" className="w-full h-[220px] object-cover rounded-xl" />
-                </figure>
-              )}
-              {i === 3 && article.inlineImage2 && (
-                <figure className="-mx-1 my-6">
-                  <img src={article.inlineImage2} alt="" className="w-full h-[220px] object-cover rounded-xl" />
-                </figure>
-              )}
-              {i === 2 && article.pullQuote && (
-                <blockquote className="border-l-[3px] border-gold pl-4 my-6 font-serif text-[19px] italic text-ink leading-snug">
-                  "{article.pullQuote}"
-                </blockquote>
-              )}
-            </div>
-          ))}
+          {article.paragraphs.map((p, i) => {
+            const bookmarked = hasPara(article.id, i);
+            return (
+              <div key={i} ref={(el) => { paraRefs.current[i] = el; }} className="relative">
+                <p
+                  className={hasMalayalam(p) ? "font-malayalam mb-5 leading-[1.9] pr-6" : "font-body mb-5 pr-6"}
+                  style={bookmarked ? { borderLeft: "2px solid #B08A3A", paddingLeft: "10px" } : {}}
+                >
+                  {p}
+                </p>
+                <button
+                  onClick={() => togglePara(article.id, article.title, i, p)}
+                  className="absolute top-0 right-0 p-1"
+                  aria-label="Bookmark paragraph"
+                  style={{ color: bookmarked ? "#B08A3A" : "rgba(0,0,0,0.18)" }}
+                >
+                  <Bookmark size={13} filled={bookmarked} />
+                </button>
+                {i === 1 && article.inlineImage && (
+                  <figure className="-mx-1 my-6">
+                    <img src={article.inlineImage} alt="" className="w-full h-[220px] object-cover rounded-xl" />
+                  </figure>
+                )}
+                {i === 3 && article.inlineImage2 && (
+                  <figure className="-mx-1 my-6">
+                    <img src={article.inlineImage2} alt="" className="w-full h-[220px] object-cover rounded-xl" />
+                  </figure>
+                )}
+                {i === 2 && article.pullQuote && (
+                  <blockquote className="border-l-[3px] border-gold pl-4 my-6 font-serif text-[19px] italic text-ink leading-snug">
+                    "{article.pullQuote}"
+                  </blockquote>
+                )}
+              </div>
+            );
+          })}
         </article>
 
         {gallery.length > 0 && (
