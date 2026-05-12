@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { Magazine } from "@/lib/data";
+import { Book } from "@/components/Icons";
 
 export function HeroCover({ magazine }: { magazine: Magazine }) {
   return (
     <Link href={`/magazine?id=${magazine.id}`} className="block px-5">
       <div className="relative rounded-card overflow-hidden shadow-card bg-surface">
-        <img
-          src={magazine.cover}
-          alt={magazine.title}
-          className="w-full h-auto block"
-        />
+        {magazine.cover
+          ? <img src={magazine.cover} alt={magazine.title} className="w-full h-auto block" />
+          : <div className="w-full aspect-[3/4] bg-surface flex items-center justify-center text-muted"><Book size={40} /></div>
+        }
         <span className="absolute bottom-14 left-3 z-[1] text-[9px] tracking-[0.22em] uppercase bg-gold text-white px-2.5 py-1 rounded-full font-medium shadow-card">
           Latest Issue
         </span>
@@ -31,11 +31,10 @@ export function SmallCover({ magazine, showLatest }: { magazine: Magazine; showL
             Latest
           </span>
         )}
-        <img
-          src={magazine.cover}
-          alt={magazine.title}
-          className="w-full aspect-[3/4] object-cover block"
-        />
+        {magazine.cover
+          ? <img src={magazine.cover} alt={magazine.title} className="w-full aspect-[3/4] object-cover block" />
+          : <div className="w-full aspect-[3/4] bg-surface flex items-center justify-center text-muted"><Book size={32} /></div>
+        }
       </div>
       <div className="mt-2 px-0.5">
         <div className="text-[11px] text-muted">

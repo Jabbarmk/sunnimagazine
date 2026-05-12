@@ -7,7 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import { hasMalayalam } from "@/lib/text";
 import { getArticle, getArticles, getGallery } from "@/lib/api";
 import { useBookmarks } from "@/lib/bookmarks";
-import { Bookmark } from "@/components/Icons";
+import { Bookmark, User, ImageIcon } from "@/components/Icons";
 import type { GalleryImage } from "@/lib/store";
 import type { Article } from "@/lib/data";
 
@@ -54,7 +54,10 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
       <div className="flex-1 overflow-y-auto no-scrollbar bg-bg pb-16 md:pb-0">
         <div className="relative">
           <ArticleBar articleId={article.id} />
-          <img src={article.hero} alt={article.title} className="w-full h-[320px] object-cover" />
+          {article.hero
+            ? <img src={article.hero} alt={article.title} className="w-full h-[320px] object-cover" />
+            : <div className="w-full h-[320px] bg-surface flex items-center justify-center text-muted"><ImageIcon size={40} /></div>
+          }
           <div className="absolute bottom-3 left-5">
             <span className={hasMalayalam(article.category)
               ? "inline-block font-malayalam font-semibold text-[11px] bg-gold text-white px-2.5 py-1 rounded-full"
@@ -73,7 +76,10 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
           <p className="text-[15px] text-muted italic mt-3 leading-snug">{article.caption}</p>
           <div className="h-px bg-gold/50 my-5" />
           <div className="flex items-center gap-3">
-            <img src={article.avatar} alt={article.author} className="w-10 h-10 rounded-full object-cover" />
+            {article.avatar
+              ? <img src={article.avatar} alt={article.author} className="w-10 h-10 rounded-full object-cover" />
+              : <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-muted flex-shrink-0"><User size={18} /></div>
+            }
             <div className="flex-1">
               <div className="text-[13px] font-medium text-ink">{article.author}</div>
               <div className="text-[11px] text-muted">{article.date} · {article.readTime}</div>
@@ -168,7 +174,10 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
               {related.map((r) => (
                 <Link key={r.id} href={`/article?id=${r.id}`} className="flex-shrink-0 w-[200px]">
                   <div className="rounded-xl overflow-hidden shadow-card">
-                    <img src={r.hero} className="w-full h-[120px] object-cover" alt="" />
+                    {r.hero
+                      ? <img src={r.hero} className="w-full h-[120px] object-cover" alt="" />
+                      : <div className="w-full h-[120px] bg-surface flex items-center justify-center text-muted"><ImageIcon size={28} /></div>
+                    }
                   </div>
                   <div className="mt-2">
                     <div className="text-[8px] tracking-[0.22em] text-gold">{r.category}</div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getMagazinesDashboard, deleteMagazine, publishMagazine, getArticles } from "@/lib/api";
+import { Book } from "@/components/Icons";
 import type { Magazine } from "@/lib/data";
 import type { Article } from "@/lib/data";
 
@@ -43,7 +44,10 @@ export default function MagazinesPage() {
           const articleCount = articles.filter((a) => a.magazineId === m.id).length;
           return (
             <div key={m.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
-              <img src={m.cover} alt={m.title} className="w-12 h-16 object-cover rounded-lg flex-shrink-0" />
+              {m.cover
+                ? <img src={m.cover} alt={m.title} className="w-12 h-16 object-cover rounded-lg flex-shrink-0" />
+                : <div className="w-12 h-16 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400"><Book size={20} /></div>
+              }
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-malayalam font-semibold text-gray-900 text-[15px]">{m.title}</span>

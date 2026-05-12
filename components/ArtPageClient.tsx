@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getArtCategories, getEmailSettings, saveUserWriting } from "@/lib/api";
 import { sendWritingEmails } from "@/lib/email";
 import type { Art, ArtCategory, UserWriting } from "@/lib/store";
-import { ChevronLeft, X } from "@/components/Icons";
+import { ChevronLeft, X, User } from "@/components/Icons";
 
 function ArtCard({ art }: { art: Art }) {
   return (
@@ -29,7 +29,7 @@ function ArtCard({ art }: { art: Art }) {
             <img src={art.authorAvatar} alt={art.authorName}
               className="w-7 h-7 rounded-full object-cover border border-line flex-shrink-0" />
           ) : (
-            <div className="w-7 h-7 rounded-full bg-line flex-shrink-0" />
+            <div className="w-7 h-7 rounded-full bg-surface flex items-center justify-center text-muted flex-shrink-0"><User size={14} /></div>
           )}
           <span className="text-[11px] text-muted">{art.authorName}</span>
         </div>
