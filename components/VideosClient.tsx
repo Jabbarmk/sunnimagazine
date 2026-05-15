@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Video, VideoCategory } from "@/lib/store";
 import { Play, X } from "@/components/Icons";
 
@@ -18,7 +18,7 @@ function extractYouTubeId(link: string): string | null {
   return null;
 }
 
-function getThumb(link: string): string | null {
+function getYouTubeThumb(link: string): string | null {
   const id = extractYouTubeId(link);
   return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
@@ -27,6 +27,64 @@ function getEmbedUrl(link: string): string {
   const id = extractYouTubeId(link);
   if (id) return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
   return link;
+}
+
+function VideoThumb({ src, caption }: { src: string; caption: string }) {
+  const [frame, setFrame] = useState<string | null>(null);
+
+  useEffect(() => {
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.src = src;
+
+    const onMetadata = () => { video.currentTime = 0.1; };
+    const onSeeked = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth || 320;
+        canvas.height = video.videoHeight || 568;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          setFrame(canvas.toDataURL("image/jpeg", 0.85));
+        }
+      } catch {
+        // CORS blocked — fall back to caption placeholder
+      }
+      video.removeEventListener("loadedmetadata", onMetadata);
+      video.removeEventListener("seeked", onSeeked);
+    };
+
+    video.addEventListener("loadedmetadata", onMetadata);
+    video.addEventListener("seeked", onSeeked);
+    video.load();
+
+    return () => {
+      video.removeEventListener("loadedmetadata", onMetadata);
+      video.removeEventListener("seeked", onSeeked);
+      video.src = "";
+    };
+  }, [src]);
+
+  if (frame) {
+    return (
+      <div className="relative w-full aspect-[9/16]">
+        <img src={frame} alt={caption} className="w-full h-full object-cover block" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full aspect-[9/16] bg-ink/80 flex flex-col items-center justify-center gap-3 px-3">
+      <span className="text-white opacity-70"><Play size={32} /></span>
+      {caption && (
+        <p className="text-white text-[12px] font-medium text-center leading-snug line-clamp-4">{caption}</p>
+      )}
+    </div>
+  );
 }
 
 export default function VideosClient({ videos, categories }: { videos: Video[]; categories: VideoCategory[] }) {
@@ -61,16 +119,15 @@ export default function VideosClient({ videos, categories }: { videos: Video[]; 
       ) : (
         <div className="grid grid-cols-2 gap-3 px-4 pb-6">
           {filtered.map((v) => {
-            const thumb = getThumb(v.link);
+            const ytThumb = getYouTubeThumb(v.link);
+            const isYouTube = !!ytThumb;
             return (
               <button key={v.id} onClick={() => setPlaying(v)} className="text-left group">
                 <div className="relative rounded-xl overflow-hidden bg-gray-100">
-                  {thumb ? (
-                    <img src={thumb} alt={v.caption} className="w-full aspect-[9/16] object-cover block" />
+                  {isYouTube ? (
+                    <img src={ytThumb} alt={v.caption} className="w-full aspect-[9/16] object-cover block" />
                   ) : (
-                    <div className="w-full aspect-[9/16] bg-ink/10 flex items-center justify-center">
-                      <Play size={28} />
-                    </div>
+                    <VideoThumb src={v.link} caption={v.caption} />
                   )}
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="absolute inset-0 flex items-center justify-center">
@@ -113,12 +170,22 @@ export default function VideosClient({ videos, categories }: { videos: Video[]; 
             onClick={(e) => e.stopPropagation()}
           >
             <div className="relative rounded-2xl overflow-hidden bg-black" style={{ aspectRatio: "9/16" }}>
-              <iframe
-                src={getEmbedUrl(playing.link)}
-                allow="autoplay; encrypted-media; fullscreen"
-                allowFullScreen
-                className="w-full h-full"
-              />
+              {extractYouTubeId(playing.link) ? (
+                <iframe
+                  src={getEmbedUrl(playing.link)}
+                  allow="autoplay; encrypted-media; fullscreen"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              ) : (
+                <video
+                  src={playing.link}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-contain"
+                />
+              )}
             </div>
           </div>
         </div>

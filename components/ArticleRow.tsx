@@ -41,8 +41,8 @@ export default function ArticleRow({
         <div
           className={
             hasMalayalam(article.title)
-              ? "font-malayalam font-bold text-[15px] text-ink leading-snug mt-1 line-clamp-2"
-              : "font-serif text-[15px] text-ink leading-snug mt-1 line-clamp-2"
+              ? "font-malayalam font-bold text-[15px] text-ink leading-snug mt-1 line-clamp-4 text-left"
+              : "font-serif text-[15px] text-ink leading-snug mt-1 line-clamp-4 text-left"
           }
         >
           {article.title}

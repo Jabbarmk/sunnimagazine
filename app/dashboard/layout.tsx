@@ -110,6 +110,13 @@ const HelpCircleIcon = () => (
     <line x1="12" y1="17" x2="12.01" y2="17"/>
   </svg>
 );
+const NewspaperFoldIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"/>
+    <path d="M21 12H7"/><path d="M21 17H7"/><path d="M7 7h7"/>
+    <circle cx="18" cy="18" r="3"/><path d="M22 22l-1.5-1.5"/>
+  </svg>
+);
 const LogOutIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -134,6 +141,7 @@ const nav = [
   { href: "/dashboard/users", label: "Users", Icon: UsersIcon },
   { href: "/dashboard/deletedusers", label: "Deleted Users", Icon: TrashIcon },
   { href: "/dashboard/userwritings", label: "User Writings", Icon: EditIcon },
+  { href: "/dashboard/editorial", label: "Editorial", Icon: NewspaperFoldIcon },
   { href: "/dashboard/settings", label: "Settings", Icon: SettingsIcon },
   { href: "/dashboard/help", label: "Help / സഹായം", Icon: HelpCircleIcon },
 ];

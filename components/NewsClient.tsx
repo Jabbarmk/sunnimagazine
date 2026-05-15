@@ -44,10 +44,7 @@ export default function NewsClient({ items, cats }: { items: NewsItem[]; cats: C
                   <div className="w-20 h-16 bg-surface rounded-xl flex-shrink-0 flex items-center justify-center text-muted text-[22px]">📰</div>
                 )}
                 <div className="flex-1 min-w-0">
-                  {item.categoryName && (
-                    <span className="text-[9px] tracking-[0.2em] uppercase text-gold font-medium">{item.categoryName}</span>
-                  )}
-                  <p className="font-serif text-[14px] text-ink leading-snug mt-0.5 line-clamp-2">{item.title}</p>
+                  <p className="font-serif text-[14px] font-bold text-ink leading-snug mt-0.5 line-clamp-3">{item.title}</p>
                   <div className="flex items-center gap-2 mt-1">
                     {item.publishedAt && <span className="text-[11px] text-muted">{item.publishedAt}</span>}
                     {item.source && <span className="text-[11px] text-muted">· {item.source}</span>}

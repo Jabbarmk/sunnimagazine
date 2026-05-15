@@ -16,7 +16,7 @@ const config: Config = {
         navy: "#16161C",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["var(--font-poppins)", "system-ui", "sans-serif"],
         serif: ["var(--font-playfair)", "Georgia", "serif"],
         body: ["var(--font-lora)", "Georgia", "serif"],
         malayalam: ["var(--font-malayalam)", "system-ui", "sans-serif"],

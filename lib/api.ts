@@ -129,6 +129,11 @@ export const deleteNewsItem = (id: string) => del(`/news/${id}`);
 export const getTicker = () => get<{ text: string; isEnabled: boolean }>("/ticker");
 export const saveTicker = (t: { text: string; isEnabled: boolean }) => post("/ticker", t);
 
+// ── Editorial ─────────────────────────────────────────────
+export const getEditorial = (magazineId?: string | null) =>
+  get<any>(magazineId ? `/editorial?magazineId=${encodeURIComponent(magazineId)}` : "/editorial");
+export const saveEditorial = (e: any) => post("/editorial", e);
+
 // ── Auth ──────────────────────────────────────────────────
 export async function loginAdmin(email: string, password: string): Promise<boolean> {
   const res = await fetch("/api/auth", {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   getVideos, saveVideo, deleteVideo,
   getVideoCategories, saveVideoCategory, deleteVideoCategory,
@@ -38,7 +38,11 @@ export default function VideosPage() {
   const [fe, setFe] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState("");
 
-  // category inline add
+  const [videoType, setVideoType] = useState<"link" | "file">("link");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+
   const [newCatName, setNewCatName] = useState("");
   const [catError, setCatError] = useState("");
 
@@ -51,7 +55,11 @@ export default function VideosPage() {
   };
   useEffect(() => { reload(); }, []);
 
-  const reset = () => { setForm(EMPTY_VIDEO); setEditId(null); setFe({}); setSaveError(""); };
+  const reset = () => {
+    setForm(EMPTY_VIDEO); setEditId(null); setFe({}); setSaveError("");
+    setVideoType("link"); setUploadError("");
+    if (fileRef.current) fileRef.current.value = "";
+  };
 
   const set = (k: keyof typeof EMPTY_VIDEO) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -60,15 +68,39 @@ export default function VideosPage() {
 
   const handleEdit = (v: Video) => {
     setEditId(v.id);
+    const isUploaded = v.link.startsWith("/uploads/");
+    setVideoType(isUploaded ? "file" : "link");
     setForm({ categoryId: v.categoryId, caption: v.caption, link: v.link });
-    setFe({}); setSaveError("");
+    setFe({}); setSaveError(""); setUploadError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError("File must be under 50MB"); return;
+    }
+    setUploadError(""); setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/videos/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setForm((f) => ({ ...f, link: data.url }));
+      setFe((p) => { const n = { ...p }; delete n.link; return n; });
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSave = async () => {
     const errors: Record<string, string> = {};
     if (!form.categoryId) errors.categoryId = "Select a category";
-    if (!form.link.trim()) errors.link = "Video link is required";
+    if (!form.link.trim()) errors.link = videoType === "file" ? "Upload a video file" : "Video link is required";
     if (Object.keys(errors).length) { setFe(errors); return; }
     try {
       const selCat = cats.find((c) => c.id === form.categoryId);
@@ -152,24 +184,91 @@ export default function VideosPage() {
             </select>
             {fe.categoryId && <p className="text-[11px] text-red-500 mt-1">{fe.categoryId}</p>}
           </div>
+
           <div>
             <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Caption</label>
             <input value={form.caption} onChange={set("caption")} placeholder="Video caption or title"
               className={inp("caption")} />
           </div>
+
+          {/* Video source type toggle */}
           <div>
-            <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Video Link <span className="text-red-400">*</span></label>
-            <input value={form.link} onChange={set("link")} placeholder="https://youtube.com/watch?v=..."
-              className={inp("link")} />
-            {fe.link && <p className="text-[11px] text-red-500 mt-1">{fe.link}</p>}
-            {form.link && getThumb(form.link) && (
-              <img src={getThumb(form.link)!} alt="preview" className="mt-2 w-40 h-24 object-cover rounded-lg" />
+            <label className="block text-[12px] font-medium text-gray-700 mb-2">Video Source <span className="text-red-400">*</span></label>
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => { setVideoType("link"); setUploadError(""); setForm((f) => ({ ...f, link: "" })); }}
+                className={`px-4 py-2 rounded-lg text-[12px] font-medium border transition-colors ${videoType === "link" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}
+              >
+                Video Link (YouTube / Any URL)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setVideoType("file"); setUploadError(""); setForm((f) => ({ ...f, link: "" })); if (fileRef.current) fileRef.current.value = ""; }}
+                className={`px-4 py-2 rounded-lg text-[12px] font-medium border transition-colors ${videoType === "file" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-600 border-gray-200 hover:border-blue-300"}`}
+              >
+                Upload Video (max 50MB)
+              </button>
+            </div>
+
+            {videoType === "link" ? (
+              <div>
+                <input
+                  value={form.link}
+                  onChange={set("link")}
+                  placeholder="https://youtube.com/watch?v=... or any video URL"
+                  className={inp("link")}
+                />
+                {fe.link && <p className="text-[11px] text-red-500 mt-1">{fe.link}</p>}
+                {form.link && getThumb(form.link) && (
+                  <img src={getThumb(form.link)!} alt="preview" className="mt-2 w-40 h-24 object-cover rounded-lg" />
+                )}
+                {form.link && !extractYouTubeId(form.link) && form.link.startsWith("http") && (
+                  <p className="text-[11px] text-gray-400 mt-1">Non-YouTube URL — will use built-in video player</p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label
+                  className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${fe.link ? "border-red-400 bg-red-50" : "border-gray-200 bg-gray-50 hover:border-blue-400 hover:bg-blue-50"}`}
+                >
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                  {uploading ? (
+                    <span className="text-[13px] text-blue-500">Uploading…</span>
+                  ) : form.link ? (
+                    <div className="text-center">
+                      <div className="text-[22px] mb-1">✅</div>
+                      <span className="text-[12px] text-green-600 font-medium">Uploaded</span>
+                      <p className="text-[10px] text-gray-400 mt-0.5">{form.link.split("/").pop()}</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="text-[28px] mb-1">🎬</div>
+                      <span className="text-[13px] text-gray-500">Click to select video file</span>
+                      <p className="text-[11px] text-gray-400 mt-0.5">MP4, MOV, WebM — max 50MB</p>
+                    </div>
+                  )}
+                </label>
+                {(fe.link || uploadError) && (
+                  <p className="text-[11px] text-red-500 mt-1">{uploadError || fe.link}</p>
+                )}
+              </div>
             )}
           </div>
+
           {saveError && <p className="text-[13px] text-red-500 bg-red-50 px-3 py-2 rounded-lg">{saveError}</p>}
           <div className="flex gap-2 pt-1">
-            <button onClick={handleSave}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700">
+            <button
+              onClick={handleSave}
+              disabled={uploading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 disabled:opacity-50">
               {editId ? "Save Changes" : "Add Video"}
             </button>
             {editId && (
@@ -197,11 +296,14 @@ export default function VideosPage() {
               {thumb ? (
                 <img src={thumb} alt={v.caption} className="w-20 h-14 object-cover rounded-lg flex-shrink-0" />
               ) : (
-                <div className="w-20 h-14 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 text-[22px]">▶</div>
+                <div className="w-20 h-14 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-400 text-[22px]">▶</div>
               )}
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] text-amber-600 font-medium mb-0.5">{v.categoryName}</div>
                 <div className="text-[13px] font-medium text-gray-800 truncate">{v.caption || v.link}</div>
+                {v.link.startsWith("/uploads/") && (
+                  <div className="text-[10px] text-blue-400 mt-0.5">Uploaded file</div>
+                )}
               </div>
               <button onClick={() => handleEdit(v)} className="text-[12px] text-gray-400 hover:text-gray-700 flex-shrink-0">Edit</button>
               <button onClick={() => handleDelete(v.id)} className="text-[12px] text-red-400 hover:text-red-600 flex-shrink-0">Delete</button>

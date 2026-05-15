@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, Lora, Noto_Sans_Malayalam } from "next/font/google";
+import { Poppins, Playfair_Display, Lora, Noto_Sans_Malayalam } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const poppins = Poppins({ subsets: ["latin"], weight: ["400", "500", "700"], variable: "--font-poppins", display: "swap" });
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair", display: "swap" });
 const lora = Lora({ subsets: ["latin"], variable: "--font-lora", display: "swap" });
 const malayalam = Noto_Sans_Malayalam({
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ml" className={`${inter.variable} ${playfair.variable} ${lora.variable} ${malayalam.variable}`}>
+    <html lang="ml" className={`${poppins.variable} ${playfair.variable} ${lora.variable} ${malayalam.variable}`}>
       <body>{children}</body>
     </html>
   );
