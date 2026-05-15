@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BackBar } from "@/components/TopBar";
-import { Book } from "@/components/Icons";
+import { Book, ChevronLeft } from "@/components/Icons";
 import ImgWithFallback from "@/components/ImgWithFallback";
 import ArticleRow from "@/components/ArticleRow";
 import BottomNav from "@/components/BottomNav";
@@ -76,11 +75,16 @@ export default function MagazineView({ id }: { id: string }) {
   return (
     <>
       <div className="flex-1 overflow-y-auto no-scrollbar pb-[94px] md:pb-[30px]">
-        <BackBar title={magazine.title} subtitle={`${magazine.month} ${magazine.year}`} />
         <div className="relative mt-1">
           <ImgWithFallback src={magazine.cover} alt={magazine.title} className="w-full h-[100px] object-cover"
             fallback={<div className="w-full h-[100px] bg-surface flex items-center justify-center text-muted"><Book size={32} /></div>} />
           <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent" />
+          <button
+            onClick={() => window.history.back()}
+            className="absolute top-3 left-4 w-9 h-9 rounded-xl bg-white/80 backdrop-blur-sm shadow-card flex items-center justify-center text-ink"
+          >
+            <ChevronLeft size={18} />
+          </button>
         </div>
         <div className="px-5 pt-5 pb-2">
           <div className="text-[9px] tracking-[0.25em] text-gold uppercase">In this issue</div>
