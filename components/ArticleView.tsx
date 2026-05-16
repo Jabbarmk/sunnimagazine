@@ -27,7 +27,7 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
       if (!a) return;
       setArticle(a);
       getArticles().then((all) => {
-        setRelated(all.filter((x) => x.id !== a.id && x.magazineId === a.magazineId).slice(0, 3));
+        setRelated(all.filter((x) => x.id !== a.id && x.magazineId === a.magazineId));
       });
       getGallery(id).then(setGallery);
       setGalleryIndex(0);
