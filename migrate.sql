@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS `user_writings` (
   `email` varchar(255) DEFAULT NULL,
   `art_category_id` varchar(100) DEFAULT NULL,
   `art_category_name` varchar(255) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `image` text DEFAULT NULL,
+  `description` mediumtext DEFAULT NULL,
+  `image` mediumtext DEFAULT NULL,
   `sent_at` varchar(100) DEFAULT NULL,
   `status` enum('pending','reviewed','published') DEFAULT 'pending',
   PRIMARY KEY (`id`)
@@ -93,3 +93,7 @@ ALTER TABLE `app_users`
 ALTER TABLE `email_settings`
   ADD COLUMN IF NOT EXISTS `whatsapp_template` text DEFAULT NULL,
   ADD COLUMN IF NOT EXISTS `signup_email_template` text DEFAULT NULL;
+
+ALTER TABLE `user_writings`
+  MODIFY COLUMN `description` mediumtext DEFAULT NULL,
+  MODIFY COLUMN `image` mediumtext DEFAULT NULL;
