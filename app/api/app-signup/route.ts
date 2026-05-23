@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   await db.query(
     `INSERT INTO app_users (id,name,email,mobile,password,is_active,location,photo)
      VALUES (?,?,?,?,?,1,'',NULL)`,
-    [id, name.trim(), email.trim(), mobile?.trim() || null]
+    [id, name.trim(), email.trim(), mobile?.trim() || null, null]
   );
 
   try {
