@@ -1,8 +1,33 @@
 # Gulf Sathyadhara — API Reference
 
-Base URL: `https://smartflix.cloud`
+**Base URL:** `https://smartflix.cloud`
 
-All requests and responses use JSON unless noted. Successful mutations return `{ "ok": true }`.
+All request/response bodies are JSON unless noted. Successful mutations return `{ "ok": true }`.
+
+---
+
+## Table of Contents
+
+- [Authentication](#authentication)
+- [App Users](#app-users)
+- [User Subscriptions](#user-subscriptions)
+- [Magazines](#magazines)
+- [Articles](#articles)
+- [News](#news)
+- [News Categories](#news-categories)
+- [Events](#events)
+- [Videos](#videos)
+- [Video Categories](#video-categories)
+- [Arts](#arts)
+- [Art Categories](#art-categories)
+- [User Writings](#user-writings)
+- [Authors](#authors)
+- [Categories](#categories)
+- [Slides](#slides)
+- [Galleries](#galleries)
+- [Editorial](#editorial)
+- [Ticker](#ticker)
+- [Email Settings](#email-settings)
 
 ---
 
@@ -10,16 +35,25 @@ All requests and responses use JSON unless noted. Successful mutations return `{
 
 ### Admin Login
 `POST /api/auth`
-```json
-{ "email": "string", "password": "string" }
-```
-Returns `{ "ok": true }` or `401 { "error": "Invalid credentials" }`.
+
+| Field | Type | Required |
+|---|---|---|
+| `email` | string | ✓ |
+| `password` | string | ✓ |
+
+**Response:** `{ "ok": true }`
+**Errors:** `401 { "error": "Invalid credentials" }`
+
+---
 
 ### App User Login
 `POST /api/app-login`
-```json
-{ "identifier": "string (email or mobile)", "password": "string" }
-```
+
+| Field | Type | Description |
+|---|---|---|
+| `identifier` | string | Email or mobile number |
+| `password` | string | |
+
 **Response:**
 ```json
 {
@@ -35,369 +69,39 @@ Returns `{ "ok": true }` or `401 { "error": "Invalid credentials" }`.
   "referralMobile": "string"
 }
 ```
-Errors: `400 { "error": "Required" }` · `401 { "error": "Invalid credentials" }`
+**Errors:** `400 Required` · `401 Invalid credentials`
+
+---
 
 ### App User Signup
 `POST /api/app-signup`
-```json
-{ "name": "string", "email": "string", "mobile": "string (optional)" }
-```
+
+| Field | Type | Required |
+|---|---|---|
+| `name` | string | ✓ |
+| `email` | string | ✓ |
+| `mobile` | string | |
+
 **Response:** `{ "ok": true, "id": "string" }`
 
-Triggers welcome email to user and notification to admin.
+Sends welcome email to user + notification to admin on success.
 
-Errors: `400 Required` · `409 Email already registered` · `409 Mobile number already registered`
+**Errors:** `400 Name and email are required` · `409 Email already registered` · `409 Mobile number already registered`
 
 ---
 
-## Magazines
+### App User Delete Account
 
-### List Magazines
-`GET /api/magazines`
+`POST /api/app-delete-account`
 
-| Query | Type | Description |
+Self-service account deletion for a signed-in app user. Soft delete — sets `deleted_at` and `is_active=0` so the user can no longer log in, while the admin still sees them in the deleted-users list. Allowed even if the user has an active subscription.
+
+| Field | Type | Required |
 |---|---|---|
-| `all` | `"1"` | Include unpublished. Omit for published only. |
+| `id` | string | ✓ |
 
-**Response:**
-```json
-[{
-  "id": "string",
-  "title": "string",
-  "month": "string",
-  "year": "number",
-  "cover": "string (base64 or URL)",
-  "description": "string",
-  "articleIds": ["string"],
-  "isPublished": "boolean",
-  "created_at": "string"
-}]
-```
-
-### Get Magazine
-`GET /api/magazines/[id]` → single object or `404 { "error": "Not found" }`
-
-### Create / Update Magazine
-`POST /api/magazines`
-```json
-{
-  "id": "string",
-  "title": "string",
-  "month": "string",
-  "year": "number",
-  "cover": "string",
-  "description": "string",
-  "articleIds": ["string"],
-  "isPublished": "boolean"
-}
-```
-
-### Publish / Unpublish Magazine
-`PUT /api/magazines/[id]`
-```json
-{ "isPublished": true }
-```
-
-### Delete Magazine
-`DELETE /api/magazines/[id]`
-
----
-
-## Articles
-
-### List Articles
-`GET /api/articles`
-
-**Response:**
-```json
-[{
-  "id": "string",
-  "magazineId": "string",
-  "title": "string",
-  "caption": "string",
-  "category": "string",
-  "author": "string",
-  "avatar": "string",
-  "date": "string",
-  "readTime": "number",
-  "hero": "string",
-  "paragraphs": ["string"],
-  "inlineImage": "string | null",
-  "inlineImage2": "string | null",
-  "bottomImage": "string | null",
-  "pullQuotes": [{ "text": "string", "afterParagraph": "number" }],
-  "created_at": "string"
-}]
-```
-
-### Get Article
-`GET /api/articles/[id]` → single object or `404`
-
-### Create / Update Article
-`POST /api/articles`
-```json
-{
-  "id": "string",
-  "magazineId": "string",
-  "title": "string",
-  "caption": "string",
-  "category": "string",
-  "author": "string",
-  "avatar": "string",
-  "date": "string",
-  "readTime": "number",
-  "hero": "string",
-  "paragraphs": ["string"],
-  "inlineImage": "string | null",
-  "inlineImage2": "string | null",
-  "bottomImage": "string | null",
-  "pullQuotes": [{ "text": "string", "afterParagraph": "number" }]
-}
-```
-
-### Delete Article
-`DELETE /api/articles/[id]`
-
----
-
-## News
-
-### List News
-`GET /api/news`
-
-**Response:**
-```json
-[{
-  "id": "string",
-  "categoryId": "string",
-  "categoryName": "string",
-  "title": "string",
-  "description": "string",
-  "image": "string",
-  "source": "string",
-  "publishedAt": "string"
-}]
-```
-
-### Get News Item
-`GET /api/news/[id]` → single object or `404`
-
-### Create / Update News
-`POST /api/news`
-```json
-{
-  "id": "string",
-  "categoryId": "string",
-  "categoryName": "string",
-  "title": "string",
-  "description": "string",
-  "image": "string",
-  "source": "string",
-  "publishedAt": "string"
-}
-```
-
-### Delete News
-`DELETE /api/news/[id]`
-
----
-
-## News Categories
-
-### List
-`GET /api/news-categories` → `[{ "id": "string", "name": "string" }]`
-
-### Create / Update
-`POST /api/news-categories` `{ "id": "string", "name": "string" }`
-
-### Delete
-`DELETE /api/news-categories/[id]`
-
----
-
-## Events
-
-### List Events
-`GET /api/events`
-
-**Response:**
-```json
-[{
-  "id": "string",
-  "title": "string",
-  "description": "string",
-  "poster": "string",
-  "eventDate": "string"
-}]
-```
-
-### Get Event
-`GET /api/events/[id]` → single object or `404`
-
-### Create / Update Event
-`POST /api/events`
-```json
-{ "id": "string", "title": "string", "description": "string", "poster": "string", "eventDate": "string" }
-```
-
-### Delete Event
-`DELETE /api/events/[id]`
-
----
-
-## Videos
-
-### List Videos
-`GET /api/videos`
-
-**Response:**
-```json
-[{
-  "id": "string",
-  "categoryId": "string",
-  "categoryName": "string",
-  "caption": "string",
-  "link": "string",
-  "created_at": "string"
-}]
-```
-
-### Create / Update Video
-`POST /api/videos`
-```json
-{ "id": "string", "categoryId": "string", "categoryName": "string", "caption": "string", "link": "string" }
-```
-
-### Delete Video
-`DELETE /api/videos/[id]`
-
-### Upload Video File
-`POST /api/videos/upload` — `multipart/form-data` with `file` field
-
-- Max size: 50 MB
-- Must be a video MIME type
-
-**Response:** `{ "url": "string" }`
-
-Errors: `400 No file provided` · `400 File exceeds 50MB limit` · `400 Only video files are allowed`
-
----
-
-## Video Categories
-
-### List
-`GET /api/video-categories` → `[{ "id": "string", "name": "string" }]`
-
-### Create / Update
-`POST /api/video-categories` `{ "id": "string", "name": "string" }`
-
-### Delete
-`DELETE /api/video-categories/[id]`
-
----
-
-## Arts
-
-### List Arts
-`GET /api/arts`
-
-**Response:**
-```json
-[{
-  "id": "string",
-  "magazineId": "string",
-  "artCategoryId": "string",
-  "artCategoryName": "string",
-  "authorId": "string | null",
-  "authorName": "string | null",
-  "authorAvatar": "string | null",
-  "title": "string",
-  "image": "string | null",
-  "description": "string | null",
-  "created_at": "string"
-}]
-```
-
-### Create / Update Art
-`POST /api/arts`
-```json
-{
-  "id": "string",
-  "magazineId": "string",
-  "artCategoryId": "string",
-  "artCategoryName": "string",
-  "authorId": "string | null",
-  "authorName": "string | null",
-  "authorAvatar": "string | null",
-  "title": "string",
-  "image": "string | null",
-  "description": "string | null"
-}
-```
-
-### Delete Art
-`DELETE /api/arts/[id]`
-
----
-
-## Art Categories
-
-### List
-`GET /api/art-categories` → `[{ "id": "string", "name": "string" }]`
-
-### Create / Update
-`POST /api/art-categories` `{ "id": "string", "name": "string" }`
-
-### Delete
-`DELETE /api/art-categories/[id]`
-
----
-
-## User Writings
-
-### List Writings
-`GET /api/user-writings`
-
-**Response:**
-```json
-[{
-  "id": "string",
-  "name": "string",
-  "email": "string",
-  "artCategoryId": "string",
-  "artCategoryName": "string",
-  "description": "string",
-  "image": "string | null",
-  "sentAt": "string",
-  "status": "pending | reviewed | published"
-}]
-```
-
-### Submit Writing
-`POST /api/user-writings`
-```json
-{
-  "id": "string",
-  "name": "string",
-  "email": "string",
-  "artCategoryId": "string",
-  "artCategoryName": "string",
-  "description": "string",
-  "image": "string | null (base64)",
-  "sentAt": "string (ISO date)",
-  "status": "pending"
-}
-```
-Triggers email to admin and confirmation to submitter.
-
-### Update Writing Status
-`PUT /api/user-writings/[id]`
-```json
-{ "status": "pending | reviewed | published" }
-```
-
-### Delete Writing
-`DELETE /api/user-writings/[id]`
+**Response:** `{ "ok": true }`
+**Errors:** `400 User id is required` · `404 User not found`
 
 ---
 
@@ -408,7 +112,7 @@ Triggers email to admin and confirmation to submitter.
 
 | Query | Type | Description |
 |---|---|---|
-| `deleted` | `"1"` | List soft-deleted users. Omit for active users. |
+| `deleted` | `"1"` | Return soft-deleted users. Omit for active users. |
 
 **Response:**
 ```json
@@ -429,41 +133,49 @@ Triggers email to admin and confirmation to submitter.
 }]
 ```
 
+---
+
 ### Create / Update User
 `POST /api/users`
-```json
-{
-  "id": "string",
-  "name": "string",
-  "email": "string",
-  "password": "string",
-  "mobile": "string",
-  "location": "string",
-  "photo": "string | null",
-  "subscriptionFrom": "string | null",
-  "subscriptionTo": "string | null",
-  "referredBy": "string | null",
-  "referralMobile": "string | null"
-}
-```
-Errors: `409 Email already registered` · `409 Mobile number already registered`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `name` | string | ✓ |
+| `email` | string | ✓ |
+| `password` | string | |
+| `mobile` | string | |
+| `location` | string | |
+| `photo` | string \| null | |
+| `subscriptionFrom` | string \| null | |
+| `subscriptionTo` | string \| null | |
+| `referredBy` | string \| null | |
+| `referralMobile` | string \| null | |
+
+**Errors:** `409 Email already registered` · `409 Mobile number already registered`
+
+---
 
 ### Update User
 `PUT /api/users/[id]`
 
-Activate / deactivate:
+**Activate / deactivate:**
 ```json
 { "isActive": true }
 ```
-Soft delete:
+
+**Soft delete:**
 ```json
 { "softDelete": true }
 ```
-Update subscription dates:
+Blocked if subscription is still active. Error: `400 Cannot delete user with active subscription. Subscription expires {date}`
+
+**Update subscription dates:**
 ```json
 { "subscriptionFrom": "string | null", "subscriptionTo": "string | null" }
 ```
-Error: `400 Cannot delete user with active subscription. Subscription expires {date}`
+
+---
 
 ### Hard Delete User
 `DELETE /api/users/[id]`
@@ -488,22 +200,459 @@ Error: `400 Cannot delete user with active subscription. Subscription expires {d
 }]
 ```
 
+---
+
 ### Create / Update Subscription
 `POST /api/user-subscriptions`
-```json
-{
-  "id": "string",
-  "userId": "string",
-  "amountAed": "number",
-  "fromMonth": "string (YYYY-MM)",
-  "toMonth": "string (YYYY-MM)",
-  "paidDate": "string | null"
-}
-```
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `userId` | string | ✓ |
+| `amountAed` | number | ✓ |
+| `fromMonth` | string (YYYY-MM) | ✓ |
+| `toMonth` | string (YYYY-MM) | ✓ |
+| `paidDate` | string \| null | |
+
 Also syncs `subscriptionFrom` / `subscriptionTo` on the user record.
+
+---
 
 ### Delete Subscription
 `DELETE /api/user-subscriptions/[id]`
+
+---
+
+## Magazines
+
+### List Magazines
+`GET /api/magazines`
+
+| Query | Type | Description |
+|---|---|---|
+| `all` | `"1"` | Include unpublished. Omit for published only. |
+
+Ordered by year DESC then month (December → January).
+
+**Response:**
+```json
+[{
+  "id": "string",
+  "title": "string",
+  "month": "string",
+  "year": "number",
+  "cover": "string",
+  "description": "string",
+  "articleIds": ["string"],
+  "isPublished": "boolean",
+  "created_at": "string"
+}]
+```
+
+---
+
+### Get Magazine
+`GET /api/magazines/[id]`
+
+Returns single object or `404 { "error": "Not found" }`.
+
+---
+
+### Create / Update Magazine
+`POST /api/magazines`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `title` | string | ✓ |
+| `month` | string | ✓ |
+| `year` | number | ✓ |
+| `cover` | string | ✓ |
+| `description` | string | |
+| `articleIds` | string[] | |
+| `isPublished` | boolean | |
+
+---
+
+### Publish / Unpublish Magazine
+`PUT /api/magazines/[id]`
+```json
+{ "isPublished": true }
+```
+
+---
+
+### Delete Magazine
+`DELETE /api/magazines/[id]`
+
+---
+
+## Articles
+
+### List Articles
+`GET /api/articles`
+
+Ordered by `created_at DESC`.
+
+**Response:**
+```json
+[{
+  "id": "string",
+  "magazineId": "string",
+  "title": "string",
+  "caption": "string",
+  "category": "string",
+  "author": "string",
+  "avatar": "string",
+  "date": "string",
+  "readTime": "number",
+  "hero": "string",
+  "paragraphs": ["string"],
+  "inlineImage": "string | null",
+  "inlineImage2": "string | null",
+  "bottomImage": "string | null",
+  "pullQuotes": [{ "text": "string", "afterParagraph": "number" }],
+  "created_at": "string"
+}]
+```
+
+---
+
+### Get Article
+`GET /api/articles/[id]`
+
+Returns single object or `404 { "error": "Not found" }`.
+
+---
+
+### Create / Update Article
+`POST /api/articles`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `magazineId` | string | ✓ |
+| `title` | string | ✓ |
+| `caption` | string | |
+| `category` | string | |
+| `author` | string | |
+| `avatar` | string | |
+| `date` | string | |
+| `readTime` | number | |
+| `hero` | string | |
+| `paragraphs` | string[] | |
+| `inlineImage` | string \| null | |
+| `inlineImage2` | string \| null | |
+| `bottomImage` | string \| null | |
+| `pullQuotes` | `[{ text, afterParagraph }]` | |
+
+---
+
+### Delete Article
+`DELETE /api/articles/[id]`
+
+---
+
+## News
+
+### List News
+`GET /api/news`
+
+Ordered by `created_at DESC`.
+
+**Response:**
+```json
+[{
+  "id": "string",
+  "categoryId": "string",
+  "categoryName": "string",
+  "title": "string",
+  "description": "string",
+  "image": "string",
+  "source": "string",
+  "publishedAt": "string"
+}]
+```
+
+---
+
+### Get News Item
+`GET /api/news/[id]`
+
+Returns single object or `404 { "error": "Not found" }`.
+
+---
+
+### Create / Update News
+`POST /api/news`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `categoryId` | string | ✓ |
+| `categoryName` | string | ✓ |
+| `title` | string | ✓ |
+| `description` | string | |
+| `image` | string | |
+| `source` | string | |
+| `publishedAt` | string | |
+
+---
+
+### Delete News
+`DELETE /api/news/[id]`
+
+---
+
+## News Categories
+
+### List
+`GET /api/news-categories` → `[{ "id": "string", "name": "string" }]`
+
+### Create / Update
+`POST /api/news-categories`
+```json
+{ "id": "string", "name": "string" }
+```
+
+### Delete
+`DELETE /api/news-categories/[id]`
+
+---
+
+## Events
+
+### List Events
+`GET /api/events`
+
+Ordered by `created_at DESC`.
+
+**Response:**
+```json
+[{
+  "id": "string",
+  "title": "string",
+  "description": "string",
+  "poster": "string",
+  "eventDate": "string"
+}]
+```
+
+---
+
+### Get Event
+`GET /api/events/[id]`
+
+Returns single object or `404 { "error": "Not found" }`.
+
+---
+
+### Create / Update Event
+`POST /api/events`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `title` | string | ✓ |
+| `description` | string | |
+| `poster` | string | |
+| `eventDate` | string | |
+
+---
+
+### Delete Event
+`DELETE /api/events/[id]`
+
+---
+
+## Videos
+
+### List Videos
+`GET /api/videos`
+
+Ordered by `created_at DESC`.
+
+**Response:**
+```json
+[{
+  "id": "string",
+  "categoryId": "string",
+  "categoryName": "string",
+  "caption": "string",
+  "link": "string",
+  "created_at": "string"
+}]
+```
+
+---
+
+### Create / Update Video
+`POST /api/videos`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `categoryId` | string | ✓ |
+| `categoryName` | string | ✓ |
+| `caption` | string | |
+| `link` | string | ✓ |
+
+---
+
+### Delete Video
+`DELETE /api/videos/[id]`
+
+---
+
+### Upload Video File
+`POST /api/videos/upload`
+
+Content-Type: `multipart/form-data`
+
+| Field | Type | Description |
+|---|---|---|
+| `file` | File | Video file (max 50 MB, must be `video/*`) |
+
+**Response:** `{ "url": "/uploads/videos/vid_xxx.mp4" }`
+
+**Errors:** `400 No file provided` · `400 File exceeds 50MB limit` · `400 Only video files are allowed` · `500 Upload failed`
+
+---
+
+## Video Categories
+
+### List
+`GET /api/video-categories` → `[{ "id": "string", "name": "string" }]`
+
+### Create / Update
+`POST /api/video-categories`
+```json
+{ "id": "string", "name": "string" }
+```
+
+### Delete
+`DELETE /api/video-categories/[id]`
+
+---
+
+## Arts
+
+### List Arts
+`GET /api/arts`
+
+Ordered by `created_at DESC`.
+
+**Response:**
+```json
+[{
+  "id": "string",
+  "magazineId": "string",
+  "artCategoryId": "string",
+  "artCategoryName": "string",
+  "authorId": "string | null",
+  "authorName": "string | null",
+  "authorAvatar": "string | null",
+  "title": "string",
+  "image": "string | null",
+  "description": "string | null",
+  "created_at": "string"
+}]
+```
+
+---
+
+### Create / Update Art
+`POST /api/arts`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `magazineId` | string | ✓ |
+| `artCategoryId` | string | ✓ |
+| `artCategoryName` | string | ✓ |
+| `title` | string | ✓ |
+| `authorId` | string \| null | |
+| `authorName` | string \| null | |
+| `authorAvatar` | string \| null | |
+| `image` | string \| null | |
+| `description` | string \| null | |
+
+---
+
+### Delete Art
+`DELETE /api/arts/[id]`
+
+---
+
+## Art Categories
+
+### List
+`GET /api/art-categories` → `[{ "id": "string", "name": "string" }]`
+
+### Create / Update
+`POST /api/art-categories`
+```json
+{ "id": "string", "name": "string" }
+```
+
+### Delete
+`DELETE /api/art-categories/[id]`
+
+---
+
+## User Writings
+
+### List Writings
+`GET /api/user-writings`
+
+Ordered by `sent_at DESC`.
+
+**Response:**
+```json
+[{
+  "id": "string",
+  "name": "string",
+  "email": "string",
+  "artCategoryId": "string",
+  "artCategoryName": "string",
+  "description": "string",
+  "image": "string | null",
+  "sentAt": "string",
+  "status": "pending | reviewed | published"
+}]
+```
+
+---
+
+### Submit Writing
+`POST /api/user-writings`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `name` | string | ✓ |
+| `email` | string | ✓ |
+| `artCategoryId` | string | ✓ |
+| `artCategoryName` | string | ✓ |
+| `description` | string | ✓ |
+| `image` | string \| null | Base64 image |
+| `sentAt` | string | ISO date string |
+| `status` | string | Default: `"pending"` |
+
+Sends notification email to admin + confirmation to submitter.
+
+---
+
+### Update Writing Status
+`PUT /api/user-writings/[id]`
+```json
+{ "status": "pending | reviewed | published" }
+```
+
+---
+
+### Delete Writing
+`DELETE /api/user-writings/[id]`
 
 ---
 
@@ -513,7 +662,10 @@ Also syncs `subscriptionFrom` / `subscriptionTo` on the user record.
 `GET /api/authors` → `[{ "id": "string", "name": "string", "avatar": "string" }]`
 
 ### Create / Update
-`POST /api/authors` `{ "id": "string", "name": "string", "avatar": "string" }`
+`POST /api/authors`
+```json
+{ "id": "string", "name": "string", "avatar": "string" }
+```
 
 ### Delete
 `DELETE /api/authors/[id]`
@@ -526,7 +678,10 @@ Also syncs `subscriptionFrom` / `subscriptionTo` on the user record.
 `GET /api/categories` → `[{ "id": "string", "name": "string" }]`
 
 ### Create / Update
-`POST /api/categories` `{ "id": "string", "name": "string" }`
+`POST /api/categories`
+```json
+{ "id": "string", "name": "string" }
+```
 
 ### Delete
 `DELETE /api/categories/[id]`
@@ -536,7 +691,9 @@ Also syncs `subscriptionFrom` / `subscriptionTo` on the user record.
 ## Slides
 
 ### List Slides
-`GET /api/slides` → array ordered by `sort_order`
+`GET /api/slides`
+
+Ordered by `sort_order ASC`, then `created_at DESC`.
 
 **Response:**
 ```json
@@ -553,23 +710,30 @@ Also syncs `subscriptionFrom` / `subscriptionTo` on the user record.
 }]
 ```
 
+---
+
 ### Get Slide
-`GET /api/slides/[id]` → single object or `404`
+`GET /api/slides/[id]`
+
+Returns single object or `404 { "error": "Not found" }`.
+
+---
 
 ### Create / Update Slide
 `POST /api/slides`
-```json
-{
-  "id": "string",
-  "image": "string",
-  "poster": "string | null",
-  "title": "string",
-  "details": "string",
-  "website": "string",
-  "contact": "string",
-  "sortOrder": "number"
-}
-```
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `image` | string | ✓ |
+| `poster` | string \| null | |
+| `title` | string | |
+| `details` | string | |
+| `website` | string | |
+| `contact` | string | |
+| `sortOrder` | number | Default: `0` |
+
+---
 
 ### Delete Slide
 `DELETE /api/slides/[id]`
@@ -583,14 +747,21 @@ Also syncs `subscriptionFrom` / `subscriptionTo` on the user record.
 
 | Query | Type | Description |
 |---|---|---|
-| `articleId` | string | Filter by article. Returns `[{ "id", "url" }]` |
+| `articleId` | string | Filter by article. Returns `[{ "id", "url" }]` only. |
 
 Without filter returns `[{ "id", "article_id", "url" }]`.
 
-### Create / Update
-`POST /api/galleries` `{ "id": "string", "articleId": "string", "url": "string" }`
+---
 
-### Delete
+### Create / Update Gallery Item
+`POST /api/galleries`
+```json
+{ "id": "string", "articleId": "string", "url": "string" }
+```
+
+---
+
+### Delete Gallery Item
 `DELETE /api/galleries/[id]`
 
 ---
@@ -602,23 +773,38 @@ Without filter returns `[{ "id", "article_id", "url" }]`.
 
 | Query | Type | Description |
 |---|---|---|
-| `magazineId` | string | Get editorial for specific magazine. Omit for global. |
+| `magazineId` | string | Get editorial for a specific magazine. Falls back to global if not found. Omit to get most recently updated per-magazine editorial (falls back to global). |
 
-### Create / Update Editorial
+**Response:** Editorial data object merged with defaults.
+
+---
+
+### Save Editorial
 `POST /api/editorial`
-```json
-{ "magazineId": "string | null", "...fields": "..." }
-```
+
+| Field | Type | Description |
+|---|---|---|
+| `magazineId` | string \| null | `null` saves as global editorial |
+| `...fields` | any | Editorial content fields |
+
+**Errors:** `500 { "error": "..." }`
 
 ---
 
 ## Ticker
 
 ### Get Ticker
-`GET /api/ticker` → `{ "text": "string", "isEnabled": "boolean" }`
+`GET /api/ticker`
+
+**Response:** `{ "text": "string", "isEnabled": "boolean" }`
+
+---
 
 ### Update Ticker
-`POST /api/ticker` `{ "text": "string", "isEnabled": "boolean" }`
+`POST /api/ticker`
+```json
+{ "text": "string", "isEnabled": true }
+```
 
 ---
 
@@ -626,6 +812,8 @@ Without filter returns `[{ "id", "article_id", "url" }]`.
 
 ### Get Settings
 `GET /api/email-settings`
+
+**Response:**
 ```json
 {
   "host": "string",
@@ -639,7 +827,11 @@ Without filter returns `[{ "id", "article_id", "url" }]`.
 }
 ```
 
-### Save Settings
-`POST /api/email-settings` — same shape as GET response.
+---
 
-`signupEmailTemplate` supports `{name}`, `{email}`, `{mobile}` placeholders.
+### Save Settings
+`POST /api/email-settings`
+
+Same shape as GET response.
+
+`signupEmailTemplate` supports placeholders: `{name}`, `{email}`, `{mobile}`
