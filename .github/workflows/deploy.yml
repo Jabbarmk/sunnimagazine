@@ -24,6 +24,11 @@ jobs:
           script_stop: true
           script: |
             set -e
+
+            # Load nvm so node/npm/pm2 are on PATH in this non-interactive shell
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
             cd /var/www/sunnimagazine
 
             echo "==> Fetching latest code"
