@@ -1,24 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { getArticles, deleteArticle } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
+import { getArticles, getMagazinesDashboard, deleteArticle } from "@/lib/api";
 import type { Article } from "@/lib/data";
+import type { Magazine } from "@/lib/data";
 
-export default function ArticlesPage() {
+function ArticlesList() {
+  const searchParams = useSearchParams();
+  const magazineParam = searchParams.get("magazine");
   const [articles, setArticles] = useState<Article[]>([]);
+  const [magazines, setMagazines] = useState<Magazine[]>([]);
+  const [magazineId, setMagazineId] = useState<string>("");
   const [search, setSearch] = useState("");
 
   const load = () => { getArticles().then(setArticles); };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    getMagazinesDashboard().then((mags) => {
+      setMagazines(mags);
+      // Default selection: magazine from the URL (e.g. opened from Magazines page),
+      // otherwise the latest magazine (list is sorted newest first).
+      setMagazineId((prev) => prev || magazineParam || mags[0]?.id || "");
+    });
+  }, [magazineParam]);
 
-  const filtered = articles.filter(
+  const byMagazine = articles.filter((a) => !magazineId || a.magazineId === magazineId);
+  const filtered = byMagazine.filter(
     (a) =>
       a.title.toLowerCase().includes(search.toLowerCase()) ||
       a.author.toLowerCase().includes(search.toLowerCase()) ||
       a.category.toLowerCase().includes(search.toLowerCase())
   );
+
+  const selectedMagazine = magazines.find((m) => m.id === magazineId);
 
   const handleDelete = async (id: string) => {
     if (!confirm("ഈ ലേഖനം ഇല്ലാതാക്കണോ?")) return;
@@ -31,7 +48,11 @@ export default function ArticlesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-[22px] font-semibold text-gray-900">Articles</h1>
-          <p className="text-[13px] text-gray-500 mt-0.5">{articles.length} total articles</p>
+          <p className="text-[13px] text-gray-500 mt-0.5">
+            {selectedMagazine
+              ? `${byMagazine.length} articles in ${selectedMagazine.title}`
+              : `${byMagazine.length} articles`}
+          </p>
         </div>
         <Link
           href="/dashboard/articles/new"
@@ -41,12 +62,22 @@ export default function ArticlesPage() {
         </Link>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <select
+          value={magazineId}
+          onChange={(e) => setMagazineId(e.target.value)}
+          className="px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400 bg-white"
+        >
+          <option value="">All magazines</option>
+          {magazines.map((m) => (
+            <option key={m.id} value={m.id}>{m.title} ({m.month} {m.year})</option>
+          ))}
+        </select>
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search articles..."
-          className="w-full max-w-sm px-4 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400"
+          className="flex-1 min-w-[180px] max-w-sm px-4 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400"
         />
       </div>
 
@@ -104,5 +135,13 @@ export default function ArticlesPage() {
         </table>
       </div>
     </div>
+  );
+}
+
+export default function ArticlesPage() {
+  return (
+    <Suspense fallback={<div className="text-gray-400 text-[13px]">Loading…</div>}>
+      <ArticlesList />
+    </Suspense>
   );
 }

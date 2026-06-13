@@ -12,24 +12,48 @@ function parsePullQuotes(raw: string | null) {
   }
 }
 
+// Numeric value of an id like "a11" -> 11, for ordering small-to-large.
+function idNum(id: string) {
+  const m = String(id).match(/\d+/);
+  return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
+}
+
 export async function GET() {
-  const [rows] = await db.query("SELECT * FROM articles ORDER BY created_at DESC");
-  const articles = (rows as any[]).map((r) => ({
-    ...r,
-    paragraphs: JSON.parse(r.paragraphs || "[]"),
-    magazineId: r.magazine_id,
-    readTime: r.read_time,
-    inlineImage: r.inline_image,
-    inlineImage2: r.inline_image2,
-    bottomImage: r.bottom_image,
-    pullQuotes: parsePullQuotes(r.pull_quote),
-  }));
+  const [rows] = await db.query("SELECT * FROM articles");
+  const articles = (rows as any[])
+    .map((r) => ({
+      ...r,
+      paragraphs: JSON.parse(r.paragraphs || "[]"),
+      magazineId: r.magazine_id,
+      readTime: r.read_time,
+      inlineImage: r.inline_image,
+      inlineImage2: r.inline_image2,
+      bottomImage: r.bottom_image,
+      pullQuotes: parsePullQuotes(r.pull_quote),
+    }))
+    .sort((a, b) => idNum(a.id) - idNum(b.id) || String(a.id).localeCompare(String(b.id)));
   return NextResponse.json(articles);
 }
 
 export async function POST(req: Request) {
   const b = await req.json();
   const pq = b.pullQuotes?.length ? JSON.stringify(b.pullQuotes) : null;
+
+  // Editing an existing article and changing its ID = rename the primary key.
+  // Move the row and update everything that references the old id.
+  if (b.originalId && b.originalId !== b.id) {
+    const [taken] = await db.query("SELECT id FROM articles WHERE id=?", [b.id]);
+    if ((taken as any[]).length) {
+      return NextResponse.json({ error: "Article ID already in use" }, { status: 409 });
+    }
+    await db.query("UPDATE articles SET id=? WHERE id=?", [b.id, b.originalId]);
+    await db.query("UPDATE galleries SET article_id=? WHERE article_id=?", [b.id, b.originalId]);
+    await db.query(
+      "UPDATE magazines SET article_ids = REPLACE(article_ids, ?, ?) WHERE article_ids LIKE ?",
+      [`"${b.originalId}"`, `"${b.id}"`, `%"${b.originalId}"%`]
+    );
+  }
+
   await db.query(
     `INSERT INTO articles (id,magazine_id,title,caption,category,author,avatar,date,read_time,hero,paragraphs,inline_image,inline_image2,bottom_image,pull_quote)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)

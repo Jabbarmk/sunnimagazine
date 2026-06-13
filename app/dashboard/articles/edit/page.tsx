@@ -65,13 +65,14 @@ function EditArticleForm() {
 
   const handleSave = async () => {
     const errors: Record<string, string> = {};
+    if (!form.id.trim()) errors.id = "Article ID is required";
     if (!form.magazineId) errors.magazineId = "Please select a magazine";
     if (!form.title.trim()) errors.title = "Title is required";
     if (Object.keys(errors).length) { setFe(errors); return; }
     try {
       const paragraphs = form.paragraphsRaw.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
       await saveArticle({
-        id: form.id, magazineId: form.magazineId, title: form.title,
+        id: form.id.trim(), originalId: id, magazineId: form.magazineId, title: form.title,
         caption: form.caption, category: form.category, author: form.author,
         avatar: form.avatar, date: form.date, readTime: form.readTime, hero: form.hero,
         paragraphs,
@@ -91,10 +92,18 @@ function EditArticleForm() {
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 text-[20px]">←</button>
         <h1 className="text-[22px] font-semibold text-gray-900">Edit Article</h1>
-        <span className="text-[12px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded">{form.id}</span>
+        <span className="text-[12px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded">{id}</span>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
+        <Row label="Article ID" hint="Changing this renames the article everywhere it's referenced" error={fe.id}>
+          <input
+            value={form.id}
+            onChange={set("id")}
+            placeholder="a11"
+            className={`w-full px-3 py-2 border rounded-lg text-[13px] outline-none ${fe.id ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-200 focus:border-blue-400"}`}
+          />
+        </Row>
         <Row label="Magazine" error={fe.magazineId}>
           <select
             value={form.magazineId}

@@ -63,6 +63,10 @@ export default function MagazinesPage() {
                 <div className="font-malayalam text-[12px] text-gray-500 mt-1 line-clamp-1">{m.description}</div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                <Link href={`/dashboard/articles?magazine=${m.id}`}
+                  className="px-3 py-1.5 text-[12px] border border-blue-200 rounded-lg hover:bg-blue-50 text-blue-600">
+                  View Articles
+                </Link>
                 <button
                   onClick={() => handlePublish(m)}
                   className={`px-3 py-1.5 text-[12px] border rounded-lg transition-colors ${

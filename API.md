@@ -292,7 +292,7 @@ Returns single object or `404 { "error": "Not found" }`.
 ### List Articles
 `GET /api/articles`
 
-Ordered by `created_at DESC`.
+Ordered by article id ascending (smallest number first, e.g. `a1`, `a2`, `a11`).
 
 **Response:**
 ```json
@@ -331,6 +331,7 @@ Returns single object or `404 { "error": "Not found" }`.
 | Field | Type | Required |
 |---|---|---|
 | `id` | string | ✓ |
+| `originalId` | string | When editing, the article's current id. If it differs from `id`, the article is renamed (primary key moved) and references in galleries + magazines are updated. |
 | `magazineId` | string | ✓ |
 | `title` | string | ✓ |
 | `caption` | string | |
@@ -345,6 +346,8 @@ Returns single object or `404 { "error": "Not found" }`.
 | `inlineImage2` | string \| null | |
 | `bottomImage` | string \| null | |
 | `pullQuotes` | `[{ text, afterParagraph }]` | |
+
+**Errors:** `409 Article ID already in use` (when renaming to an id that already exists)
 
 ---
 
