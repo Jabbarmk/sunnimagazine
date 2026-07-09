@@ -37,13 +37,13 @@ export function getAuthState(): "auth" | "skip" | null {
 }
 
 export function isAuthenticated(): boolean {
-  const s = getAuthState();
-  return s === "auth" || s === "skip";
+  // Login is mandatory — only a real sign-in counts (no "skip").
+  return getAuthState() === "auth";
 }
 
 export type StoredUser = {
   id: string; name: string; email: string; mobile: string;
-  location: string; photo: string;
+  location: string; photo: string; emirates: string;
   subscriptionFrom: string; subscriptionTo: string;
   referredBy: string; referralMobile: string;
 };
@@ -72,5 +72,5 @@ export function getAppUser(): StoredUser | null {
 export function clearAppUser(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(APP_USER_KEY);
-  localStorage.setItem(AUTH_KEY, "skip");
+  localStorage.removeItem(AUTH_KEY);
 }

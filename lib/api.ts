@@ -32,6 +32,12 @@ async function put(path: string, body: unknown): Promise<void> {
 
 // ── Articles ──────────────────────────────────────────────
 export const getArticles = () => get<any[]>("/articles");
+// Light list (id, title, category, author, date, magazineId only) — no images/bodies.
+export const getArticlesList = (magazineId?: string) =>
+  get<any[]>(`/articles?list=1${magazineId ? `&magazineId=${encodeURIComponent(magazineId)}` : ""}`);
+// Full articles for a single magazine, filtered on the server.
+export const getArticlesByMagazine = (magazineId: string) =>
+  get<any[]>(`/articles?magazineId=${encodeURIComponent(magazineId)}`);
 export const getArticle = (id: string) => get<any>(`/articles/${id}`);
 export const saveArticle = (a: any) => post("/articles", a);
 export const deleteArticle = (id: string) => del(`/articles/${id}`);
@@ -55,7 +61,8 @@ export const saveAuthor = (a: any) => post("/authors", a);
 export const deleteAuthor = (id: string) => del(`/authors/${id}`);
 
 // ── Slides ────────────────────────────────────────────────
-export const getSlides = () => get<any[]>("/slides");
+export const getSlides = (userId?: string) =>
+  get<any[]>(`/slides${userId ? `?userId=${encodeURIComponent(userId)}` : ""}`);
 export const getSlide = (id: string) => get<any>(`/slides/${id}`);
 export const saveSlide = (s: any) => post("/slides", s);
 export const deleteSlide = (id: string) => del(`/slides/${id}`);

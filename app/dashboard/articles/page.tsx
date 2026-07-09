@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { getArticles, getMagazinesDashboard, deleteArticle } from "@/lib/api";
+import { getArticlesList, getMagazinesDashboard, deleteArticle } from "@/lib/api";
 import type { Article } from "@/lib/data";
 import type { Magazine } from "@/lib/data";
 
@@ -12,23 +12,28 @@ function ArticlesList() {
   const magazineParam = searchParams.get("magazine");
   const [articles, setArticles] = useState<Article[]>([]);
   const [magazines, setMagazines] = useState<Magazine[]>([]);
-  const [magazineId, setMagazineId] = useState<string>("");
+  // null = not initialised yet; "" = All magazines
+  const [magazineId, setMagazineId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const load = () => { getArticles().then(setArticles); };
+  const load = (mag: string | null) => {
+    if (mag === null) return;
+    getArticlesList(mag || undefined).then(setArticles);
+  };
 
   useEffect(() => {
-    load();
     getMagazinesDashboard().then((mags) => {
       setMagazines(mags);
       // Default selection: magazine from the URL (e.g. opened from Magazines page),
       // otherwise the latest magazine (list is sorted newest first).
-      setMagazineId((prev) => prev || magazineParam || mags[0]?.id || "");
+      setMagazineId((prev) => prev ?? (magazineParam || mags[0]?.id || ""));
     });
   }, [magazineParam]);
 
-  const byMagazine = articles.filter((a) => !magazineId || a.magazineId === magazineId);
-  const filtered = byMagazine.filter(
+  // Fetch only the selected magazine's articles (light list) from the server.
+  useEffect(() => { load(magazineId); }, [magazineId]);
+
+  const filtered = articles.filter(
     (a) =>
       a.title.toLowerCase().includes(search.toLowerCase()) ||
       a.author.toLowerCase().includes(search.toLowerCase()) ||
@@ -40,7 +45,7 @@ function ArticlesList() {
   const handleDelete = async (id: string) => {
     if (!confirm("ഈ ലേഖനം ഇല്ലാതാക്കണോ?")) return;
     await deleteArticle(id);
-    load();
+    load(magazineId);
   };
 
   return (
@@ -50,8 +55,8 @@ function ArticlesList() {
           <h1 className="text-[22px] font-semibold text-gray-900">Articles</h1>
           <p className="text-[13px] text-gray-500 mt-0.5">
             {selectedMagazine
-              ? `${byMagazine.length} articles in ${selectedMagazine.title}`
-              : `${byMagazine.length} articles`}
+              ? `${articles.length} articles in ${selectedMagazine.title}`
+              : `${articles.length} articles`}
           </p>
         </div>
         <Link
@@ -64,7 +69,7 @@ function ArticlesList() {
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <select
-          value={magazineId}
+          value={magazineId ?? ""}
           onChange={(e) => setMagazineId(e.target.value)}
           className="px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400 bg-white"
         >

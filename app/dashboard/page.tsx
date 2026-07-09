@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getArticles, getMagazines, getCategories } from "@/lib/api";
+import { getArticlesList, getMagazines, getCategories } from "@/lib/api";
 
 const FileTextIcon = () => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -36,7 +36,7 @@ export default function DashboardPage() {
   const [counts, setCounts] = useState({ articles: 0, magazines: 0, categories: 0 });
 
   useEffect(() => {
-    Promise.all([getArticles(), getMagazines(), getCategories()]).then(([a, m, c]) => {
+    Promise.all([getArticlesList(), getMagazines(), getCategories()]).then(([a, m, c]) => {
       setCounts({ articles: a.length, magazines: m.length, categories: c.length });
     });
   }, []);

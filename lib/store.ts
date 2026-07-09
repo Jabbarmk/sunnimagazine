@@ -3,7 +3,7 @@ import type { Article, Magazine } from "./data";
 
 export type Category = { id: string; name: string };
 export type Author = { id: string; name: string; avatar: string };
-export type Slide = { id: string; image: string; poster: string; title: string; details: string; website: string; contact: string };
+export type Slide = { id: string; image: string; poster: string; title: string; details: string; website: string; contact: string; emirates?: string };
 export type GalleryImage = { id: string; url: string };
 export type ArtCategory = { id: string; name: string };
 export type Art = {
@@ -31,6 +31,7 @@ export type AppUser = {
   subscriptionTo: string;
   referredBy: string;
   referralMobile: string;
+  emirates: string;
   isActive: boolean;
   deletedAt: string | null;
 };
@@ -90,6 +91,7 @@ export type EventItem = {
   description: string;
   poster: string;
   eventDate: string;
+  emirates?: string;
 };
 
 export type NewsCategory = { id: string; name: string };
@@ -102,6 +104,7 @@ export type NewsItem = {
   image: string;
   source: string;
   publishedAt: string;
+  emirates?: string;
 };
 
 const ART_KEY = "gs_articles_v1";

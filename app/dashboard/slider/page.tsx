@@ -5,9 +5,10 @@ import { getSlides, saveSlide, deleteSlide } from "@/lib/api";
 import type { Slide } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
+import { EMIRATES_WITH_GLOBAL, GLOBAL } from "@/lib/emirates";
 
 const EMPTY: Omit<Slide, "id"> & { sortOrder: number } = {
-  image: "", poster: "", title: "", details: "", website: "", contact: "", sortOrder: 0,
+  image: "", poster: "", title: "", details: "", website: "", contact: "", emirates: GLOBAL, sortOrder: 0,
 };
 
 export default function SliderPage() {
@@ -32,6 +33,7 @@ export default function SliderPage() {
     setForm({
       image: s.image, poster: s.poster ?? "", title: s.title,
       details: s.details, website: s.website, contact: s.contact,
+      emirates: s.emirates ?? GLOBAL,
       sortOrder: s.sortOrder ?? 0,
     } as any);
     setFe({}); setSaveError("");
@@ -55,7 +57,7 @@ export default function SliderPage() {
     reload();
   };
 
-  const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
     setFe((p) => { const n = { ...p }; delete n[k]; return n; });
   };
@@ -101,6 +103,13 @@ export default function SliderPage() {
             <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Contact Details</label>
             <textarea value={form.contact} onChange={set("contact")} placeholder="Phone, email, address..." rows={2}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400 resize-y" />
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Emirate <span className="text-gray-400 font-normal">— Global = shown to all users</span></label>
+            <select value={form.emirates} onChange={set("emirates")}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400 bg-white">
+              {EMIRATES_WITH_GLOBAL.map((e) => <option key={e} value={e}>{e}</option>)}
+            </select>
           </div>
           <div>
             <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Sort Order</label>
@@ -151,7 +160,10 @@ export default function SliderPage() {
                 <div className="w-16 h-12 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 text-[20px]">⬜</div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium text-gray-800 truncate">{s.title}</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-medium text-gray-800 truncate">{s.title}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 flex-shrink-0">📍 {s.emirates || "Global"}</span>
+                </div>
                 {s.website && <div className="text-[11px] text-gray-400 truncate">{s.website}</div>}
               </div>
               <button onClick={() => handleEdit(s)} className="text-[12px] text-gray-400 hover:text-gray-700 flex-shrink-0">Edit</button>

@@ -17,6 +17,7 @@ export async function getNewsDB(): Promise<NewsItem[]> {
     id: r.id, categoryId: r.category_id, categoryName: r.category_name,
     title: r.title, description: r.description, image: r.image,
     source: r.source, publishedAt: r.published_at,
+    emirates: r.emirates ?? "Global",
   }));
 }
 
@@ -25,6 +26,7 @@ export async function getEventsDB(): Promise<EventItem[]> {
   return (rows as any[]).map((r) => ({
     id: r.id, title: r.title, description: r.description,
     poster: r.poster, eventDate: r.event_date,
+    emirates: r.emirates ?? "Global",
   }));
 }
 

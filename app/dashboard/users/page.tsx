@@ -10,6 +10,7 @@ import type { AppUser, UserSubscription, EmailSettings } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
 import { sendSubscriptionReceipt } from "@/lib/email";
+import { EMIRATES_WITH_GLOBAL } from "@/lib/emirates";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -299,7 +300,7 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
 
 const EMPTY: Omit<AppUser, "id" | "isActive" | "deletedAt"> = {
   name: "", email: "", password: "", mobile: "", location: "",
-  photo: "", subscriptionFrom: "", subscriptionTo: "",
+  photo: "", emirates: "", subscriptionFrom: "", subscriptionTo: "",
   referredBy: "", referralMobile: "",
 };
 
@@ -340,7 +341,7 @@ export default function UsersPage() {
     setEditId(u.id);
     setForm({
       name: u.name, email: u.email, password: "", mobile: u.mobile,
-      location: u.location, photo: u.photo,
+      location: u.location, photo: u.photo, emirates: u.emirates ?? "",
       subscriptionFrom: u.subscriptionFrom, subscriptionTo: u.subscriptionTo,
       referredBy: u.referredBy ?? "", referralMobile: u.referralMobile ?? "",
     });
@@ -359,6 +360,7 @@ export default function UsersPage() {
     if (!form.name.trim())  errs.name  = "Name is required";
     if (!form.email.trim()) errs.email = "Email is required";
     if (!editId && !form.password.trim()) errs.password = "Password is required";
+    if (!form.emirates) errs.emirates = "Emirate is required";
     const mobileErr = validateMobile(form.mobile);
     if (mobileErr) errs.mobile = mobileErr;
     const refMobileErr = validateMobile(form.referralMobile);
@@ -371,7 +373,8 @@ export default function UsersPage() {
         id, name: form.name.trim(), email: form.email.trim(),
         password: form.password.trim() || existing?.password || "",
         mobile: form.mobile.trim(), location: form.location.trim(),
-        photo: form.photo, subscriptionFrom: form.subscriptionFrom,
+        photo: form.photo, emirates: form.emirates,
+        subscriptionFrom: form.subscriptionFrom,
         subscriptionTo: form.subscriptionTo,
         referredBy: form.referredBy.trim(), referralMobile: form.referralMobile.trim(),
       });
@@ -490,6 +493,18 @@ export default function UsersPage() {
                 : <p className="text-[10px] text-gray-400 mt-1">e.g. 971501234567</p>
               }
             </div>
+            <div>
+              <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Emirate <span className="text-red-400">*</span></label>
+              <select
+                value={form.emirates}
+                onChange={(e) => { setForm((f) => ({ ...f, emirates: e.target.value })); setFe((p) => { const n = { ...p }; delete n.emirates; return n; }); }}
+                className={inp("emirates") + " bg-white"}
+              >
+                <option value="">Select emirate</option>
+                {EMIRATES_WITH_GLOBAL.map((e) => <option key={e} value={e}>{e}</option>)}
+              </select>
+              {fe.emirates && <p className="text-[11px] text-red-500 mt-1">{fe.emirates}</p>}
+            </div>
             <div className="col-span-2">
               <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Location</label>
               <input value={form.location} onChange={set("location")} placeholder="City, Country" className={inp("location")} />
@@ -578,6 +593,7 @@ export default function UsersPage() {
                     <div className="flex gap-3 mt-0.5 flex-wrap">
                       {u.mobile && <span className="text-[11px] text-gray-400">{u.mobile}</span>}
                       {u.location && <span className="text-[11px] text-gray-400">{u.location}</span>}
+                      {u.emirates && <span className="text-[11px] text-amber-600 font-medium">📍 {u.emirates}</span>}
                     </div>
                     {(u.subscriptionFrom || u.subscriptionTo) && (
                       <div className="text-[10px] text-gray-400 mt-0.5">

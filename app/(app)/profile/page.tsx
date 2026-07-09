@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useBookmarks } from "@/lib/bookmarks";
 import { LogoBar } from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
-import { getAppUser, clearAppUser, skipLogin, type StoredUser } from "@/lib/auth";
+import { getAppUser, clearAppUser, type StoredUser } from "@/lib/auth";
 
 function daysLeft(to: string): number {
   return Math.ceil((new Date(to).getTime() - Date.now()) / 86_400_000);

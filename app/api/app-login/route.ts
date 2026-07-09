@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Required" }, { status: 400 });
   }
   const [rows] = await db.query(
-    `SELECT id,name,email,mobile,location,photo,subscription_from,subscription_to,referred_by,referral_mobile
+    `SELECT id,name,email,mobile,location,photo,emirates,subscription_from,subscription_to,referred_by,referral_mobile
      FROM app_users
      WHERE (email=? OR mobile=?) AND password=? AND is_active=1 AND deleted_at IS NULL
      LIMIT 1`,
@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     mobile: u.mobile,
     location: u.location,
     photo: u.photo ?? "",
+    emirates: u.emirates ?? "",
     subscriptionFrom: u.subscription_from ?? "",
     subscriptionTo: u.subscription_to ?? "",
     referredBy: u.referred_by ?? "",

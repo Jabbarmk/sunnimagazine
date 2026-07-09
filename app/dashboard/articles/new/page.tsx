@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { saveArticle, getMagazines, getCategories, getAuthors, getArticles } from "@/lib/api";
+import { saveArticle, getMagazines, getCategories, getAuthors, getArticlesList } from "@/lib/api";
 import type { Category, Author } from "@/lib/store";
 import type { Magazine, PullQuote } from "@/lib/data";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
@@ -35,7 +35,7 @@ export default function NewArticlePage() {
     });
     getCategories().then(setCategories);
     getAuthors().then(setAuthors);
-    getArticles().then((all) => {
+    getArticlesList().then((all) => {
       const existingIds = all.map((a: { id: string }) => a.id);
       let n = all.length + 1;
       while (existingIds.includes(`a${n}`)) n++;

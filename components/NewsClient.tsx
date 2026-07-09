@@ -1,15 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import type { NewsItem } from "@/lib/store";
+import { getAppUser } from "@/lib/auth";
+import { emirateVisible } from "@/lib/emirates";
 
 type Cat = { id: string; name: string };
 
 export default function NewsClient({ items, cats }: { items: NewsItem[]; cats: Cat[] }) {
   const [activeTab, setActiveTab] = useState("All");
+  const [emirate, setEmirate] = useState<string | null>(null);
+  useEffect(() => { setEmirate(getAppUser()?.emirates ?? ""); }, []);
+
+  // Show only news for the user's emirate (+ Global) once we know it.
+  const visible = emirate === null ? items : items.filter((n) => emirateVisible(emirate, n.emirates));
   const tabs = ["All", ...cats.map((c) => c.name)];
-  const filtered = activeTab === "All" ? items : items.filter((n) => n.categoryName === activeTab);
+  const filtered = activeTab === "All" ? visible : visible.filter((n) => n.categoryName === activeTab);
 
   return (
     <>

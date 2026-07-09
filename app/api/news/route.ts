@@ -12,19 +12,21 @@ export async function GET() {
     image: r.image,
     source: r.source,
     publishedAt: r.published_at,
+    emirates: r.emirates ?? "Global",
   })));
 }
 
 export async function POST(req: Request) {
   const b = await req.json();
   await db.query(
-    `INSERT INTO news (id,category_id,category_name,title,description,image,source,published_at)
-     VALUES (?,?,?,?,?,?,?,?)
+    `INSERT INTO news (id,category_id,category_name,title,description,image,source,published_at,emirates)
+     VALUES (?,?,?,?,?,?,?,?,?)
      ON DUPLICATE KEY UPDATE
        category_id=VALUES(category_id),category_name=VALUES(category_name),
        title=VALUES(title),description=VALUES(description),
-       image=VALUES(image),source=VALUES(source),published_at=VALUES(published_at)`,
-    [b.id, b.categoryId, b.categoryName, b.title, b.description, b.image, b.source, b.publishedAt]
+       image=VALUES(image),source=VALUES(source),published_at=VALUES(published_at),
+       emirates=VALUES(emirates)`,
+    [b.id, b.categoryId, b.categoryName, b.title, b.description, b.image, b.source, b.publishedAt, b.emirates || "Global"]
   );
   return NextResponse.json({ ok: true });
 }

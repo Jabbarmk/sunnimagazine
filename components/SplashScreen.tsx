@@ -111,13 +111,6 @@ export default function SplashScreen() {
           >
             Login
           </button>
-          <button
-            onClick={dismiss}
-            className="w-full py-3.5 rounded-2xl text-[14px] font-medium"
-            style={{ color: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.1)" }}
-          >
-            Skip
-          </button>
         </div>
       </div>
 

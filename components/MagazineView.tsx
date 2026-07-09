@@ -6,7 +6,7 @@ import { Book, ChevronLeft } from "@/components/Icons";
 import ImgWithFallback from "@/components/ImgWithFallback";
 import ArticleRow from "@/components/ArticleRow";
 import BottomNav from "@/components/BottomNav";
-import { getMagazine, getArticles, getEditorial } from "@/lib/api";
+import { getMagazine, getArticlesByMagazine, getEditorial } from "@/lib/api";
 import type { Magazine, Article } from "@/lib/data";
 
 export default function MagazineView({ id }: { id: string }) {
@@ -22,7 +22,7 @@ export default function MagazineView({ id }: { id: string }) {
         if (!m) { setLoading(false); return; }
         setMagazine(m);
         return Promise.all([
-          getArticles().then((all) => setItems(all.filter((a) => a.magazineId === m.id))),
+          getArticlesByMagazine(m.id).then(setItems),
           getEditorial(m.id).then(setEditorial),
         ]);
       })

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMagazinesDashboard, deleteMagazine, publishMagazine, getArticles } from "@/lib/api";
+import { getMagazinesDashboard, deleteMagazine, publishMagazine, getArticlesList } from "@/lib/api";
 import { Book } from "@/components/Icons";
 import type { Magazine } from "@/lib/data";
 import type { Article } from "@/lib/data";
@@ -13,7 +13,7 @@ export default function MagazinesPage() {
 
   const load = () => {
     getMagazinesDashboard().then(setMagazines);
-    getArticles().then(setArticles);
+    getArticlesList().then(setArticles);
   };
   useEffect(() => { load(); }, []);
 

@@ -8,10 +8,11 @@ import {
 import type { NewsItem, NewsCategory } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
+import { EMIRATES_WITH_GLOBAL, GLOBAL } from "@/lib/emirates";
 
 const today = () => new Date().toISOString().split("T")[0];
 
-const EMPTY = { categoryId: "", title: "", description: "", image: "", source: "", publishedAt: today() };
+const EMPTY = { categoryId: "", title: "", description: "", image: "", source: "", publishedAt: today(), emirates: GLOBAL };
 
 function fmtDate(v: string): string {
   if (!v) return "";
@@ -62,6 +63,7 @@ export default function NewsPage() {
       image: item.image,
       source: item.source,
       publishedAt: item.publishedAt || today(),
+      emirates: item.emirates || GLOBAL,
     });
     setFe({}); setSaveError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -83,6 +85,7 @@ export default function NewsPage() {
         image: form.image,
         source: form.source.trim(),
         publishedAt: form.publishedAt,
+        emirates: form.emirates,
       });
       reset(); reload();
     } catch (e: unknown) { setSaveError(e instanceof Error ? e.message : "Failed to save."); }
@@ -162,6 +165,12 @@ export default function NewsPage() {
             </select>
           </div>
           <div>
+            <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Emirate <span className="text-gray-400 font-normal">— Global = shown to all users</span></label>
+            <select value={form.emirates} onChange={set("emirates")} className={inp("emirates") + " bg-white"}>
+              {EMIRATES_WITH_GLOBAL.map((e) => <option key={e} value={e}>{e}</option>)}
+            </select>
+          </div>
+          <div>
             <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Title <span className="text-red-400">*</span></label>
             <input value={form.title} onChange={set("title")} placeholder="News title" className={inp("title")} />
             {fe.title && <p className="text-[11px] text-red-500 mt-1">{fe.title}</p>}
@@ -223,9 +232,12 @@ export default function NewsPage() {
                 <div className="w-20 h-14 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 text-[22px]">📰</div>
               )}
               <div className="flex-1 min-w-0">
-                {item.categoryName && (
-                  <div className="text-[11px] text-amber-600 font-medium mb-0.5">{item.categoryName}</div>
-                )}
+                <div className="flex items-center gap-2 mb-0.5">
+                  {item.categoryName && (
+                    <span className="text-[11px] text-amber-600 font-medium">{item.categoryName}</span>
+                  )}
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">📍 {item.emirates || "Global"}</span>
+                </div>
                 <div className="text-[13px] font-medium text-gray-800 line-clamp-2">{item.title}</div>
                 {item.source && <div className="text-[11px] text-gray-400 mt-0.5">{item.source}</div>}
                 {item.publishedAt && <div className="text-[11px] text-gray-400">{fmtDate(item.publishedAt)}</div>}

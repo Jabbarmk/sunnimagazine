@@ -16,6 +16,7 @@ export async function GET(req: Request) {
     mobile: r.mobile,
     location: r.location,
     photo: r.photo,
+    emirates: r.emirates ?? "",
     subscriptionFrom: r.subscription_from ?? "",
     subscriptionTo: r.subscription_to ?? "",
     referredBy: r.referred_by ?? "",
@@ -41,13 +42,13 @@ export async function POST(req: Request) {
   }
 
   await db.query(
-    `INSERT INTO app_users (id,name,email,password,mobile,location,photo,subscription_from,subscription_to,referred_by,referral_mobile,is_active)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,1)
+    `INSERT INTO app_users (id,name,email,password,mobile,location,photo,emirates,subscription_from,subscription_to,referred_by,referral_mobile,is_active)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1)
      ON DUPLICATE KEY UPDATE name=VALUES(name),email=VALUES(email),password=VALUES(password),
-       mobile=VALUES(mobile),location=VALUES(location),photo=VALUES(photo),
+       mobile=VALUES(mobile),location=VALUES(location),photo=VALUES(photo),emirates=VALUES(emirates),
        subscription_from=VALUES(subscription_from),subscription_to=VALUES(subscription_to),
        referred_by=VALUES(referred_by),referral_mobile=VALUES(referral_mobile)`,
-    [b.id, b.name, b.email, b.password, b.mobile, b.location, b.photo ?? null,
+    [b.id, b.name, b.email, b.password, b.mobile, b.location, b.photo ?? null, b.emirates ?? "",
      b.subscriptionFrom || null, b.subscriptionTo || null, b.referredBy || null, b.referralMobile || null]
   );
   return NextResponse.json({ ok: true });

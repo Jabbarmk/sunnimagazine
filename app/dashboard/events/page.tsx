@@ -5,8 +5,9 @@ import { getEvents, saveEvent, deleteEvent } from "@/lib/api";
 import type { EventItem } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
+import { EMIRATES_WITH_GLOBAL, GLOBAL } from "@/lib/emirates";
 
-const EMPTY = { title: "", description: "", poster: "", eventDate: "" };
+const EMPTY = { title: "", description: "", poster: "", eventDate: "", emirates: GLOBAL };
 
 function fmtDate(v: string): string {
   if (!v) return "";
@@ -36,7 +37,7 @@ export default function EventsPage() {
   const reset = () => { setForm(EMPTY); setEditId(null); setFe({}); setSaveError(""); };
 
   const set = (k: keyof typeof EMPTY) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
     setFe((p) => { const n = { ...p }; delete n[k]; return n; });
@@ -44,7 +45,7 @@ export default function EventsPage() {
 
   const handleEdit = (ev: EventItem) => {
     setEditId(ev.id);
-    setForm({ title: ev.title, description: ev.description, poster: ev.poster, eventDate: ev.eventDate });
+    setForm({ title: ev.title, description: ev.description, poster: ev.poster, eventDate: ev.eventDate, emirates: ev.emirates || GLOBAL });
     setFe({}); setSaveError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -60,6 +61,7 @@ export default function EventsPage() {
         description: form.description.trim(),
         poster: form.poster,
         eventDate: form.eventDate,
+        emirates: form.emirates,
       });
       reset(); reload();
     } catch (e: unknown) { setSaveError(e instanceof Error ? e.message : "Failed to save."); }
@@ -99,6 +101,12 @@ export default function EventsPage() {
               onChange={set("eventDate")}
               className={inp("eventDate")}
             />
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Emirate <span className="text-gray-400 font-normal">— Global = shown to all users</span></label>
+            <select value={form.emirates} onChange={set("emirates")} className={inp("emirates") + " bg-white"}>
+              {EMIRATES_WITH_GLOBAL.map((e) => <option key={e} value={e}>{e}</option>)}
+            </select>
           </div>
           <div>
             <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Poster Image</label>
@@ -143,7 +151,10 @@ export default function EventsPage() {
                 <div className="w-20 h-14 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 text-[22px]">📅</div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium text-gray-800 line-clamp-1">{ev.title}</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-medium text-gray-800 line-clamp-1">{ev.title}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 flex-shrink-0">📍 {ev.emirates || "Global"}</span>
+                </div>
                 {ev.eventDate && (
                   <div className="text-[11px] text-amber-600 font-medium mt-0.5">{fmtDate(ev.eventDate)}</div>
                 )}

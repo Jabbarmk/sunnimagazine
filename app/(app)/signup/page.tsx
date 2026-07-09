@@ -4,16 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getEmailSettings } from "@/lib/api";
 import { sendSignupEmails } from "@/lib/email";
+import { EMIRATES_WITH_GLOBAL } from "@/lib/emirates";
 
 export default function SignupPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", mobile: "", email: "" });
+  const [form, setForm] = useState({ name: "", mobile: "", email: "", emirates: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
     setErrors((p) => { const n = { ...p }; delete n[k]; return n; });
     setServerError("");
@@ -22,6 +23,7 @@ export default function SignupPage() {
   const handleSubmit = async () => {
     const errs: Record<string, string> = {};
     if (!form.name.trim()) errs.name = "Name is required";
+    if (!form.emirates) errs.emirates = "Please select your emirate";
     if (!form.email.trim()) errs.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = "Enter a valid email";
     if (Object.keys(errs).length) { setErrors(errs); return; }
@@ -32,7 +34,7 @@ export default function SignupPage() {
       const res = await fetch("/api/app-signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.name.trim(), email: form.email.trim(), mobile: form.mobile.trim() }),
+        body: JSON.stringify({ name: form.name.trim(), email: form.email.trim(), mobile: form.mobile.trim(), emirates: form.emirates }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -105,6 +107,21 @@ export default function SignupPage() {
               type="tel"
               className={inp("mobile")}
             />
+          </div>
+
+          <div>
+            <label className="block text-[12px] text-muted mb-1.5">Emirate <span className="text-accent">*</span></label>
+            <select
+              value={form.emirates}
+              onChange={set("emirates")}
+              className={inp("emirates") + " appearance-none"}
+            >
+              <option value="">Select your emirate</option>
+              {EMIRATES_WITH_GLOBAL.map((e) => (
+                <option key={e} value={e}>{e}</option>
+              ))}
+            </select>
+            {errors.emirates && <p className="text-[11px] text-accent mt-1">{errors.emirates}</p>}
           </div>
 
           <div>

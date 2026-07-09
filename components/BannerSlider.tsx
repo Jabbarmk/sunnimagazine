@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { getSlides } from "@/lib/api";
+import { getAppUser } from "@/lib/auth";
 
 export default function BannerSlider() {
   const [slides, setSlides] = useState<{ id: string; image: string; title: string }[]>([]);
@@ -12,7 +13,8 @@ export default function BannerSlider() {
   const router = useRouter();
 
   useEffect(() => {
-    getSlides().then((loaded) => {
+    // Filter slides by the logged-in user's emirate (Global slides show to all).
+    getSlides(getAppUser()?.id).then((loaded) => {
       if (loaded.length > 0) setSlides(loaded.map((s) => ({ id: s.id, image: s.image, title: s.title })));
     });
   }, []);

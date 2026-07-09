@@ -6,7 +6,7 @@ import { ArticleBar } from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
 import { hasMalayalam } from "@/lib/text";
 import { renderInline } from "@/lib/renderInline";
-import { getArticle, getArticles, getGallery } from "@/lib/api";
+import { getArticle, getArticlesByMagazine, getGallery } from "@/lib/api";
 import { useBookmarks } from "@/lib/bookmarks";
 import { Bookmark, User, ImageIcon } from "@/components/Icons";
 import ImgWithFallback from "@/components/ImgWithFallback";
@@ -26,8 +26,8 @@ export default function ArticleView({ id, scrollToPara }: { id: string; scrollTo
     getArticle(id).then((a) => {
       if (!a) return;
       setArticle(a);
-      getArticles().then((all) => {
-        setRelated(all.filter((x) => x.id !== a.id && x.magazineId === a.magazineId));
+      getArticlesByMagazine(a.magazineId).then((all) => {
+        setRelated(all.filter((x) => x.id !== a.id));
       });
       getGallery(id).then(setGallery);
       setGalleryIndex(0);

@@ -81,6 +81,7 @@ All request/response bodies are JSON unless noted. Successful mutations return `
 | `name` | string | ✓ |
 | `email` | string | ✓ |
 | `mobile` | string | |
+| `emirates` | string | ✓ — one of the 7 UAE emirates or `Global` |
 
 **Response:** `{ "ok": true, "id": "string" }`
 
@@ -293,6 +294,13 @@ Returns single object or `404 { "error": "Not found" }`.
 `GET /api/articles`
 
 Ordered by article id ascending (smallest number first, e.g. `a1`, `a2`, `a11`).
+
+| Query | Type | Description |
+|---|---|---|
+| `magazineId` | string | Filter to a single magazine's articles (server-side). Omit for all. |
+| `list` | `"1"` | Light mode — returns only `id`, `magazineId`, `title`, `category`, `author`, `date` (no images or paragraph bodies). Use for list/table views. |
+
+Combine both, e.g. `GET /api/articles?magazineId=m3&list=1`.
 
 **Response:**
 ```json
@@ -697,6 +705,12 @@ Sends notification email to admin + confirmation to submitter.
 `GET /api/slides`
 
 Ordered by `sort_order ASC`, then `created_at DESC`.
+
+| Query | Type | Description |
+|---|---|---|
+| `userId` | string | Filter slides to the user's emirate (+ `Global`). Omit (dashboard) to return all. |
+
+Each slide has an `emirates` field (`Global` = shown to everyone). `news`, `events`, and `app_users` also carry an `emirates` field. News/events are filtered per-user client-side; slides are filtered server-side via `userId`.
 
 **Response:**
 ```json

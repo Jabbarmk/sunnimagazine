@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { skipLogin, loginAppUser, getAppUser } from "@/lib/auth";
+import { loginAppUser, getAppUser } from "@/lib/auth";
 
 function isExpired(subscriptionTo: string): boolean {
   if (!subscriptionTo) return false;
@@ -36,11 +36,6 @@ export default function LoginPage() {
     } else {
       setError("Invalid mobile/email or password.");
     }
-  };
-
-  const goHome = () => {
-    skipLogin();
-    router.push("/");
   };
 
   if (expired) {
@@ -111,13 +106,6 @@ export default function LoginPage() {
             {loading ? "Signing in…" : "Sign In"}
           </button>
         </div>
-
-        <button
-          onClick={goHome}
-          className="mt-6 text-[13px] text-muted underline underline-offset-2"
-        >
-          Skip for now
-        </button>
       </div>
 
       <div className="pb-8 text-center space-y-2">

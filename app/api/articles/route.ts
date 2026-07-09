@@ -18,8 +18,39 @@ function idNum(id: string) {
   return m ? parseInt(m[0], 10) : Number.MAX_SAFE_INTEGER;
 }
 
-export async function GET() {
-  const [rows] = await db.query("SELECT * FROM articles");
+const byId = (a: { id: string }, b: { id: string }) =>
+  idNum(a.id) - idNum(b.id) || String(a.id).localeCompare(String(b.id));
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const magazineId = searchParams.get("magazineId");
+  const list = searchParams.get("list");
+
+  // Filter on the server so a client never downloads other magazines' articles.
+  const where = magazineId ? "WHERE magazine_id=?" : "";
+  const args = magazineId ? [magazineId] : [];
+
+  // Light mode: only the columns a list view needs — skips the heavy
+  // base64 images and paragraph bodies that bloat the payload.
+  if (list) {
+    const [rows] = await db.query(
+      `SELECT id, magazine_id, title, category, author, date FROM articles ${where}`,
+      args
+    );
+    const items = (rows as any[])
+      .map((r) => ({
+        id: r.id,
+        magazineId: r.magazine_id,
+        title: r.title,
+        category: r.category,
+        author: r.author,
+        date: r.date,
+      }))
+      .sort(byId);
+    return NextResponse.json(items);
+  }
+
+  const [rows] = await db.query(`SELECT * FROM articles ${where}`, args);
   const articles = (rows as any[])
     .map((r) => ({
       ...r,
@@ -31,7 +62,7 @@ export async function GET() {
       bottomImage: r.bottom_image,
       pullQuotes: parsePullQuotes(r.pull_quote),
     }))
-    .sort((a, b) => idNum(a.id) - idNum(b.id) || String(a.id).localeCompare(String(b.id)));
+    .sort(byId);
   return NextResponse.json(articles);
 }
 
