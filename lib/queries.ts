@@ -64,6 +64,21 @@ export async function getEventDB(id: string): Promise<EventItem | null> {
   }
 }
 
+export async function getOtherMagazinesDB(limit = 5): Promise<any[]> {
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM other_magazines ORDER BY sort_order ASC, created_at DESC LIMIT ?",
+      [limit]
+    );
+    return (rows as any[]).map((r) => ({
+      id: r.id, title: r.title, details: r.details, cover: r.cover,
+      pdfUrl: r.pdf_url, issueDate: r.issue_date,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function getNewsCategoriesDB(): Promise<{ id: string; name: string }[]> {
   const [rows] = await db.query("SELECT * FROM news_categories ORDER BY name");
   return rows as any[];

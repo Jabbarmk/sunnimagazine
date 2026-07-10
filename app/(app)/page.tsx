@@ -1,6 +1,6 @@
 export const revalidate = 60;
 
-import { getMagazinesDB, getNewsDB, getEventsDB, getTickerDB } from "@/lib/queries";
+import { getMagazinesDB, getNewsDB, getEventsDB, getTickerDB, getOtherMagazinesDB } from "@/lib/queries";
 import type { Magazine } from "@/lib/data";
 import { LogoBar } from "@/components/TopBar";
 import SectionHeader from "@/components/SectionHeader";
@@ -8,6 +8,7 @@ import { HeroCover, SmallCover } from "@/components/MagazineCover";
 import BottomNav from "@/components/BottomNav";
 import BannerSlider from "@/components/BannerSlider";
 import HomeFeeds from "@/components/HomeFeeds";
+import OtherMagazines from "@/components/OtherMagazines";
 
 const MONTHS: Record<string, number> = {
   january:1,february:2,march:3,april:4,may:5,june:6,
@@ -44,8 +45,8 @@ function TickerBar({ text, isEnabled }: { text: string; isEnabled: boolean }) {
 }
 
 export default async function Home() {
-  const [mags, newsItems, events, ticker] = await Promise.all([
-    getMagazinesDB(), getNewsDB(), getEventsDB(), getTickerDB(),
+  const [mags, newsItems, events, ticker, otherMags] = await Promise.all([
+    getMagazinesDB(), getNewsDB(), getEventsDB(), getTickerDB(), getOtherMagazinesDB(5),
   ]);
 
   const magazines = sortByDate(mags);
@@ -74,6 +75,7 @@ export default async function Home() {
             </div>
           </>
         )}
+        <OtherMagazines items={otherMags} />
         <HomeFeeds news={newsItems} events={events} />
       </div>
       <BottomNav />

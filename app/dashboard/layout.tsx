@@ -129,6 +129,7 @@ const nav = [
   { href: "/dashboard", label: "Overview", Icon: GridIcon },
   { href: "/dashboard/articles", label: "Articles", Icon: FileTextIcon },
   { href: "/dashboard/magazines", label: "Magazines", Icon: BookIcon },
+  { href: "/dashboard/othermagazines", label: "Other Magazines", Icon: NewspaperFoldIcon },
   { href: "/dashboard/categories", label: "Categories", Icon: TagIcon },
   { href: "/dashboard/authors", label: "Authors", Icon: UserIcon },
   { href: "/dashboard/slider", label: "Slider", Icon: SlidersIcon },

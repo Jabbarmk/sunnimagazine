@@ -42,6 +42,19 @@ export const getArticle = (id: string) => get<any>(`/articles/${id}`);
 export const saveArticle = (a: any) => post("/articles", a);
 export const deleteArticle = (id: string) => del(`/articles/${id}`);
 
+// ── Other Magazines (cover + details + PDF) ───────────────
+export const getOtherMagazines = () => get<any[]>("/other-magazines");
+export const saveOtherMagazine = (m: any) => post("/other-magazines", m);
+export const deleteOtherMagazine = (id: string) => del(`/other-magazines/${id}`);
+export async function uploadPdf(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch("/api/other-magazines/upload", { method: "POST", body: fd });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || "Upload failed");
+  return data.url as string;
+}
+
 // ── Magazines ─────────────────────────────────────────────
 export const getMagazines = () => get<any[]>("/magazines");
 export const getMagazinesDashboard = () => get<any[]>("/magazines?all=1");

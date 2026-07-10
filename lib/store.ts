@@ -4,6 +4,16 @@ import type { Article, Magazine } from "./data";
 export type Category = { id: string; name: string };
 export type Author = { id: string; name: string; avatar: string };
 export type Slide = { id: string; image: string; poster: string; title: string; details: string; website: string; contact: string; emirates?: string };
+
+export type OtherMagazine = {
+  id: string;
+  title: string;
+  details: string;
+  cover: string;
+  pdfUrl: string;
+  issueDate: string;
+  sortOrder?: number;
+};
 export type GalleryImage = { id: string; url: string };
 export type ArtCategory = { id: string; name: string };
 export type Art = {

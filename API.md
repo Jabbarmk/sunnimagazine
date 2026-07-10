@@ -201,6 +201,49 @@ Blocked if subscription is still active. Error: `400 Cannot delete user with act
 
 ---
 
+## Other Magazines
+
+Standalone magazines (cover + details + PDF, **not** tied to articles). Shown on the app home below Old Prints; tapping a cover opens the PDF in an in-app viewer.
+
+### List
+`GET /api/other-magazines`
+
+Ordered by `sortOrder ASC`, then `created_at DESC`.
+```json
+[{
+  "id": "string",
+  "title": "string",
+  "details": "string",
+  "cover": "string",       // base64 image or URL
+  "pdfUrl": "string",      // /uploads/pdfs/xxx.pdf
+  "issueDate": "string",
+  "sortOrder": "number"
+}]
+```
+
+### Create / Update
+`POST /api/other-magazines`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ |
+| `title` | string | ✓ |
+| `details` | string | |
+| `cover` | string | |
+| `pdfUrl` | string | ✓ (from the upload endpoint) |
+| `issueDate` | string | |
+| `sortOrder` | number | Default `0` |
+
+### Upload PDF
+`POST /api/other-magazines/upload` · `multipart/form-data`, field `file`
+
+Max 50 MB, PDF only. **Response:** `{ "url": "/uploads/pdfs/mag_xxx.pdf" }`
+
+### Delete
+`DELETE /api/other-magazines/[id]`
+
+---
+
 ## User Subscriptions
 
 ### List Subscriptions
