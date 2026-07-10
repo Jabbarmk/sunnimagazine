@@ -3,10 +3,16 @@ import db from "@/lib/db";
 
 export async function GET(req: Request) {
   const all = new URL(req.url).searchParams.get("all");
-  const where = all ? "" : "WHERE is_published=1";
-  const [rows] = await db.query(`SELECT * FROM magazines ${where} ORDER BY year DESC, FIELD(month,'December','November','October','September','August','July','June','May','April','March','February','January')`);
+  const where = all ? "" : "WHERE m.is_published=1";
+  // article_count is computed in SQL so list views don't have to download articles.
+  const [rows] = await db.query(
+    `SELECT m.*, (SELECT COUNT(*) FROM articles a WHERE a.magazine_id = m.id) AS article_count
+     FROM magazines m ${where}
+     ORDER BY m.year DESC, FIELD(m.month,'December','November','October','September','August','July','June','May','April','March','February','January')`
+  );
   return NextResponse.json((rows as any[]).map((r) => ({
     ...r, articleIds: JSON.parse(r.article_ids || "[]"), isPublished: !!r.is_published,
+    articleCount: Number(r.article_count) || 0,
   })));
 }
 

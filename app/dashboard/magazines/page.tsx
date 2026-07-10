@@ -2,18 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMagazinesDashboard, deleteMagazine, publishMagazine, getArticlesList } from "@/lib/api";
+import { getMagazinesDashboard, deleteMagazine, publishMagazine } from "@/lib/api";
 import { Book } from "@/components/Icons";
 import type { Magazine } from "@/lib/data";
-import type { Article } from "@/lib/data";
 
 export default function MagazinesPage() {
-  const [magazines, setMagazines] = useState<Magazine[]>([]);
-  const [articles, setArticles] = useState<Article[]>([]);
+  // Each magazine carries articleCount from the API — no need to load articles here.
+  const [magazines, setMagazines] = useState<(Magazine & { articleCount?: number })[]>([]);
 
   const load = () => {
     getMagazinesDashboard().then(setMagazines);
-    getArticlesList().then(setArticles);
   };
   useEffect(() => { load(); }, []);
 
@@ -41,7 +39,7 @@ export default function MagazinesPage() {
 
       <div className="grid grid-cols-1 gap-3">
         {magazines.map((m) => {
-          const articleCount = articles.filter((a) => a.magazineId === m.id).length;
+          const articleCount = m.articleCount ?? 0;
           return (
             <div key={m.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
               {m.cover
