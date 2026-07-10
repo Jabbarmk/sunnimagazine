@@ -55,8 +55,8 @@ export async function POST(req: Request) {
   const { name, email, mobile, emirates } = await req.json();
   if (!name?.trim() || !email?.trim())
     return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
-  if (!emirates?.trim())
-    return NextResponse.json({ error: "Emirate is required" }, { status: 400 });
+  // emirates is optional at the API level so older app builds that don't send it
+  // keep working; empty emirate = the user sees only Global content until it's set.
 
   const [dupEmail] = await db.query("SELECT id FROM app_users WHERE email=?", [email]);
   if ((dupEmail as any[]).length > 0)
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   await db.query(
     `INSERT INTO app_users (id,name,email,mobile,password,is_active,location,photo,emirates)
      VALUES (?,?,?,?,?,1,'',NULL,?)`,
-    [id, name.trim(), email.trim(), mobile?.trim() || null, null, emirates.trim()]
+    [id, name.trim(), email.trim(), mobile?.trim() || null, null, emirates?.trim() || ""]
   );
 
   try {
