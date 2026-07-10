@@ -6,6 +6,24 @@ All request/response bodies are JSON unless noted. Successful mutations return `
 
 ---
 
+## Fast Listing Flow (magazines → articles)
+
+Use these scoped endpoints so list screens stay tiny and fast. **Never call `GET /api/articles` with no query** — that returns every article with full base64 images (~15 MB). Always use `list=1` and/or `magazineId`.
+
+| Step | Endpoint | Payload | Notes |
+|---|---|---|---|
+| 1. Magazine list | `GET /api/magazines` (`?all=1` for drafts) | ~1 MB | Includes `articleCount` — no article fetch needed |
+| 2. Articles in a magazine | `GET /api/articles?list=1&magazineId=<id>` | ~KB | Light: `id, title, category, author, date`, no images |
+| 3. Full article (on open) | `GET /api/articles/<id>` | full | Only the one article's images/body load |
+
+Light list variants:
+- `GET /api/articles?list=1` — all articles, light (for global lists/counts).
+- `GET /api/articles?magazineId=<id>` — full articles for one magazine (reader view).
+
+Articles are ordered by id ascending (`a1, a2, a11…`, smallest first).
+
+---
+
 ## Table of Contents
 
 - [Authentication](#authentication)
@@ -246,9 +264,12 @@ Ordered by year DESC then month (December → January).
   "description": "string",
   "articleIds": ["string"],
   "isPublished": "boolean",
+  "articleCount": "number",
   "created_at": "string"
 }]
 ```
+
+`articleCount` is computed in SQL — list views get counts without fetching any articles.
 
 ---
 
