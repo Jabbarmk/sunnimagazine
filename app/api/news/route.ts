@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
+import { notifyInBackground, audienceToTopic } from "@/lib/fcm";
 
 export async function GET() {
   const [rows] = await db.query("SELECT * FROM news ORDER BY created_at DESC");
@@ -18,6 +19,9 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const b = await req.json();
+  // Only notify when this is a brand-new item, not an edit.
+  const [ex] = await db.query("SELECT id FROM news WHERE id=?", [b.id]);
+  const isNew = !(ex as any[]).length;
   await db.query(
     `INSERT INTO news (id,category_id,category_name,title,description,image,source,published_at,emirates)
      VALUES (?,?,?,?,?,?,?,?,?)
@@ -28,5 +32,8 @@ export async function POST(req: Request) {
        emirates=VALUES(emirates)`,
     [b.id, b.categoryId, b.categoryName, b.title, b.description, b.image, b.source, b.publishedAt, b.emirates || "Global"]
   );
+  if (isNew) {
+    notifyInBackground(audienceToTopic(b.emirates), b.title, b.categoryName || "New update", { type: "news", id: b.id });
+  }
   return NextResponse.json({ ok: true });
 }

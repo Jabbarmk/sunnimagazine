@@ -154,6 +154,10 @@ export const deleteNewsItem = (id: string) => del(`/news/${id}`);
 export const getTicker = () => get<{ text: string; isEnabled: boolean }>("/ticker");
 export const saveTicker = (t: { text: string; isEnabled: boolean }) => post("/ticker", t);
 
+// ── Notifications (push) ──────────────────────────────────
+export const sendNotification = (payload: { title: string; body: string; target: string }) =>
+  post("/notifications/send", payload);
+
 // ── Editorial ─────────────────────────────────────────────
 export const getEditorial = (magazineId?: string | null) =>
   get<any>(magazineId ? `/editorial?magazineId=${encodeURIComponent(magazineId)}` : "/editorial");
