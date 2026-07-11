@@ -75,7 +75,7 @@ export default async function Home() {
             </div>
           </>
         )}
-        <OtherMagazines items={otherMags} />
+        <OtherMagazines items={otherMags} variant="row" href="/othermagazines" />
         <HomeFeeds news={newsItems} events={events} />
       </div>
       <BottomNav />

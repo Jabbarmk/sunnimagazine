@@ -9,38 +9,61 @@ type OtherMag = {
   cover: string; pdfUrl: string; issueDate: string;
 };
 
-// Home-page "Other Magazines": horizontal row of covers; tap opens the PDF
-// in a fullscreen in-app viewer with a close button.
-export default function OtherMagazines({ items }: { items: OtherMag[] }) {
+// "Other Magazines" — tap a cover to open its PDF in a fullscreen in-app viewer.
+// variant "row"  = home horizontal strip (optionally with a View All link)
+// variant "grid" = full listing page (2-column grid)
+export default function OtherMagazines({
+  items,
+  variant = "row",
+  href,
+  showHeader = true,
+}: {
+  items: OtherMag[];
+  variant?: "row" | "grid";
+  href?: string;
+  showHeader?: boolean;
+}) {
   const [active, setActive] = useState<OtherMag | null>(null);
-  if (!items || items.length === 0) return null;
+  if (!items || items.length === 0) {
+    return variant === "grid"
+      ? <p className="px-5 py-16 text-center text-[13px] text-muted">No magazines yet.</p>
+      : null;
+  }
+
+  const Card = ({ m }: { m: OtherMag }) => (
+    <button onClick={() => setActive(m)} className="text-left w-full">
+      <div className="rounded-2xl overflow-hidden bg-surface shadow-card">
+        <ImgWithFallback
+          src={m.cover}
+          alt={m.title}
+          className={`w-full object-cover block ${variant === "grid" ? "h-[240px]" : "h-[180px]"}`}
+          fallback={<div className={`w-full ${variant === "grid" ? "h-[240px]" : "h-[180px]"} bg-gold/10 flex items-center justify-center text-[36px]`}>📕</div>}
+        />
+        <div className="p-2.5">
+          <div className="font-serif text-[12px] text-ink leading-snug line-clamp-2">{m.title}</div>
+          {m.issueDate && <div className="text-[10px] text-muted mt-0.5">{m.issueDate}</div>}
+        </div>
+      </div>
+    </button>
+  );
 
   return (
     <>
-      <div className="mt-6 mb-4">
-        <SectionHeader title="Other Magazines" />
-        <div className="flex gap-3 overflow-x-auto no-scrollbar px-5 pb-2">
-          {items.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setActive(m)}
-              className="flex-shrink-0 w-[130px] text-left"
-            >
-              <div className="rounded-2xl overflow-hidden bg-surface shadow-card">
-                <ImgWithFallback
-                  src={m.cover}
-                  alt={m.title}
-                  className="w-full h-[180px] object-cover block"
-                  fallback={<div className="w-full h-[180px] bg-gold/10 flex items-center justify-center text-[36px]">📕</div>}
-                />
-                <div className="p-2.5">
-                  <div className="font-serif text-[12px] text-ink leading-snug line-clamp-2">{m.title}</div>
-                  {m.issueDate && <div className="text-[10px] text-muted mt-0.5">{m.issueDate}</div>}
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
+      <div className={variant === "row" ? "mt-6 mb-4" : "mb-4"}>
+        {showHeader && (
+          <SectionHeader title="Other Magazines" href={href} actionLabel="View All" />
+        )}
+        {variant === "row" ? (
+          <div className="flex gap-3 overflow-x-auto no-scrollbar px-5 pb-2">
+            {items.map((m) => (
+              <div key={m.id} className="flex-shrink-0 w-[130px]"><Card m={m} /></div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 px-5">
+            {items.map((m) => <Card key={m.id} m={m} />)}
+          </div>
+        )}
       </div>
 
       {/* Fullscreen PDF viewer */}
@@ -69,11 +92,7 @@ export default function OtherMagazines({ items }: { items: OtherMag[] }) {
             </div>
           </div>
           <div className="flex-1 bg-white overflow-hidden">
-            <iframe
-              src={active.pdfUrl}
-              title={active.title}
-              className="w-full h-full border-0"
-            />
+            <iframe src={active.pdfUrl} title={active.title} className="w-full h-full border-0" />
           </div>
         </div>
       )}
