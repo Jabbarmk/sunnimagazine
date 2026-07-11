@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { getArticlesList, getMagazinesDashboard, deleteArticle } from "@/lib/api";
+import { getArticlesList, getMagazinesList, deleteArticle } from "@/lib/api";
 import type { Article } from "@/lib/data";
 import type { Magazine } from "@/lib/data";
 
@@ -22,7 +22,7 @@ function ArticlesList() {
   };
 
   useEffect(() => {
-    getMagazinesDashboard().then((mags) => {
+    getMagazinesList().then((mags) => {
       setMagazines(mags);
       // Default selection: magazine from the URL (e.g. opened from Magazines page),
       // otherwise the latest magazine (list is sorted newest first).

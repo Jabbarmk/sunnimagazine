@@ -2,17 +2,27 @@ import { NextResponse } from "next/server";
 import db from "@/lib/db";
 
 export async function GET(req: Request) {
-  const all = new URL(req.url).searchParams.get("all");
+  const { searchParams } = new URL(req.url);
+  const all = searchParams.get("all");
+  const list = searchParams.get("list");
   const where = all ? "" : "WHERE m.is_published=1";
-  // article_count is computed in SQL so list views don't have to download articles.
+
+  // Light mode: skip the heavy base64 `cover` (covers are lazy-loaded per magazine
+  // via /api/magazines/[id]/cover). `has_cover` tells the client whether to show a
+  // thumbnail or a placeholder. article_count is computed in SQL either way.
+  const cols = list
+    ? `m.id, m.title, m.month, m.year, m.description, m.article_ids, m.is_published,
+       (m.cover IS NOT NULL AND m.cover <> '') AS has_cover`
+    : "m.*";
   const [rows] = await db.query(
-    `SELECT m.*, (SELECT COUNT(*) FROM articles a WHERE a.magazine_id = m.id) AS article_count
+    `SELECT ${cols}, (SELECT COUNT(*) FROM articles a WHERE a.magazine_id = m.id) AS article_count
      FROM magazines m ${where}
      ORDER BY m.year DESC, FIELD(m.month,'December','November','October','September','August','July','June','May','April','March','February','January')`
   );
   return NextResponse.json((rows as any[]).map((r) => ({
     ...r, articleIds: JSON.parse(r.article_ids || "[]"), isPublished: !!r.is_published,
     articleCount: Number(r.article_count) || 0,
+    hasCover: r.has_cover !== undefined ? !!Number(r.has_cover) : undefined,
   })));
 }
 

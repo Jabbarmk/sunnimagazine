@@ -58,6 +58,9 @@ export async function uploadPdf(file: File): Promise<string> {
 // ── Magazines ─────────────────────────────────────────────
 export const getMagazines = () => get<any[]>("/magazines");
 export const getMagazinesDashboard = () => get<any[]>("/magazines?all=1");
+// Light magazines (no base64 cover) — covers load lazily via /api/magazines/[id]/cover.
+export const getMagazinesList = () => get<any[]>("/magazines?all=1&list=1");
+export const magazineCoverUrl = (id: string) => `/api/magazines/${id}/cover`;
 export const getMagazine = (id: string) => get<any>(`/magazines/${id}`);
 export const saveMagazine = (m: any) => post("/magazines", m);
 export const deleteMagazine = (id: string) => del(`/magazines/${id}`);

@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMagazinesDashboard, deleteMagazine, publishMagazine } from "@/lib/api";
+import { getMagazinesList, magazineCoverUrl, deleteMagazine, publishMagazine } from "@/lib/api";
 import { Book } from "@/components/Icons";
 import type { Magazine } from "@/lib/data";
 
 export default function MagazinesPage() {
-  // Each magazine carries articleCount from the API — no need to load articles here.
-  const [magazines, setMagazines] = useState<(Magazine & { articleCount?: number })[]>([]);
+  // Light list: articleCount + hasCover, no base64 covers. Covers lazy-load per magazine.
+  const [magazines, setMagazines] = useState<(Magazine & { articleCount?: number; hasCover?: boolean })[]>([]);
 
   const load = () => {
-    getMagazinesDashboard().then(setMagazines);
+    getMagazinesList().then(setMagazines);
   };
   useEffect(() => { load(); }, []);
 
@@ -42,8 +42,8 @@ export default function MagazinesPage() {
           const articleCount = m.articleCount ?? 0;
           return (
             <div key={m.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
-              {m.cover
-                ? <img src={m.cover} alt={m.title} className="w-12 h-16 object-cover rounded-lg flex-shrink-0" />
+              {m.hasCover
+                ? <img src={magazineCoverUrl(m.id)} alt={m.title} loading="lazy" className="w-12 h-16 object-cover rounded-lg flex-shrink-0 bg-gray-100" />
                 : <div className="w-12 h-16 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400"><Book size={20} /></div>
               }
               <div className="flex-1 min-w-0">
