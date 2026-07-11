@@ -21,6 +21,10 @@ function idNum(id: string) {
 const byId = (a: { id: string }, b: { id: string }) =>
   idNum(a.id) - idNum(b.id) || String(a.id).localeCompare(String(b.id));
 
+// Primary order = per-magazine sort_order; id is only a tiebreaker/fallback.
+const bySort = (a: { id: string; sortOrder?: number }, b: { id: string; sortOrder?: number }) =>
+  ((a.sortOrder ?? 1e9) - (b.sortOrder ?? 1e9)) || byId(a, b);
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const magazineId = searchParams.get("magazineId");
@@ -34,7 +38,7 @@ export async function GET(req: Request) {
   // base64 images and paragraph bodies that bloat the payload.
   if (list) {
     const [rows] = await db.query(
-      `SELECT id, magazine_id, title, category, author, date FROM articles ${where}`,
+      `SELECT id, magazine_id, title, category, author, date, sort_order FROM articles ${where}`,
       args
     );
     const items = (rows as any[])
@@ -45,8 +49,9 @@ export async function GET(req: Request) {
         category: r.category,
         author: r.author,
         date: r.date,
+        sortOrder: r.sort_order,
       }))
-      .sort(byId);
+      .sort(bySort);
     return NextResponse.json(items);
   }
 
@@ -61,8 +66,9 @@ export async function GET(req: Request) {
       inlineImage2: r.inline_image2,
       bottomImage: r.bottom_image,
       pullQuotes: parsePullQuotes(r.pull_quote),
+      sortOrder: r.sort_order,
     }))
-    .sort(byId);
+    .sort(bySort);
   return NextResponse.json(articles);
 }
 
@@ -85,9 +91,17 @@ export async function POST(req: Request) {
     );
   }
 
+  // New articles append to the end of their magazine; edits keep their existing
+  // sort_order (it is intentionally NOT in the ON DUPLICATE KEY UPDATE list).
+  const [mx] = await db.query(
+    "SELECT COALESCE(MAX(sort_order),0)+1 AS next FROM articles WHERE magazine_id=?",
+    [b.magazineId]
+  );
+  const nextOrder = (mx as any[])[0]?.next ?? 1;
+
   await db.query(
-    `INSERT INTO articles (id,magazine_id,title,caption,category,author,avatar,date,read_time,hero,paragraphs,inline_image,inline_image2,bottom_image,pull_quote)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    `INSERT INTO articles (id,magazine_id,title,caption,category,author,avatar,date,read_time,hero,paragraphs,inline_image,inline_image2,bottom_image,pull_quote,sort_order)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
      ON DUPLICATE KEY UPDATE
        magazine_id=VALUES(magazine_id),title=VALUES(title),caption=VALUES(caption),
        category=VALUES(category),author=VALUES(author),avatar=VALUES(avatar),
@@ -97,7 +111,7 @@ export async function POST(req: Request) {
        pull_quote=VALUES(pull_quote)`,
     [b.id, b.magazineId, b.title, b.caption, b.category, b.author, b.avatar,
      b.date, b.readTime, b.hero, JSON.stringify(b.paragraphs || []),
-     b.inlineImage || null, b.inlineImage2 || null, b.bottomImage || null, pq]
+     b.inlineImage || null, b.inlineImage2 || null, b.bottomImage || null, pq, nextOrder]
   );
   return NextResponse.json({ ok: true });
 }

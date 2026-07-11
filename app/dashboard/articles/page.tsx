@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { getArticlesList, getMagazinesList, deleteArticle } from "@/lib/api";
+import { getArticlesList, getMagazinesList, deleteArticle, reorderArticles } from "@/lib/api";
 import type { Article } from "@/lib/data";
 import type { Magazine } from "@/lib/data";
 
@@ -15,6 +15,8 @@ function ArticlesList() {
   // null = not initialised yet; "" = All magazines
   const [magazineId, setMagazineId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   const load = (mag: string | null) => {
     if (mag === null) return;
@@ -41,6 +43,22 @@ function ArticlesList() {
   );
 
   const selectedMagazine = magazines.find((m) => m.id === magazineId);
+
+  // Reordering only makes sense within one magazine and with no active search
+  // (dragging a filtered subset would be ambiguous).
+  const canReorder = !!magazineId && search.trim() === "";
+
+  const handleDrop = async (target: number) => {
+    if (dragIndex === null || dragIndex === target) { setDragIndex(null); return; }
+    const next = [...articles];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(target, 0, moved);
+    setArticles(next);
+    setDragIndex(null);
+    setSavingOrder(true);
+    try { await reorderArticles(next.map((a) => a.id)); }
+    finally { setSavingOrder(false); }
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm("ഈ ലേഖനം ഇല്ലാതാക്കണോ?")) return;
@@ -86,10 +104,20 @@ function ArticlesList() {
         />
       </div>
 
+      {canReorder ? (
+        <p className="text-[12px] text-gray-400 mb-2">
+          ⠿ Drag rows to reorder how articles appear in this magazine{savingOrder ? " · saving…" : ""}
+        </p>
+      ) : (
+        <p className="text-[12px] text-gray-400 mb-2">
+          Select a single magazine and clear search to drag-reorder articles.
+        </p>
+      )}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full text-[13px]">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
+              <th className="px-2 py-3"></th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Title</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Category</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Author</th>
@@ -100,13 +128,23 @@ function ArticlesList() {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                   No articles found.
                 </td>
               </tr>
             )}
             {filtered.map((a, i) => (
-              <tr key={a.id} className={`${i > 0 ? "border-t border-gray-100" : ""} hover:bg-gray-50`}>
+              <tr
+                key={a.id}
+                draggable={canReorder}
+                onDragStart={() => canReorder && setDragIndex(i)}
+                onDragOver={(e) => { if (canReorder) e.preventDefault(); }}
+                onDrop={() => canReorder && handleDrop(i)}
+                className={`${i > 0 ? "border-t border-gray-100" : ""} hover:bg-gray-50 ${dragIndex === i ? "opacity-50" : ""}`}
+              >
+                <td className={`px-2 py-3 text-center text-gray-300 ${canReorder ? "cursor-move" : ""}`}>
+                  {canReorder ? "⠿" : ""}
+                </td>
                 <td className="px-4 py-3">
                   <div className="font-malayalam text-gray-900 line-clamp-1 max-w-[220px]">{a.title}</div>
                   <div className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{a.id}</div>

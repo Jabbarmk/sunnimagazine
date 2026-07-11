@@ -39,6 +39,8 @@ export const getArticlesList = (magazineId?: string) =>
 export const getArticlesByMagazine = (magazineId: string) =>
   get<any[]>(`/articles?magazineId=${encodeURIComponent(magazineId)}`);
 export const getArticle = (id: string) => get<any>(`/articles/${id}`);
+// Persist drag-and-drop order: ids in desired order → sort_order 1..N.
+export const reorderArticles = (ids: string[]) => post("/articles/reorder", { ids });
 export const saveArticle = (a: any) => post("/articles", a);
 export const deleteArticle = (id: string) => del(`/articles/${id}`);
 

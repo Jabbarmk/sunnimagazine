@@ -357,7 +357,7 @@ Returns single object or `404 { "error": "Not found" }`.
 ### List Articles
 `GET /api/articles`
 
-Ordered by article id ascending (smallest number first, e.g. `a1`, `a2`, `a11`).
+Ordered by **`sortOrder`** (per-magazine drag order), then article id as a tiebreaker. `id` is never used for ordering on its own anymore.
 
 | Query | Type | Description |
 |---|---|---|
@@ -420,6 +420,21 @@ Returns single object or `404 { "error": "Not found" }`.
 | `pullQuotes` | `[{ text, afterParagraph }]` | |
 
 **Errors:** `409 Article ID already in use` (when renaming to an id that already exists)
+
+New articles are appended to the end of their magazine (`sort_order` = current max + 1). Editing an article never changes its `sort_order`.
+
+---
+
+### Reorder Articles
+`POST /api/articles/reorder`
+
+Persists a drag-and-drop order for a magazine's articles.
+
+| Field | Type | Description |
+|---|---|---|
+| `ids` | string[] | Article ids in the desired order; each gets `sort_order` = its 1-based position |
+
+**Response:** `{ "ok": true }`
 
 ---
 
