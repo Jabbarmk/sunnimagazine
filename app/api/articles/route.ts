@@ -91,13 +91,19 @@ export async function POST(req: Request) {
     );
   }
 
-  // New articles append to the end of their magazine; edits keep their existing
+  // sort_order for a NEW article: use the one supplied by the form if present,
+  // otherwise append to the end of the magazine. Edits keep their existing
   // sort_order (it is intentionally NOT in the ON DUPLICATE KEY UPDATE list).
-  const [mx] = await db.query(
-    "SELECT COALESCE(MAX(sort_order),0)+1 AS next FROM articles WHERE magazine_id=?",
-    [b.magazineId]
-  );
-  const nextOrder = (mx as any[])[0]?.next ?? 1;
+  let nextOrder: number;
+  if (b.sortOrder != null && `${b.sortOrder}`.trim() !== "") {
+    nextOrder = Number(b.sortOrder) || 0;
+  } else {
+    const [mx] = await db.query(
+      "SELECT COALESCE(MAX(sort_order),0)+1 AS next FROM articles WHERE magazine_id=?",
+      [b.magazineId]
+    );
+    nextOrder = (mx as any[])[0]?.next ?? 1;
+  }
 
   await db.query(
     `INSERT INTO articles (id,magazine_id,title,caption,category,author,avatar,date,read_time,hero,paragraphs,inline_image,inline_image2,bottom_image,pull_quote,sort_order)

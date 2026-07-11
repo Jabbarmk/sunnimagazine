@@ -9,12 +9,25 @@ import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import ParagraphEditor from "@/components/ParagraphEditor";
 
 const EMPTY = {
-  id: "", magazineId: "", title: "", caption: "", category: "",
+  id: "", magazineId: "", sortOrder: "", title: "", caption: "", category: "",
   author: "", avatar: "", date: "", readTime: "", hero: "",
   paragraphsRaw: "", inlineImage: "", inlineImage2: "", bottomImage: "",
 };
 
 type FE = Record<string, string>;
+
+// Auto ID: capitalized month(3) + year + (articles in magazine + 1), e.g. May20265.
+// Ensures uniqueness if that id is already taken.
+function genIdAndOrder(mag: Magazine | undefined, all: { id: string; magazineId: string }[]) {
+  if (!mag) return { id: "", sortOrder: "" };
+  const count = all.filter((a) => a.magazineId === mag.id).length;
+  const mon = String(mag.month || "").slice(0, 3);
+  const monCap = mon.charAt(0).toUpperCase() + mon.slice(1).toLowerCase();
+  const existing = new Set(all.map((a) => a.id));
+  let n = count + 1;
+  while (existing.has(`${monCap}${mag.year}${n}`)) n++;
+  return { id: `${monCap}${mag.year}${n}`, sortOrder: String(count + 1) };
+}
 
 export default function NewArticlePage() {
   const router = useRouter();
@@ -23,25 +36,35 @@ export default function NewArticlePage() {
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
+  const [allArticles, setAllArticles] = useState<{ id: string; magazineId: string }[]>([]);
   const [fe, setFe] = useState<FE>({});
   const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     const today = new Date();
     const formatted = today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    getMagazines().then((mags) => {
+    Promise.all([getMagazines(), getArticlesList()]).then(([mags, all]) => {
       setMagazines(mags);
-      setForm((f) => ({ ...f, magazineId: mags[0]?.id ?? "" }));
+      setAllArticles(all);
+      const firstMag = mags[0];
+      const gen = genIdAndOrder(firstMag, all);
+      setForm((f) => ({
+        ...f, magazineId: firstMag?.id ?? "",
+        id: gen.id, sortOrder: gen.sortOrder,
+        date: formatted, readTime: "5 min read",
+      }));
     });
     getCategories().then(setCategories);
     getAuthors().then(setAuthors);
-    getArticlesList().then((all) => {
-      const existingIds = all.map((a: { id: string }) => a.id);
-      let n = all.length + 1;
-      while (existingIds.includes(`a${n}`)) n++;
-      setForm((f) => ({ ...f, id: `a${n}`, date: formatted, readTime: "5 min read" }));
-    });
   }, []);
+
+  // Changing the magazine regenerates the auto id + default sort order.
+  const onMagazineChange = (magId: string) => {
+    const mag = magazines.find((m) => m.id === magId);
+    const gen = genIdAndOrder(mag, allArticles);
+    setForm((f) => ({ ...f, magazineId: magId, id: gen.id, sortOrder: gen.sortOrder }));
+    setFe((prev) => { const n = { ...prev }; delete n.magazineId; return n; });
+  };
 
   const set = (k: keyof typeof EMPTY) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -69,6 +92,7 @@ export default function NewArticlePage() {
       await saveArticle({
         id: form.id,
         magazineId: form.magazineId,
+        sortOrder: form.sortOrder,
         title: form.title,
         caption: form.caption,
         category: form.category,
@@ -103,16 +127,20 @@ export default function NewArticlePage() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
-        <Row label="Article ID" hint="e.g. a11" error={fe.id}>
-          <input value={form.id} onChange={set("id")} placeholder="a11" className={inp(!!fe.id)} />
-        </Row>
         <Row label="Magazine" error={fe.magazineId}>
-          <select value={form.magazineId} onChange={set("magazineId")} className={sel(!!fe.magazineId)}>
+          <select value={form.magazineId} onChange={(e) => onMagazineChange(e.target.value)} className={sel(!!fe.magazineId)}>
             <option value="">Select magazine</option>
             {magazines.map((m) => (
               <option key={m.id} value={m.id}>{m.title} ({m.month} {m.year})</option>
             ))}
           </select>
+        </Row>
+        <Row label="Article ID" hint="auto-generated — editable" error={fe.id}>
+          <input value={form.id} onChange={set("id")} placeholder="May20265" className={inp(!!fe.id)} />
+        </Row>
+        <Row label="Sort Order" hint="position in the magazine — editable">
+          <input type="number" min="1" value={form.sortOrder} onChange={set("sortOrder")}
+            className="w-28 px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
         </Row>
 
         <div className="border-t border-gray-100 pt-4">
