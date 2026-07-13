@@ -146,8 +146,18 @@ function ArticlesList() {
                   {canReorder ? "⠿" : ""}
                 </td>
                 <td className="px-4 py-3">
-                  <div className="font-malayalam text-gray-900 line-clamp-1 max-w-[220px]">{a.title}</div>
-                  <div className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{a.id}</div>
+                  <div className="flex items-center gap-3">
+                    {(a as any).hasHero ? (
+                      <img src={`/api/articles/${a.id}/hero`} alt="" loading="lazy"
+                        className="w-12 h-9 object-cover rounded-md flex-shrink-0 bg-gray-100" />
+                    ) : (
+                      <div className="w-12 h-9 rounded-md bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-300 text-[13px]">▦</div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-malayalam text-gray-900 line-clamp-1 max-w-[200px]">{a.title}</div>
+                      <div className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">{a.id}</div>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <span className="font-malayalam inline-block px-2 py-0.5 bg-gold/10 text-gold rounded text-[11px]">

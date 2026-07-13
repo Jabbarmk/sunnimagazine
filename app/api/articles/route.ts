@@ -38,19 +38,27 @@ export async function GET(req: Request) {
   // base64 images and paragraph bodies that bloat the payload.
   if (list) {
     const [rows] = await db.query(
-      `SELECT id, magazine_id, title, category, author, date, sort_order FROM articles ${where}`,
+      `SELECT id, magazine_id, title, category, author, date, sort_order,
+              (hero IS NOT NULL AND hero <> '') AS has_hero
+       FROM articles ${where}`,
       args
     );
     const items = (rows as any[])
-      .map((r) => ({
-        id: r.id,
-        magazineId: r.magazine_id,
-        title: r.title,
-        category: r.category,
-        author: r.author,
-        date: r.date,
-        sortOrder: r.sort_order,
-      }))
+      .map((r) => {
+        const hasHero = !!Number(r.has_hero);
+        return {
+          id: r.id,
+          magazineId: r.magazine_id,
+          title: r.title,
+          category: r.category,
+          author: r.author,
+          date: r.date,
+          sortOrder: r.sort_order,
+          hasHero,
+          // Cacheable thumbnail URL (relative) — apps prepend their base URL.
+          thumbUrl: hasHero ? `/api/articles/${r.id}/hero` : null,
+        };
+      })
       .sort(bySort);
     return NextResponse.json(items);
   }
