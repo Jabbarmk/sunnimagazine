@@ -7,12 +7,14 @@
 
 ALTER TABLE `articles` ADD COLUMN `sort_order` INT NOT NULL DEFAULT 0;
 
+-- NULLIF handles ids with no digits: REGEXP_REPLACE -> '' -> NULL, which casts
+-- safely (MySQL 8 strict mode rejects CAST('' AS UNSIGNED)).
 UPDATE `articles` a
 JOIN (
   SELECT id,
     ROW_NUMBER() OVER (
       PARTITION BY magazine_id
-      ORDER BY CAST(REGEXP_REPLACE(id, '[^0-9]', '') AS UNSIGNED), id
+      ORDER BY CAST(NULLIF(REGEXP_REPLACE(id, '[^0-9]', ''), '') AS UNSIGNED), id
     ) AS rn
   FROM `articles`
 ) t ON a.id = t.id
