@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getCategories, saveCategory, deleteCategory } from "@/lib/api";
 import type { Category } from "@/lib/store";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -83,18 +84,16 @@ export default function CategoriesPage() {
                     autoFocus lang="ml"
                     className="flex-1 px-3 py-1.5 border border-blue-400 rounded-lg text-[14px] outline-none font-malayalam"
                   />
-                  <button onClick={handleSaveEdit} className="text-[12px] text-blue-600 hover:text-blue-800 font-medium">Save</button>
-                  <button onClick={() => { setEditId(null); setEditError(""); }} className="text-[12px] text-gray-400 hover:text-gray-600">Cancel</button>
+                  <RowActionButton variant="primary" onClick={handleSaveEdit}>Save</RowActionButton>
+                  <RowActionButton onClick={() => { setEditId(null); setEditError(""); }}>Cancel</RowActionButton>
                 </div>
                 {editError && <p className="text-[11px] text-red-500">{editError}</p>}
               </div>
             ) : (
               <>
                 <span className="flex-1 text-[14px] text-gray-800 font-malayalam" lang="ml">{cat.name}</span>
-                <button onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditError(""); }}
-                  className="text-[12px] text-gray-400 hover:text-gray-700">Edit</button>
-                <button onClick={() => handleDelete(cat.id)}
-                  className="text-[12px] text-red-400 hover:text-red-600">Delete</button>
+                <RowActionButton onClick={() => { setEditId(cat.id); setEditName(cat.name); setEditError(""); }}>Edit</RowActionButton>
+                <RowActionButton variant="danger" onClick={() => handleDelete(cat.id)}>Delete</RowActionButton>
               </>
             )}
           </div>

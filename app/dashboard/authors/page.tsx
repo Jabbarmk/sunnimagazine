@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getAuthors, saveAuthor, deleteAuthor } from "@/lib/api";
 import type { Author } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 const EMPTY = { id: "", name: "", avatar: "" };
 
@@ -96,8 +97,8 @@ export default function AuthorsPage() {
               </div>
             )}
             <span className="flex-1 text-[13px] text-gray-800">{a.name}</span>
-            <button onClick={() => handleEdit(a)} className="text-[12px] text-gray-400 hover:text-gray-700">Edit</button>
-            <button onClick={() => handleDelete(a.id)} className="text-[12px] text-red-400 hover:text-red-600">Delete</button>
+            <RowActionButton onClick={() => handleEdit(a)}>Edit</RowActionButton>
+            <RowActionButton variant="danger" onClick={() => handleDelete(a.id)}>Delete</RowActionButton>
           </div>
         ))}
       </div>

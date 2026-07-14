@@ -11,6 +11,7 @@ import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
 import { sendSubscriptionReceipt } from "@/lib/email";
 import { EMIRATES_WITH_GLOBAL } from "@/lib/emirates";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -613,18 +614,21 @@ export default function UsersPage() {
                       <div className="text-[11px] text-red-500 mt-1 font-medium">{actionMsg.msg}</div>
                     )}
                   </div>
-                  <div className="flex flex-col gap-1 flex-shrink-0 items-end">
-                    <button onClick={() => setExpandedId(isExpanded ? null : u.id)}
-                      className={`text-[11px] px-2 py-1 rounded-md transition-colors ${isExpanded ? "bg-blue-50 text-blue-600" : "text-gray-400 hover:bg-gray-50"}`}>
+                  <div className="flex flex-wrap gap-1.5 flex-shrink-0 justify-end max-w-[220px]">
+                    <RowActionButton
+                      variant={isExpanded ? "primary" : "default"}
+                      onClick={() => setExpandedId(isExpanded ? null : u.id)}
+                    >
                       {isExpanded ? "▲ Close" : "▼ Subs"}
-                    </button>
-                    <button onClick={() => handleEdit(u)} className="text-[12px] text-gray-400 hover:text-gray-700">Edit</button>
-                    <button
+                    </RowActionButton>
+                    <RowActionButton onClick={() => handleEdit(u)}>Edit</RowActionButton>
+                    <RowActionButton
+                      variant={u.isActive ? "warning" : "success"}
                       onClick={() => handleToggleActive(u)}
-                      className={`text-[11px] ${u.isActive ? "text-amber-500 hover:text-amber-700" : "text-green-500 hover:text-green-700"}`}>
+                    >
                       {u.isActive ? "Deactivate" : "Activate"}
-                    </button>
-                    <button onClick={() => handleDelete(u)} className="text-[12px] text-red-400 hover:text-red-600">Delete</button>
+                    </RowActionButton>
+                    <RowActionButton variant="danger" onClick={() => handleDelete(u)}>Delete</RowActionButton>
                   </div>
                 </div>
                 {isExpanded && (

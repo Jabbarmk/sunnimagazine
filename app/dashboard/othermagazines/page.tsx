@@ -5,6 +5,7 @@ import { getOtherMagazines, saveOtherMagazine, deleteOtherMagazine, uploadPdf } 
 import type { OtherMagazine } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 const EMPTY = { title: "", details: "", cover: "", pdfUrl: "", issueDate: "", sortOrder: 0 };
 
@@ -173,14 +174,16 @@ export default function OtherMagazinesPage() {
                 <div className="w-12 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-gray-300 text-[20px]">📕</div>
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium text-gray-800 truncate">{m.title}</div>
-                {m.issueDate && <div className="text-[11px] text-amber-600 font-medium">{m.issueDate}</div>}
+                <div className="text-[14px] font-medium text-gray-800 truncate">{m.title}</div>
+                {m.issueDate && <div className="text-[12px] text-amber-600 font-medium mt-0.5">{m.issueDate}</div>}
                 {m.pdfUrl && (
-                  <a href={m.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-[11px] text-blue-500 hover:text-blue-700">📄 View PDF</a>
+                  <a href={m.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] text-blue-500 hover:text-blue-700 mt-0.5 inline-block">📄 View PDF</a>
                 )}
               </div>
-              <button onClick={() => handleEdit(m)} className="text-[12px] text-gray-400 hover:text-gray-700 flex-shrink-0">Edit</button>
-              <button onClick={() => handleDelete(m.id)} className="text-[12px] text-red-400 hover:text-red-600 flex-shrink-0">Delete</button>
+              <div className="flex gap-1.5 flex-shrink-0">
+                <RowActionButton onClick={() => handleEdit(m)}>Edit</RowActionButton>
+                <RowActionButton variant="danger" onClick={() => handleDelete(m.id)}>Delete</RowActionButton>
+              </div>
             </div>
           ))}
         </div>

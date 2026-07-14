@@ -9,6 +9,7 @@ import type { NewsItem, NewsCategory } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
 import { EMIRATES_WITH_GLOBAL, GLOBAL } from "@/lib/emirates";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 const today = () => new Date().toISOString().split("T")[0];
 
@@ -243,8 +244,8 @@ export default function NewsPage() {
                 {item.publishedAt && <div className="text-[11px] text-gray-400">{fmtDate(item.publishedAt)}</div>}
               </div>
               <div className="flex flex-col gap-1.5 flex-shrink-0">
-                <button onClick={() => handleEdit(item)} className="text-[12px] text-gray-400 hover:text-gray-700">Edit</button>
-                <button onClick={() => handleDelete(item.id)} className="text-[12px] text-red-400 hover:text-red-600">Delete</button>
+                <RowActionButton onClick={() => handleEdit(item)}>Edit</RowActionButton>
+                <RowActionButton variant="danger" onClick={() => handleDelete(item.id)}>Delete</RowActionButton>
               </div>
             </div>
           ))}

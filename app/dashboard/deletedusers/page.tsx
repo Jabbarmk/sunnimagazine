@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getDeletedUsers, deleteAppUser } from "@/lib/api";
 import type { AppUser } from "@/lib/store";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 function fmtMonth(val: string): string {
   if (!val) return "";
@@ -82,12 +83,7 @@ export default function DeletedUsersPage() {
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => handlePermanentDelete(u)}
-                className="text-[12px] text-red-400 hover:text-red-600 flex-shrink-0"
-              >
-                Remove
-              </button>
+              <RowActionButton variant="danger" onClick={() => handlePermanentDelete(u)}>Remove</RowActionButton>
             </div>
           ))}
         </div>

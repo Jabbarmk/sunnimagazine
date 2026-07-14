@@ -6,6 +6,7 @@ import type { Slide } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
 import { EMIRATES_WITH_GLOBAL, GLOBAL } from "@/lib/emirates";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 const EMPTY: Omit<Slide, "id"> & { sortOrder: number } = {
   image: "", poster: "", title: "", details: "", website: "", contact: "", emirates: GLOBAL, sortOrder: 0,
@@ -166,8 +167,10 @@ export default function SliderPage() {
                 </div>
                 {s.website && <div className="text-[11px] text-gray-400 truncate">{s.website}</div>}
               </div>
-              <button onClick={() => handleEdit(s)} className="text-[12px] text-gray-400 hover:text-gray-700 flex-shrink-0">Edit</button>
-              <button onClick={() => handleDelete(s.id)} className="text-[12px] text-red-400 hover:text-red-600 flex-shrink-0">Delete</button>
+              <div className="flex gap-1.5 flex-shrink-0">
+                <RowActionButton onClick={() => handleEdit(s)}>Edit</RowActionButton>
+                <RowActionButton variant="danger" onClick={() => handleDelete(s.id)}>Delete</RowActionButton>
+              </div>
             </div>
           ))}
         </div>

@@ -7,6 +7,7 @@ import {
 } from "@/lib/api";
 import type { Art } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 const EMPTY = {
   magazineId: "", artCategoryId: "", authorId: "",
@@ -178,8 +179,10 @@ export default function ArtPage() {
               {a.description && <div className="text-[11px] text-gray-500 mt-0.5 whitespace-pre-wrap break-words" lang="ml">{a.description}</div>}
               {a.authorName && <div className="text-[11px] text-gray-400 mt-0.5">{a.authorName}</div>}
             </div>
-            <button onClick={() => handleEdit(a)} className="text-[12px] text-gray-400 hover:text-gray-700 flex-shrink-0">Edit</button>
-            <button onClick={() => handleDelete(a.id)} className="text-[12px] text-red-400 hover:text-red-600 flex-shrink-0">Delete</button>
+            <div className="flex flex-col gap-1.5 flex-shrink-0">
+              <RowActionButton onClick={() => handleEdit(a)}>Edit</RowActionButton>
+              <RowActionButton variant="danger" onClick={() => handleDelete(a.id)}>Delete</RowActionButton>
+            </div>
           </div>
         ))}
       </div>

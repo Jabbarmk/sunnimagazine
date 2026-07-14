@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getUserWritings, updateUserWritingStatus, deleteUserWriting } from "@/lib/api";
 import type { UserWriting } from "@/lib/store";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 const STATUS_LABELS: Record<UserWriting["status"], string> = {
   pending: "Pending",
@@ -67,18 +68,13 @@ export default function UserWritingsPage() {
                     {w.email} · {new Date(w.sentAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                   </div>
                 </div>
-                <button
+                <RowActionButton
+                  variant={expanded === w.id ? "primary" : "default"}
                   onClick={() => setExpanded(expanded === w.id ? null : w.id)}
-                  className="text-[12px] text-gray-400 hover:text-gray-700 flex-shrink-0"
                 >
                   {expanded === w.id ? "Collapse" : "View"}
-                </button>
-                <button
-                  onClick={() => handleDelete(w.id)}
-                  className="text-[12px] text-red-400 hover:text-red-600 flex-shrink-0"
-                >
-                  Delete
-                </button>
+                </RowActionButton>
+                <RowActionButton variant="danger" onClick={() => handleDelete(w.id)}>Delete</RowActionButton>
               </div>
 
               {expanded === w.id && (

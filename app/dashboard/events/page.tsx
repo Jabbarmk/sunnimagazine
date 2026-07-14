@@ -6,6 +6,7 @@ import type { EventItem } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
 import { EMIRATES_WITH_GLOBAL, GLOBAL } from "@/lib/emirates";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 const EMPTY = { title: "", description: "", poster: "", eventDate: "", emirates: GLOBAL };
 
@@ -161,8 +162,8 @@ export default function EventsPage() {
                 {ev.description && <div className="text-[11px] text-gray-400 mt-0.5 line-clamp-2">{ev.description}</div>}
               </div>
               <div className="flex flex-col gap-1.5 flex-shrink-0">
-                <button onClick={() => handleEdit(ev)} className="text-[12px] text-gray-400 hover:text-gray-700">Edit</button>
-                <button onClick={() => handleDelete(ev.id)} className="text-[12px] text-red-400 hover:text-red-600">Delete</button>
+                <RowActionButton onClick={() => handleEdit(ev)}>Edit</RowActionButton>
+                <RowActionButton variant="danger" onClick={() => handleDelete(ev.id)}>Delete</RowActionButton>
               </div>
             </div>
           ))}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getArtCategories, saveArtCategory, deleteArtCategory } from "@/lib/api";
 import type { ArtCategory } from "@/lib/store";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 export default function ArtCategoriesPage() {
   const [cats, setCats] = useState<ArtCategory[]>([]);
@@ -74,8 +75,8 @@ export default function ArtCategoriesPage() {
         {cats.map((c) => (
           <div key={c.id} className="bg-white rounded-xl border border-gray-200 flex items-center gap-3 px-4 py-3">
             <div className="flex-1 text-[13px] font-medium text-gray-800 font-malayalam" lang="ml">{c.name}</div>
-            <button onClick={() => handleEdit(c)} className="text-[12px] text-gray-400 hover:text-gray-700">Edit</button>
-            <button onClick={() => handleDelete(c.id)} className="text-[12px] text-red-400 hover:text-red-600">Delete</button>
+            <RowActionButton onClick={() => handleEdit(c)}>Edit</RowActionButton>
+            <RowActionButton variant="danger" onClick={() => handleDelete(c.id)}>Delete</RowActionButton>
           </div>
         ))}
       </div>

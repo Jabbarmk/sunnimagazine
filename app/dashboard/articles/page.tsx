@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { getArticlesList, getMagazinesList, deleteArticle, reorderArticles } from "@/lib/api";
 import type { Article } from "@/lib/data";
 import type { Magazine } from "@/lib/data";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 function ArticlesList() {
   const searchParams = useSearchParams();
@@ -167,19 +168,9 @@ function ArticlesList() {
                 <td className="px-4 py-3 text-gray-600">{a.author}</td>
                 <td className="px-4 py-3 text-gray-400">{a.date}</td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-2 justify-end">
-                    <Link
-                      href={`/dashboard/articles/edit?id=${a.id}`}
-                      className="px-3 py-1 text-[12px] border border-gray-200 rounded-lg hover:bg-gray-100 text-gray-600"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(a.id)}
-                      className="px-3 py-1 text-[12px] border border-red-100 rounded-lg hover:bg-red-50 text-red-500"
-                    >
-                      Delete
-                    </button>
+                  <div className="flex items-center gap-1.5 justify-end">
+                    <RowActionButton href={`/dashboard/articles/edit?id=${a.id}`}>Edit</RowActionButton>
+                    <RowActionButton variant="danger" onClick={() => handleDelete(a.id)}>Delete</RowActionButton>
                   </div>
                 </td>
               </tr>

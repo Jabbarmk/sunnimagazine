@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { getArticles } from "@/lib/api";
 import type { Article } from "@/lib/data";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 export default function GalleriesPage() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -35,12 +35,9 @@ export default function GalleriesPage() {
                 {counts[a.id] ? `${counts[a.id]} image${counts[a.id] > 1 ? "s" : ""}` : "No images"}
               </div>
             </div>
-            <Link
-              href={`/dashboard/galleries/edit?articleId=${a.id}`}
-              className="text-[12px] text-blue-500 hover:text-blue-700 font-medium flex-shrink-0"
-            >
+            <RowActionButton variant="primary" href={`/dashboard/galleries/edit?articleId=${a.id}`}>
               {counts[a.id] ? "Edit" : "Add images"}
-            </Link>
+            </RowActionButton>
           </div>
         ))}
       </div>

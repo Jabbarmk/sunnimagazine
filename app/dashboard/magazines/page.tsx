@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getMagazinesList, magazineCoverUrl, deleteMagazine, publishMagazine } from "@/lib/api";
 import { Book } from "@/components/Icons";
 import type { Magazine } from "@/lib/data";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 export default function MagazinesPage() {
   // Light list: articleCount + hasCover, no base64 covers. Covers lazy-load per magazine.
@@ -60,29 +61,18 @@ export default function MagazinesPage() {
                 <div className="text-[12px] text-gray-400 mt-0.5">{m.month} {m.year} · {articleCount} articles</div>
                 <div className="font-malayalam text-[12px] text-gray-500 mt-1 line-clamp-1">{m.description}</div>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                <Link href={`/dashboard/articles?magazine=${m.id}`}
-                  className="px-3 py-1.5 text-[12px] border border-blue-200 rounded-lg hover:bg-blue-50 text-blue-600">
+              <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
+                <RowActionButton variant="primary" href={`/dashboard/articles?magazine=${m.id}`}>
                   View Articles
-                </Link>
-                <button
+                </RowActionButton>
+                <RowActionButton
+                  variant={m.isPublished ? "warning" : "success"}
                   onClick={() => handlePublish(m)}
-                  className={`px-3 py-1.5 text-[12px] border rounded-lg transition-colors ${
-                    m.isPublished
-                      ? "border-amber-200 text-amber-600 hover:bg-amber-50"
-                      : "border-green-200 text-green-600 hover:bg-green-50"
-                  }`}
                 >
                   {m.isPublished ? "Unpublish" : "Publish"}
-                </button>
-                <Link href={`/dashboard/magazines/edit?id=${m.id}`}
-                  className="px-3 py-1.5 text-[12px] border border-gray-200 rounded-lg hover:bg-gray-100 text-gray-600">
-                  Edit
-                </Link>
-                <button onClick={() => handleDelete(m.id)}
-                  className="px-3 py-1.5 text-[12px] border border-red-100 rounded-lg hover:bg-red-50 text-red-500">
-                  Delete
-                </button>
+                </RowActionButton>
+                <RowActionButton href={`/dashboard/magazines/edit?id=${m.id}`}>Edit</RowActionButton>
+                <RowActionButton variant="danger" onClick={() => handleDelete(m.id)}>Delete</RowActionButton>
               </div>
             </div>
           );

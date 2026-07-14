@@ -7,6 +7,7 @@ import {
 } from "@/lib/api";
 import type { Video, VideoCategory } from "@/lib/store";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
+import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
 function extractYouTubeId(link: string): string | null {
   const patterns = [
@@ -305,8 +306,10 @@ export default function VideosPage() {
                   <div className="text-[10px] text-blue-400 mt-0.5">Uploaded file</div>
                 )}
               </div>
-              <button onClick={() => handleEdit(v)} className="text-[12px] text-gray-400 hover:text-gray-700 flex-shrink-0">Edit</button>
-              <button onClick={() => handleDelete(v.id)} className="text-[12px] text-red-400 hover:text-red-600 flex-shrink-0">Delete</button>
+              <div className="flex gap-1.5 flex-shrink-0">
+                <RowActionButton onClick={() => handleEdit(v)}>Edit</RowActionButton>
+                <RowActionButton variant="danger" onClick={() => handleDelete(v.id)}>Delete</RowActionButton>
+              </div>
             </div>
           );
         })}
