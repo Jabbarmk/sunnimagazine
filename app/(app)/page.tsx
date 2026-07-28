@@ -1,6 +1,6 @@
 export const revalidate = 60;
 
-import { getMagazinesDB, getNewsDB, getEventsDB, getTickerDB, getOtherMagazinesDB } from "@/lib/queries";
+import { getMagazinesDB, getNewsDB, getEventsDB, getTickerDB, getOtherMagazinesDB, getWingsCategoriesDB } from "@/lib/queries";
 import type { Magazine } from "@/lib/data";
 import { LogoBar } from "@/components/TopBar";
 import SectionHeader from "@/components/SectionHeader";
@@ -9,6 +9,7 @@ import BottomNav from "@/components/BottomNav";
 import BannerSlider from "@/components/BannerSlider";
 import HomeFeeds from "@/components/HomeFeeds";
 import OtherMagazines from "@/components/OtherMagazines";
+import WingsCategories from "@/components/WingsCategories";
 
 const MONTHS: Record<string, number> = {
   january:1,february:2,march:3,april:4,may:5,june:6,
@@ -45,8 +46,8 @@ function TickerBar({ text, isEnabled }: { text: string; isEnabled: boolean }) {
 }
 
 export default async function Home() {
-  const [mags, newsItems, events, ticker, otherMags] = await Promise.all([
-    getMagazinesDB(), getNewsDB(), getEventsDB(), getTickerDB(), getOtherMagazinesDB(5),
+  const [mags, newsItems, events, ticker, otherMags, wingsCats] = await Promise.all([
+    getMagazinesDB(), getNewsDB(), getEventsDB(), getTickerDB(), getOtherMagazinesDB(5), getWingsCategoriesDB(5),
   ]);
 
   const magazines = sortByDate(mags);
@@ -76,6 +77,7 @@ export default async function Home() {
           </>
         )}
         <OtherMagazines items={otherMags} variant="row" href="/othermagazines" />
+        <WingsCategories items={wingsCats} variant="row" href="/wings" />
         <HomeFeeds news={newsItems} events={events} />
       </div>
       <BottomNav />

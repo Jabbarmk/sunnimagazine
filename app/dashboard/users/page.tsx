@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getAppUsers, saveAppUser, softDeleteUser, toggleUserActive,
   getUserSubscriptions, saveUserSubscription, deleteUserSubscription,
-  getEmailSettings,
+  getEmailSettings, notifyExpiry,
 } from "@/lib/api";
 import type { AppUser, UserSubscription, EmailSettings } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
@@ -297,6 +297,79 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
   );
 }
 
+// ─── Notify Expired / Expiring panel ───────────────────────────────────────────
+
+const DEFAULT_TEMPLATES: Record<"expired" | "expiring", { title: string; body: string }> = {
+  expired: {
+    title: "Subscription Expired",
+    body: "Dear {name}, your Gulf Sathyadhara subscription expired on {expiry}. Please renew to keep receiving issues.",
+  },
+  expiring: {
+    title: "Subscription Expiring Soon",
+    body: "Dear {name}, your Gulf Sathyadhara subscription expires on {expiry}. Please renew soon to avoid interruption.",
+  },
+};
+
+function NotifyExpiryPanel({ type, onClose }: { type: "expired" | "expiring"; onClose: () => void }) {
+  const [title, setTitle] = useState(DEFAULT_TEMPLATES[type].title);
+  const [body, setBody] = useState(DEFAULT_TEMPLATES[type].body);
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const handleSend = async () => {
+    if (!title.trim() || !body.trim()) {
+      setResult({ type: "err", text: "Title and message are required." });
+      return;
+    }
+    if (!confirm(`Send this push to all ${type} users with a registered device?`)) return;
+    setSending(true);
+    setResult(null);
+    try {
+      const r = await notifyExpiry({ type, title: title.trim(), bodyTemplate: body.trim() });
+      setResult({
+        type: "ok",
+        text: `${r.usersMatched} user(s) matched · ${r.usersWithTokens} had a registered device · ${r.tokensSent} push(es) sent${r.tokensFailed ? ` · ${r.tokensFailed} failed` : ""}.`,
+      });
+    } catch (e: unknown) {
+      setResult({ type: "err", text: e instanceof Error ? e.message : "Failed to send." });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+          Notify {type === "expired" ? "Expired" : "Expiring Soon"} Users
+        </div>
+        <button onClick={onClose} className="text-[12px] text-gray-400 hover:text-gray-600">✕ Close</button>
+      </div>
+      <div>
+        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Title</label>
+        <input value={title} onChange={(e) => setTitle(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
+      </div>
+      <div>
+        <label className="block text-[12px] font-medium text-gray-700 mb-1.5">
+          Message <span className="text-gray-400 font-normal">— {"{name}"} and {"{expiry}"} are filled in per user</span>
+        </label>
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400 resize-y" />
+      </div>
+      {result && (
+        <p className={`text-[13px] px-3 py-2 rounded-lg ${result.type === "ok" ? "text-green-700 bg-green-50" : "text-red-600 bg-red-50"}`}>
+          {result.text}
+        </p>
+      )}
+      <button onClick={handleSend} disabled={sending}
+        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 disabled:opacity-50">
+        {sending ? "Sending…" : "Send"}
+      </button>
+    </div>
+  );
+}
+
 // ─── Empty form ───────────────────────────────────────────────────────────────
 
 const EMPTY: Omit<AppUser, "id" | "isActive" | "deletedAt"> = {
@@ -317,6 +390,7 @@ export default function UsersPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [fe, setFe] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState("");
+  const [notifyPanel, setNotifyPanel] = useState<"expired" | "expiring" | null>(null);
   const [tab, setTab] = useState<FilterTab>("all");
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -437,7 +511,7 @@ export default function UsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-4 gap-3 mb-3">
         {([
           ["all",      users.length,    "Total",         "bg-white border-gray-200 text-gray-700"],
           ["active",   counts.active,   "Active",        "bg-green-50 border-green-200 text-green-700"],
@@ -451,6 +525,23 @@ export default function UsersPage() {
           </button>
         ))}
       </div>
+
+      <div className="flex items-center gap-2 mb-5">
+        <RowActionButton
+          variant="warning"
+          onClick={() => setNotifyPanel(notifyPanel === "expiring" ? null : "expiring")}
+        >
+          🔔 Notify Expiring ({counts.expiring})
+        </RowActionButton>
+        <RowActionButton
+          variant="danger"
+          onClick={() => setNotifyPanel(notifyPanel === "expired" ? null : "expired")}
+        >
+          🔔 Notify Expired ({counts.expired})
+        </RowActionButton>
+      </div>
+
+      {notifyPanel && <NotifyExpiryPanel type={notifyPanel} onClose={() => setNotifyPanel(null)} />}
 
       {/* Form */}
       {showForm && (

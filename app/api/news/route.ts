@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     [b.id, b.categoryId, b.categoryName, b.title, b.description, b.image, b.source, b.publishedAt, b.emirates || "Global"]
   );
   if (isNew) {
-    notifyInBackground(audienceToTopic(b.emirates), b.title, b.categoryName || "New update", { type: "news", id: b.id });
+    notifyInBackground(audienceToTopic(b.emirates), b.title, b.categoryName || "New update", "news", { id: b.id });
   }
   return NextResponse.json({ ok: true });
 }

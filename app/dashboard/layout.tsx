@@ -123,6 +123,11 @@ const BellIcon = () => (
     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
   </svg>
 );
+const WingsIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2c2 4 8 5 9 5-1 6-4 11-9 14-5-3-8-8-9-14 1 0 7-1 9-5z"/>
+  </svg>
+);
 const LogOutIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -136,6 +141,7 @@ const nav = [
   { href: "/dashboard/articles", label: "Articles", Icon: FileTextIcon },
   { href: "/dashboard/magazines", label: "Magazines", Icon: BookIcon },
   { href: "/dashboard/othermagazines", label: "Other Magazines", Icon: NewspaperFoldIcon },
+  { href: "/dashboard/wingscategories", label: "Wings", Icon: WingsIcon },
   { href: "/dashboard/categories", label: "Categories", Icon: TagIcon },
   { href: "/dashboard/authors", label: "Authors", Icon: UserIcon },
   { href: "/dashboard/slider", label: "Slider", Icon: SlidersIcon },

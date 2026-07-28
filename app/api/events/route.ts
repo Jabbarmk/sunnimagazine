@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     [b.id, b.title, b.description, b.poster, b.eventDate, b.emirates || "Global"]
   );
   if (isNew) {
-    notifyInBackground(audienceToTopic(b.emirates), b.title, "New event", { type: "event", id: b.id });
+    notifyInBackground(audienceToTopic(b.emirates), b.title, "New event", "event", { id: b.id });
   }
   return NextResponse.json({ ok: true });
 }

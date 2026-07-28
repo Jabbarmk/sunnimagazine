@@ -9,13 +9,18 @@ async function get<T>(path: string): Promise<T> {
 }
 
 async function post(path: string, body: unknown): Promise<void> {
+  await postJson(path, body);
+}
+
+// Like post(), but returns the parsed response body (for endpoints whose
+// result the caller needs, e.g. a send summary).
+async function postJson<T = any>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${base}/api${path}`, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data?.error || `POST ${path} failed: ${res.status}`);
-  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || `POST ${path} failed: ${res.status}`);
+  return data;
 }
 
 async function del(path: string): Promise<void> {
@@ -155,8 +160,31 @@ export const getTicker = () => get<{ text: string; isEnabled: boolean }>("/ticke
 export const saveTicker = (t: { text: string; isEnabled: boolean }) => post("/ticker", t);
 
 // ── Notifications (push) ──────────────────────────────────
-export const sendNotification = (payload: { title: string; body: string; target: string }) =>
+export const sendNotification = (payload: { title: string; body: string; target: string; type?: string }) =>
   post("/notifications/send", payload);
+export const getNotificationHistory = () => get<any[]>("/notifications");
+export const notifyExpiry = (payload: { type: "expired" | "expiring"; title: string; bodyTemplate: string }) =>
+  postJson<{ ok: true; usersMatched: number; usersWithTokens: number; tokensSent: number; tokensFailed: number }>(
+    "/users/notify-expiry", payload
+  );
+
+// ── Wings (category -> items with multi-image galleries) ──
+export const getWingsCategories = () => get<any[]>("/wings-categories");
+export const saveWingsCategory = (c: any) => post("/wings-categories", c);
+export const deleteWingsCategory = (id: string) => del(`/wings-categories/${id}`);
+export const getWings = (categoryId?: string) =>
+  get<any[]>(`/wings${categoryId ? `?categoryId=${encodeURIComponent(categoryId)}` : ""}`);
+export const getWing = (id: string) => get<any>(`/wings/${id}`);
+export const saveWing = (w: any) => post("/wings", w);
+export const deleteWing = (id: string) => del(`/wings/${id}`);
+export async function uploadWingImage(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch("/api/wings/upload", { method: "POST", body: fd });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || "Upload failed");
+  return data.url as string;
+}
 
 // ── Editorial ─────────────────────────────────────────────
 export const getEditorial = (magazineId?: string | null) =>
