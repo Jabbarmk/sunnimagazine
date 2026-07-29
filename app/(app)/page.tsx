@@ -66,6 +66,7 @@ export default async function Home() {
             <HeroCover magazine={latest} />
           </>
         )}
+        <WingsCategories items={wingsCats} variant="row" href="/wings" />
         {older.length > 0 && (
           <>
             <SectionHeader title="Old Prints" href="/archive" actionLabel="View All" />
@@ -77,7 +78,6 @@ export default async function Home() {
           </>
         )}
         <OtherMagazines items={otherMags} variant="row" href="/othermagazines" />
-        <WingsCategories items={wingsCats} variant="row" href="/wings" />
         <HomeFeeds news={newsItems} events={events} />
       </div>
       <BottomNav />

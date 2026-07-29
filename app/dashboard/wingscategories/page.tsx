@@ -12,6 +12,7 @@ const EMPTY = { name: "", image: "", sortOrder: 0 };
 export default function WingsCategoriesPage() {
   const [items, setItems] = useState<WingsCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [editId, setEditId] = useState<string | null>(null);
   const [fe, setFe] = useState<Record<string, string>>({});
@@ -25,13 +26,14 @@ export default function WingsCategoriesPage() {
   };
   useEffect(() => { reload(); }, []);
 
-  const reset = () => { setForm(EMPTY); setEditId(null); setFe({}); setSaveError(""); };
+  const reset = () => { setForm(EMPTY); setEditId(null); setFe({}); setSaveError(""); setShowForm(false); };
+
+  const handleAddNew = () => { setForm(EMPTY); setEditId(null); setFe({}); setSaveError(""); setShowForm(true); };
 
   const handleEdit = (c: WingsCategory) => {
     setEditId(c.id);
     setForm({ name: c.name ?? "", image: c.image ?? "", sortOrder: c.sortOrder ?? 0 });
-    setFe({}); setSaveError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setFe({}); setSaveError(""); setShowForm(true);
   };
 
   const handleImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,56 +76,70 @@ export default function WingsCategoriesPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-[22px] font-semibold text-gray-900">Wings</h1>
-        <p className="text-[13px] text-gray-500 mt-1">{items.length} categories · shown on the app home below Other Magazines</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[22px] font-semibold text-gray-900">Wings</h1>
+          <p className="text-[13px] text-gray-500 mt-1">{items.length} categories · shown on the app home</p>
+        </div>
+        <button onClick={handleAddNew}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 transition-colors">
+          + Add Category
+        </button>
       </div>
 
-      {/* Form */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-4">
-          {editId ? "Edit Category" : "Add Category"}
+      {/* Form popup */}
+      {showForm && (
+        <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center p-4" onClick={reset}>
+          <div
+            className="bg-white rounded-xl border border-gray-200 p-5 w-full max-w-md max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+                {editId ? "Edit Category" : "Add Category"}
+              </div>
+              <button onClick={reset} className="text-gray-400 hover:text-gray-600 text-[18px] leading-none">✕</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Category Image</label>
+                {form.image && (
+                  <img src={form.image} alt="preview" className="w-full h-32 object-cover rounded-lg border border-gray-200 mb-2" />
+                )}
+                <label className="cursor-pointer inline-block">
+                  <span className="inline-block px-3 py-2 border border-gray-200 rounded-lg text-[13px] text-gray-600 hover:bg-gray-50">
+                    {uploading ? "Uploading…" : form.image ? "Change image" : "Upload image"}
+                  </span>
+                  <input type="file" accept="image/*" onChange={handleImage} className="hidden" disabled={uploading} />
+                </label>
+              </div>
+              <div>
+                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Name <span className="text-red-400">*</span></label>
+                <input value={form.name} onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); setFe((p) => { const n = { ...p }; delete n.name; return n; }); }}
+                  placeholder="e.g. Youth Wing" className={inp("name")} autoFocus />
+                {fe.name && <p className="text-[11px] text-red-500 mt-1">{fe.name}</p>}
+              </div>
+              <div>
+                <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Sort Order</label>
+                <input type="number" min="0" value={form.sortOrder}
+                  onChange={(e) => setForm((f) => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))}
+                  className="w-24 px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
+              </div>
+              {saveError && <p className="text-[13px] text-red-500 bg-red-50 px-3 py-2 rounded-lg">{saveError}</p>}
+              <div className="flex gap-2 pt-1">
+                <button onClick={handleSave} disabled={uploading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 disabled:opacity-50">
+                  {editId ? "Save Changes" : "Add Category"}
+                </button>
+                <button onClick={reset}
+                  className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-[13px] hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Category Image</label>
-            {form.image && (
-              <img src={form.image} alt="preview" className="w-full h-32 object-cover rounded-lg border border-gray-200 mb-2" />
-            )}
-            <label className="cursor-pointer inline-block">
-              <span className="inline-block px-3 py-2 border border-gray-200 rounded-lg text-[13px] text-gray-600 hover:bg-gray-50">
-                {uploading ? "Uploading…" : form.image ? "Change image" : "Upload image"}
-              </span>
-              <input type="file" accept="image/*" onChange={handleImage} className="hidden" disabled={uploading} />
-            </label>
-          </div>
-          <div>
-            <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Name <span className="text-red-400">*</span></label>
-            <input value={form.name} onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); setFe((p) => { const n = { ...p }; delete n.name; return n; }); }}
-              placeholder="e.g. Youth Wing" className={inp("name")} />
-            {fe.name && <p className="text-[11px] text-red-500 mt-1">{fe.name}</p>}
-          </div>
-          <div>
-            <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Sort Order</label>
-            <input type="number" min="0" value={form.sortOrder}
-              onChange={(e) => setForm((f) => ({ ...f, sortOrder: parseInt(e.target.value) || 0 }))}
-              className="w-24 px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
-          </div>
-          {saveError && <p className="text-[13px] text-red-500 bg-red-50 px-3 py-2 rounded-lg">{saveError}</p>}
-          <div className="flex gap-2 pt-1">
-            <button onClick={handleSave} disabled={uploading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 disabled:opacity-50">
-              {editId ? "Save Changes" : "Add Category"}
-            </button>
-            {editId && (
-              <button onClick={reset}
-                className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-[13px] hover:bg-gray-50">
-                Cancel
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* List */}
       {loading ? (
@@ -132,7 +148,7 @@ export default function WingsCategoriesPage() {
         <div className="space-y-3">
           {items.length === 0 && (
             <div className="bg-white rounded-xl border border-gray-200 px-4 py-8 text-center text-[13px] text-gray-400">
-              No categories yet. Add one above.
+              No categories yet. Click + Add Category above.
             </div>
           )}
           {items.map((c) => (

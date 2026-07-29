@@ -710,7 +710,7 @@ export default function UsersPage() {
                       variant={isExpanded ? "primary" : "default"}
                       onClick={() => setExpandedId(isExpanded ? null : u.id)}
                     >
-                      {isExpanded ? "▲ Close" : "▼ Subs"}
+                      {isExpanded ? "▲ Close" : "▼ Subscription"}
                     </RowActionButton>
                     <RowActionButton onClick={() => handleEdit(u)}>Edit</RowActionButton>
                     <RowActionButton
