@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getEmailSettings, saveEmailSettings, getTicker, saveTicker } from "@/lib/api";
+import { getEmailSettings, saveEmailSettings, getTicker, saveTicker, getFirebaseSettings, saveFirebaseSettings } from "@/lib/api";
 import type { EmailSettings } from "@/lib/store";
 
 const EMPTY: EmailSettings = {
@@ -23,9 +23,27 @@ export default function SettingsPage() {
   const [tickerEnabled, setTickerEnabled] = useState(false);
   const [tickerSaved, setTickerSaved] = useState(false);
 
+  const [fbJson, setFbJson] = useState("");
+  const [fbConfigured, setFbConfigured] = useState(false);
+  const [fbProjectId, setFbProjectId] = useState("");
+  const [fbClientEmail, setFbClientEmail] = useState("");
+  const [fbError, setFbError] = useState("");
+  const [fbSaving, setFbSaving] = useState(false);
+  const [fbSaved, setFbSaved] = useState(false);
+
+  const loadFirebase = () => {
+    getFirebaseSettings().then((s) => {
+      setFbJson(s.serviceAccountJson || "");
+      setFbConfigured(s.configured);
+      setFbProjectId(s.projectId);
+      setFbClientEmail(s.clientEmail);
+    });
+  };
+
   useEffect(() => {
     getEmailSettings().then((s) => setForm({ ...EMPTY, ...s }));
     getTicker().then((t) => { setTickerText(t.text); setTickerEnabled(t.isEnabled); });
+    loadFirebase();
   }, []);
 
   const set = (k: keyof EmailSettings) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -43,6 +61,20 @@ export default function SettingsPage() {
     await saveTicker({ text: tickerText, isEnabled: tickerEnabled });
     setTickerSaved(true);
     setTimeout(() => setTickerSaved(false), 2500);
+  };
+
+  const handleSaveFirebase = async () => {
+    setFbError(""); setFbSaving(true);
+    try {
+      await saveFirebaseSettings(fbJson.trim());
+      loadFirebase();
+      setFbSaved(true);
+      setTimeout(() => setFbSaved(false), 2500);
+    } catch (e: unknown) {
+      setFbError(e instanceof Error ? e.message : "Failed to save.");
+    } finally {
+      setFbSaving(false);
+    }
   };
 
   return (
@@ -101,6 +133,56 @@ export default function SettingsPage() {
               Save Ticker
             </button>
             {tickerSaved && <span className="text-[12px] text-green-600 font-medium">✓ Saved</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Firebase Push Notifications ─────────────────────── */}
+      <div>
+        <div className="mb-4 flex items-center gap-2">
+          <h2 className="text-[18px] font-semibold text-gray-900">Firebase Push Notifications</h2>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+            fbConfigured
+              ? "bg-green-50 text-green-700 border-green-200"
+              : "bg-gray-100 text-gray-500 border-gray-200"
+          }`}>
+            {fbConfigured ? "Configured" : "Not configured"}
+          </span>
+        </div>
+        <p className="text-[13px] text-gray-500 mt-1 mb-4">
+          Paste your Firebase <b>service account JSON</b> here to enable push notifications
+          (magazine publish, news &amp; events, expiry reminders, and manual sends in{" "}
+          <a href="/dashboard/notifications" className="text-blue-500 hover:text-blue-700">Notification Master</a>).
+          No server access needed.
+        </p>
+        <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+          {fbConfigured && (
+            <div className="text-[12px] text-gray-600 bg-gray-50 rounded-lg px-3 py-2 space-y-0.5">
+              <div><span className="text-gray-400">Project ID:</span> <span className="font-mono">{fbProjectId}</span></div>
+              <div><span className="text-gray-400">Client email:</span> <span className="font-mono">{fbClientEmail}</span></div>
+            </div>
+          )}
+          <div>
+            <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Service Account JSON</label>
+            <textarea
+              value={fbJson}
+              onChange={(e) => { setFbJson(e.target.value); setFbError(""); setFbSaved(false); }}
+              placeholder='{"type":"service_account","project_id":"...","private_key":"...","client_email":"...", ...}'
+              rows={8}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[12px] outline-none focus:border-blue-400 font-mono resize-y"
+            />
+            <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
+              Get this from <span className="font-medium">Firebase Console → Project Settings → Service accounts →
+              Generate new private key</span>. Paste the entire downloaded JSON file content above.
+            </p>
+          </div>
+          {fbError && <p className="text-[13px] text-red-500 bg-red-50 px-3 py-2 rounded-lg">{fbError}</p>}
+          <div className="flex items-center gap-3 pt-1">
+            <button onClick={handleSaveFirebase} disabled={fbSaving}
+              className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors">
+              {fbSaving ? "Saving…" : "Save"}
+            </button>
+            {fbSaved && <span className="text-[12px] text-green-600 font-medium">✓ Saved</span>}
           </div>
         </div>
       </div>

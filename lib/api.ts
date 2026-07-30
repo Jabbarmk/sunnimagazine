@@ -167,6 +167,10 @@ export const notifyExpiry = (payload: { type: "expired" | "expiring"; title: str
   postJson<{ ok: true; usersMatched: number; usersWithTokens: number; tokensSent: number; tokensFailed: number }>(
     "/users/notify-expiry", payload
   );
+export const getFirebaseSettings = () =>
+  get<{ serviceAccountJson: string; configured: boolean; projectId: string; clientEmail: string }>("/firebase-settings");
+export const saveFirebaseSettings = (serviceAccountJson: string) =>
+  post("/firebase-settings", { serviceAccountJson });
 
 // ── Wings (category -> items with multi-image galleries) ──
 export const getWingsCategories = () => get<any[]>("/wings-categories");

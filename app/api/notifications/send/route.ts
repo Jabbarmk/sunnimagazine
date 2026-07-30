@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const result = await notifyTopic(topic, title.trim(), body.trim(), type || "manual", { type: type || "manual" });
     if ("skipped" in result) {
       return NextResponse.json(
-        { error: "Push notifications are not configured on the server yet (FIREBASE_SERVICE_ACCOUNT missing)." },
+        { error: "Push notifications are not configured yet. Add your Firebase service account in Settings first." },
         { status: 503 }
       );
     }

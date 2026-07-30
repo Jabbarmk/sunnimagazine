@@ -29,10 +29,10 @@ export async function POST(req: Request) {
   if (!title?.trim() || !bodyTemplate?.trim()) {
     return NextResponse.json({ error: "Title and message are required" }, { status: 400 });
   }
-  if (!isFcmConfigured()) {
+  if (!(await isFcmConfigured())) {
     await logNotification({ title, body: bodyTemplate, target: `${type}-users`, type, status: "skipped" });
     return NextResponse.json(
-      { error: "Push notifications are not configured on the server yet (FIREBASE_SERVICE_ACCOUNT missing)." },
+      { error: "Push notifications are not configured yet. Add your Firebase service account in Settings first." },
       { status: 503 }
     );
   }

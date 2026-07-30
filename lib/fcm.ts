@@ -13,13 +13,15 @@ import db from "@/lib/db";
 // Every send is logged to the `notifications` table (Notification Master
 // history), including skipped sends when Firebase isn't configured yet.
 //
-// Configure via env FIREBASE_SERVICE_ACCOUNT = the full service-account JSON
-// (one line). If unset, every send is a safe no-op so publishing never breaks.
+// Configured via the dashboard (Settings -> Firebase Push Notifications),
+// which stores the service-account JSON in the `firebase_settings` table —
+// no SSH/env-var editing needed. Falls back to env FIREBASE_SERVICE_ACCOUNT
+// if the DB has nothing set, for anyone who prefers that route. If neither
+// is set, every send is a safe no-op so publishing never breaks.
 
 type ServiceAccount = { project_id: string; client_email: string; private_key: string };
 
-function loadServiceAccount(): ServiceAccount | null {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+function parseServiceAccount(raw: string | null | undefined): ServiceAccount | null {
   if (!raw) return null;
   try {
     const sa = JSON.parse(raw);
@@ -34,8 +36,20 @@ function loadServiceAccount(): ServiceAccount | null {
   }
 }
 
-export function isFcmConfigured(): boolean {
-  return !!loadServiceAccount();
+async function loadServiceAccount(): Promise<ServiceAccount | null> {
+  try {
+    const [rows] = await db.query("SELECT service_account_json FROM firebase_settings WHERE id=1");
+    const raw = (rows as any[])[0]?.service_account_json;
+    const fromDb = parseServiceAccount(raw);
+    if (fromDb) return fromDb;
+  } catch {
+    // firebase_settings table may not exist yet on older deployments — fall through to env var.
+  }
+  return parseServiceAccount(process.env.FIREBASE_SERVICE_ACCOUNT);
+}
+
+export async function isFcmConfigured(): Promise<boolean> {
+  return !!(await loadServiceAccount());
 }
 
 // Emirate -> FCM topic. Global/empty -> "all". Topics allow [a-zA-Z0-9-_.~%].
@@ -49,11 +63,15 @@ function base64url(input: Buffer | string): string {
   return Buffer.from(input).toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
-let cachedToken: { token: string; exp: number } | null = null;
+// Keyed by client_email so a credential change (e.g. edited in the dashboard)
+// doesn't keep reusing an access token minted from the old private key.
+let cachedToken: { clientEmail: string; token: string; exp: number } | null = null;
 
 async function getAccessToken(sa: ServiceAccount): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  if (cachedToken && cachedToken.exp - 60 > now) return cachedToken.token;
+  if (cachedToken && cachedToken.clientEmail === sa.client_email && cachedToken.exp - 60 > now) {
+    return cachedToken.token;
+  }
 
   const header = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const claims = base64url(JSON.stringify({
@@ -77,7 +95,7 @@ async function getAccessToken(sa: ServiceAccount): Promise<string> {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || !data.access_token) throw new Error("FCM auth failed: " + JSON.stringify(data));
-  cachedToken = { token: data.access_token, exp: now + (data.expires_in || 3600) };
+  cachedToken = { clientEmail: sa.client_email, token: data.access_token, exp: now + (data.expires_in || 3600) };
   return data.access_token;
 }
 
@@ -89,7 +107,7 @@ async function sendOne(
   body: string,
   data?: Record<string, string>
 ): Promise<SendResult> {
-  const sa = loadServiceAccount();
+  const sa = await loadServiceAccount();
   if (!sa) return { skipped: true, reason: "FCM not configured" };
 
   const accessToken = await getAccessToken(sa);
@@ -128,7 +146,7 @@ export async function sendToTokens(
   body: string,
   data?: Record<string, string>
 ): Promise<{ sent: number; failed: number; skipped: boolean }> {
-  if (!isFcmConfigured()) return { sent: 0, failed: 0, skipped: true };
+  if (!(await isFcmConfigured())) return { sent: 0, failed: 0, skipped: true };
   let sent = 0, failed = 0;
   for (const token of tokens) {
     try {
@@ -174,7 +192,7 @@ export async function notifyTopic(
   type: string,
   data?: Record<string, string>
 ): Promise<SendResult> {
-  if (!isFcmConfigured()) {
+  if (!(await isFcmConfigured())) {
     await logNotification({ title, body, target: topic, type, status: "skipped" });
     return { skipped: true, reason: "FCM not configured" };
   }
