@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 
+export const dynamic = "force-dynamic"; // avoid build-time prerender querying the DB
 export async function GET(req: Request) {
   const categoryId = new URL(req.url).searchParams.get("categoryId");
   const where = categoryId ? "WHERE w.category_id=?" : "";

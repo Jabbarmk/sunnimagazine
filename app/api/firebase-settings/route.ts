@@ -3,6 +3,7 @@ import db from "@/lib/db";
 
 // Firebase Admin SDK service account, editable from the dashboard so no SSH
 // access is needed to configure push notifications.
+export const dynamic = "force-dynamic"; // avoid build-time prerender querying the DB
 export async function GET() {
   const [rows] = await db.query("SELECT service_account_json FROM firebase_settings WHERE id=1");
   const raw = (rows as any[])[0]?.service_account_json ?? "";

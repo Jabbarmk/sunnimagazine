@@ -3,6 +3,7 @@ import db from "@/lib/db";
 
 // Notification Master history — every send attempt (manual, magazine, news,
 // event, expired/expiring reminders), including skipped ones.
+export const dynamic = "force-dynamic"; // avoid build-time prerender querying the DB
 export async function GET() {
   const [rows] = await db.query(
     "SELECT * FROM notifications ORDER BY created_at DESC LIMIT 200"

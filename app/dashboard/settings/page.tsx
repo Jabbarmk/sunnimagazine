@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getEmailSettings, saveEmailSettings, getTicker, saveTicker, getFirebaseSettings, saveFirebaseSettings } from "@/lib/api";
+import { getEmailSettings, saveEmailSettings, getTicker, saveTicker, getFirebaseSettings, saveFirebaseSettings, getAppSettings, saveAppSettings, uploadLogo } from "@/lib/api";
 import type { EmailSettings } from "@/lib/store";
 
 const EMPTY: EmailSettings = {
@@ -23,6 +23,11 @@ export default function SettingsPage() {
   const [tickerEnabled, setTickerEnabled] = useState(false);
   const [tickerSaved, setTickerSaved] = useState(false);
 
+  const [logo, setLogo] = useState("");
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState("");
+  const [logoSaved, setLogoSaved] = useState(false);
+
   const [fbJson, setFbJson] = useState("");
   const [fbConfigured, setFbConfigured] = useState(false);
   const [fbProjectId, setFbProjectId] = useState("");
@@ -43,8 +48,27 @@ export default function SettingsPage() {
   useEffect(() => {
     getEmailSettings().then((s) => setForm({ ...EMPTY, ...s }));
     getTicker().then((t) => { setTickerText(t.text); setTickerEnabled(t.isEnabled); });
+    getAppSettings().then((s) => setLogo(s.logo || ""));
     loadFirebase();
   }, []);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoUploading(true); setLogoError(""); setLogoSaved(false);
+    try {
+      const url = await uploadLogo(file);
+      await saveAppSettings(url);
+      setLogo(url);
+      setLogoSaved(true);
+      setTimeout(() => setLogoSaved(false), 2500);
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setLogoUploading(false);
+      e.target.value = "";
+    }
+  };
 
   const set = (k: keyof EmailSettings) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -79,6 +103,31 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-xl space-y-8">
+      {/* ── App Logo ─────────────────────────────────────────── */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-[18px] font-semibold text-gray-900">App Logo</h2>
+          <p className="text-[13px] text-gray-500 mt-1">
+            Used by the mobile app via <code className="text-[11px] bg-gray-100 px-1 rounded">GET /api/app-settings</code>.
+          </p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+          {logo && (
+            <div className="flex justify-center">
+              <img src={logo} alt="Logo preview" className="max-w-[160px] max-h-[160px] object-contain rounded-lg border border-gray-200 bg-gray-50 p-3" />
+            </div>
+          )}
+          <label className="cursor-pointer inline-block">
+            <span className="inline-block px-3 py-2 border border-gray-200 rounded-lg text-[13px] text-gray-600 hover:bg-gray-50">
+              {logoUploading ? "Uploading…" : logo ? "Change logo" : "Upload logo"}
+            </span>
+            <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" disabled={logoUploading} />
+          </label>
+          {logoError && <p className="text-[13px] text-red-500 bg-red-50 px-3 py-2 rounded-lg">{logoError}</p>}
+          {logoSaved && <span className="ml-3 text-[12px] text-green-600 font-medium">✓ Saved</span>}
+        </div>
+      </div>
+
       {/* ── Ticker ───────────────────────────────────────────── */}
       <div>
         <div className="mb-4">

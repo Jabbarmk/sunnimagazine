@@ -172,6 +172,18 @@ export const getFirebaseSettings = () =>
 export const saveFirebaseSettings = (serviceAccountJson: string) =>
   post("/firebase-settings", { serviceAccountJson });
 
+// ── App Settings (logo, etc.) ──────────────────────────────
+export const getAppSettings = () => get<{ logo: string }>("/app-settings");
+export const saveAppSettings = (logo: string) => post("/app-settings", { logo });
+export async function uploadLogo(file: File): Promise<string> {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch("/api/app-settings/upload-logo", { method: "POST", body: fd });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || "Upload failed");
+  return data.url as string;
+}
+
 // ── Wings (category -> items with multi-image galleries) ──
 export const getWingsCategories = () => get<any[]>("/wings-categories");
 export const saveWingsCategory = (c: any) => post("/wings-categories", c);

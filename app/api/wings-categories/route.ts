@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 
+export const dynamic = "force-dynamic"; // avoid build-time prerender querying the DB
 export async function GET() {
   const [rows] = await db.query(
     `SELECT c.*, (SELECT COUNT(*) FROM wings w WHERE w.category_id = c.id) AS item_count
