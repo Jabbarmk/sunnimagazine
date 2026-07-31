@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, useEffect } from "react";
-import { dashboardLogout, isDashboardAuthenticated } from "@/lib/auth";
+import { ReactNode, useEffect, useState } from "react";
+import { dashboardLogout, isDashboardAuthenticated, getDashboardAdmin, DashboardAdmin } from "@/lib/auth";
 
 const GridIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -128,6 +128,11 @@ const WingsIcon = () => (
     <path d="M12 2c2 4 8 5 9 5-1 6-4 11-9 14-5-3-8-8-9-14 1 0 7-1 9-5z"/>
   </svg>
 );
+const ShieldIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+);
 const LogOutIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -157,19 +162,23 @@ const nav = [
   { href: "/dashboard/userwritings", label: "User Writings", Icon: EditIcon },
   { href: "/dashboard/editorial", label: "Editorial", Icon: NewspaperFoldIcon },
   { href: "/dashboard/settings", label: "Settings", Icon: SettingsIcon },
+  { href: "/dashboard/admins", label: "Admins", Icon: ShieldIcon, superAdminOnly: true },
   { href: "/dashboard/help", label: "Help / സഹായം", Icon: HelpCircleIcon },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [admin, setAdmin] = useState<DashboardAdmin | null>(null);
 
   const isLoginPage = pathname.includes("/dashboard/login");
 
   useEffect(() => {
     if (!isLoginPage && !isDashboardAuthenticated()) {
       router.replace("/dashboard/login/");
+      return;
     }
+    setAdmin(getDashboardAdmin());
   }, [isLoginPage]);
 
   const handleLogout = () => {
@@ -179,7 +188,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   if (isLoginPage) return <>{children}</>;
 
-  const currentNav = nav.find((n) =>
+  const visibleNav = nav.filter((n) => !n.superAdminOnly || admin?.role === "super_admin");
+
+  const currentNav = visibleNav.find((n) =>
     n.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(n.href)
   );
 
@@ -201,7 +212,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
-          {nav.map(({ href, label, Icon }) => {
+          {visibleNav.map(({ href, label, Icon }) => {
             const active =
               href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
             return (
@@ -264,9 +275,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[13px] font-semibold" style={{ background: "#B08A3A" }}>
-              A
+              {(admin?.email?.[0] || "A").toUpperCase()}
             </div>
-            <span className="text-[13px] text-[#6B6B70]">admin@gulfsathyadhara.com</span>
+            <span className="text-[13px] text-[#6B6B70]">{admin?.email || "admin@gulfsathyadhara.com"}</span>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-8">{children}</main>

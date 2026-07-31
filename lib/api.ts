@@ -214,8 +214,19 @@ export async function loginAdmin(email: string, password: string): Promise<boole
     body: JSON.stringify({ email, password }),
   });
   if (res.ok) {
+    const admin = await res.json(); // { id, email, role }
     localStorage.setItem("gs_dashboard_auth_v1", "admin");
+    localStorage.setItem("gs_dashboard_admin_v1", JSON.stringify(admin));
     return true;
   }
   return false;
+}
+
+// ── Admins (Super Admin only) ────────────────────────────
+export const getAdmins = () => get<any[]>("/admins");
+export const saveAdmin = (a: any) => postJson("/admins", a);
+export async function deleteAdmin(id: number | string, requesterId?: number | string): Promise<void> {
+  const res = await fetch(`${base}/api/admins/${id}${requesterId != null ? `?requesterId=${requesterId}` : ""}`, { method: "DELETE" });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || `DELETE /admins/${id} failed: ${res.status}`);
 }

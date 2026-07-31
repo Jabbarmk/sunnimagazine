@@ -1,5 +1,6 @@
 const AUTH_KEY = "gs_auth_v1";
 const DASHBOARD_AUTH_KEY = "gs_dashboard_auth_v1";
+const DASHBOARD_ADMIN_KEY = "gs_dashboard_admin_v1";
 const APP_USER_KEY = "gs_app_user_v1";
 const ADMIN_EMAIL = "admin@gulfsathyadhara.com";
 const ADMIN_PASSWORD = "admin123";
@@ -22,7 +23,24 @@ export function isDashboardAuthenticated(): boolean {
 }
 
 export function dashboardLogout(): void {
-  if (typeof window !== "undefined") localStorage.removeItem(DASHBOARD_AUTH_KEY);
+  if (typeof window !== "undefined") {
+    localStorage.removeItem(DASHBOARD_AUTH_KEY);
+    localStorage.removeItem(DASHBOARD_ADMIN_KEY);
+  }
+}
+
+export type DashboardAdmin = { id: number; email: string; role: "super_admin" | "admin" };
+
+export function getDashboardAdmin(): DashboardAdmin | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(DASHBOARD_ADMIN_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+export function isSuperAdmin(): boolean {
+  return getDashboardAdmin()?.role === "super_admin";
 }
 
 export function skipLogin(): void {
