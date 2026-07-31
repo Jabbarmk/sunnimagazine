@@ -44,7 +44,7 @@ export function isAuthenticated(): boolean {
 export type StoredUser = {
   id: string; name: string; email: string; mobile: string;
   location: string; photo: string; emirates: string;
-  subscriptionFrom: string; subscriptionTo: string;
+  subscriptionFrom: string; subscriptionTo: string; isExpired: boolean;
   referredBy: string; referralMobile: string;
 };
 

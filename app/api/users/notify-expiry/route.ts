@@ -1,22 +1,7 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 import { sendToTokens, logNotification, isFcmConfigured } from "@/lib/fcm";
-
-function subStatus(to: string): "expired" | "expiring" | "active" | "none" {
-  if (!to) return "none";
-  const days = Math.ceil((new Date(to + "-01").getTime() - Date.now()) / 86_400_000);
-  if (days < 0) return "expired";
-  if (days <= 30) return "expiring";
-  return "active";
-}
-
-function fmtMonth(val: string): string {
-  if (!val) return "";
-  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const [y, m] = val.split("-");
-  const idx = parseInt(m) - 1;
-  return idx >= 0 && idx < 12 ? `${MONTHS[idx]} ${y}` : val;
-}
+import { subStatus, fmtDate } from "@/lib/subscription";
 
 // Sends a personalized push (via device_tokens, not a topic) to every user
 // whose subscription is expired or expiring within 30 days. `bodyTemplate`
@@ -51,7 +36,7 @@ export async function POST(req: Request) {
 
     const personalizedBody = bodyTemplate
       .replace(/\{name\}/g, u.name || "")
-      .replace(/\{expiry\}/g, fmtMonth(u.subscription_to));
+      .replace(/\{expiry\}/g, fmtDate(u.subscription_to));
 
     const result = await sendToTokens(tokens, title.trim(), personalizedBody, { type });
     tokensSent += result.sent;

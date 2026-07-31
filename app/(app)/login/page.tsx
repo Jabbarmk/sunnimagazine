@@ -4,11 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginAppUser, getAppUser } from "@/lib/auth";
 
-function isExpired(subscriptionTo: string): boolean {
-  if (!subscriptionTo) return false;
-  return new Date(subscriptionTo).getTime() < Date.now();
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState("");
@@ -28,7 +23,7 @@ export default function LoginPage() {
     setLoading(false);
     if (ok) {
       const user = getAppUser();
-      if (user && isExpired(user.subscriptionTo)) {
+      if (user?.isExpired) {
         setExpired(true);
       } else {
         router.push("/");

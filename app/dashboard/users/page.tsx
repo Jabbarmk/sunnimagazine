@@ -12,33 +12,11 @@ import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
 import { sendSubscriptionReceipt } from "@/lib/email";
 import { EMIRATES_WITH_GLOBAL } from "@/lib/emirates";
 import RowActionButton from "@/app/dashboard/_components/RowActionButton";
+import { subStatus, daysLeft, fmtDate, type SubStatus } from "@/lib/subscription";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type SubStatus = "active" | "expiring" | "expired" | "none";
 type FilterTab = "all" | SubStatus;
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function subStatus(to: string): SubStatus {
-  if (!to) return "none";
-  const days = Math.ceil((new Date(to + "-01").getTime() - Date.now()) / 86_400_000);
-  if (days < 0) return "expired";
-  if (days <= 30) return "expiring";
-  return "active";
-}
-
-function daysLeft(to: string): number {
-  return Math.ceil((new Date(to + "-01").getTime() - Date.now()) / 86_400_000);
-}
-
-function fmtMonth(val: string): string {
-  if (!val) return "";
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const [y, m] = val.split("-");
-  const idx = parseInt(m) - 1;
-  return idx >= 0 && idx < 12 ? `${MONTHS[idx]} ${y}` : val;
-}
 
 function validateMobile(v: string): string | null {
   if (!v) return null;
@@ -66,7 +44,7 @@ function printReceipt(user: AppUser, sub: UserSubscription) {
   <table>
     <tr><td>Member</td><td>${user.name}</td></tr>
     <tr><td>Mobile</td><td>${user.mobile || "—"}</td></tr>
-    <tr><td>Period</td><td>${fmtMonth(sub.fromMonth)} – ${fmtMonth(sub.toMonth)}</td></tr>
+    <tr><td>Period</td><td>${fmtDate(sub.fromMonth)} – ${fmtDate(sub.toMonth)}</td></tr>
     <tr><td>Amount Paid</td><td class="amount">AED ${sub.amountAed}</td></tr>
     ${sub.paidDate ? `<tr><td>Payment Date</td><td>${sub.paidDate}</td></tr>` : ""}
   </table>
@@ -84,39 +62,6 @@ const STATUS_META: Record<SubStatus, { label: string; badge: string; row: string
   none:     { label: "No Sub",        badge: "bg-gray-100 text-gray-500 border-gray-200",    row: "border-l-4 border-l-gray-200" },
 };
 
-// ─── MonthYearPicker (fixed: local state, no premature clear) ─────────────────
-
-const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-
-function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [lYear, setLYear] = useState(value ? value.split("-")[0] : "");
-  const [lMonth, setLMonth] = useState(value ? value.split("-")[1] : "");
-
-  useEffect(() => {
-    if (value) { const [y, m] = value.split("-"); setLYear(y || ""); setLMonth(m || ""); }
-    else { setLYear(""); setLMonth(""); }
-  }, [value]);
-
-  const commit = (y: string, m: string) => {
-    if (y && m) onChange(`${y}-${m}`);
-  };
-
-  return (
-    <div className="flex gap-2">
-      <select value={lMonth} onChange={(e) => { setLMonth(e.target.value); commit(lYear, e.target.value); }}
-        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400">
-        <option value="">Month</option>
-        {MONTH_NAMES.map((m, i) => {
-          const v = String(i + 1).padStart(2, "0");
-          return <option key={v} value={v}>{m}</option>;
-        })}
-      </select>
-      <input value={lYear} onChange={(e) => { setLYear(e.target.value); commit(e.target.value, lMonth); }}
-        type="number" placeholder="Year" min="2020" max="2040"
-        className="w-24 px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
-    </div>
-  );
-}
 
 // ─── Subscription Panel ───────────────────────────────────────────────────────
 
@@ -182,7 +127,7 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
       "Dear {name}, your Gulf Sathyadhara subscription expires {expiry}. Amount: AED {amount}. Please renew soon.";
     return template
       .replace("{name}", user.name)
-      .replace("{expiry}", fmtMonth(sub.toMonth))
+      .replace("{expiry}", fmtDate(sub.toMonth))
       .replace("{amount}", String(sub.amountAed));
   };
 
@@ -223,7 +168,7 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
               {subs.map((s) => (
                 <tr key={s.id} className="border-b border-gray-100 last:border-0">
                   <td className="py-2 text-gray-700 font-medium">
-                    {fmtMonth(s.fromMonth)} – {fmtMonth(s.toMonth)}
+                    {fmtDate(s.fromMonth)} – {fmtDate(s.toMonth)}
                   </td>
                   <td className="py-2 text-amber-700 font-semibold">AED {s.amountAed}</td>
                   <td className="py-2 text-gray-500">{s.paidDate || "—"}</td>
@@ -266,11 +211,15 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
             </div>
             <div>
               <label className="block text-[11px] font-medium text-gray-600 mb-1">From <span className="text-red-400">*</span></label>
-              <MonthYearPicker value={form.fromMonth} onChange={(v) => setForm((f) => ({ ...f, fromMonth: v }))} />
+              <input type="date" value={form.fromMonth}
+                onChange={(e) => setForm((f) => ({ ...f, fromMonth: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
             </div>
             <div>
               <label className="block text-[11px] font-medium text-gray-600 mb-1">To <span className="text-red-400">*</span></label>
-              <MonthYearPicker value={form.toMonth} onChange={(v) => setForm((f) => ({ ...f, toMonth: v }))} />
+              <input type="date" value={form.toMonth}
+                onChange={(e) => setForm((f) => ({ ...f, toMonth: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
             </div>
           </div>
           <div className="flex gap-2 items-center">
@@ -467,7 +416,7 @@ export default function UsersPage() {
   const handleDelete = async (u: AppUser) => {
     const st = subStatus(u.subscriptionTo);
     if (st === "active" || st === "expiring") {
-      setActionMsg({ id: u.id, msg: `Cannot delete: subscription active until ${fmtMonth(u.subscriptionTo)}` });
+      setActionMsg({ id: u.id, msg: `Cannot delete: subscription active until ${fmtDate(u.subscriptionTo)}` });
       setTimeout(() => setActionMsg(null), 4000);
       return;
     }
@@ -689,9 +638,9 @@ export default function UsersPage() {
                     </div>
                     {(u.subscriptionFrom || u.subscriptionTo) && (
                       <div className="text-[10px] text-gray-400 mt-0.5">
-                        {u.subscriptionFrom && <>From: {fmtMonth(u.subscriptionFrom)}</>}
+                        {u.subscriptionFrom && <>From: {fmtDate(u.subscriptionFrom)}</>}
                         {u.subscriptionFrom && u.subscriptionTo && " · "}
-                        {u.subscriptionTo && <>To: {fmtMonth(u.subscriptionTo)}</>}
+                        {u.subscriptionTo && <>To: {fmtDate(u.subscriptionTo)}</>}
                       </div>
                     )}
                     {(u.referredBy || u.referralMobile) && (

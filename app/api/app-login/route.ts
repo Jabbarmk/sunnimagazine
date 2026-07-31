@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
+import { isSubscriptionExpired } from "@/lib/subscription";
 
 export async function POST(req: Request) {
   const { identifier, password } = await req.json();
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
     emirates: u.emirates ?? "",
     subscriptionFrom: u.subscription_from ?? "",
     subscriptionTo: u.subscription_to ?? "",
+    isExpired: isSubscriptionExpired(u.subscription_to ?? ""),
     referredBy: u.referred_by ?? "",
     referralMobile: u.referral_mobile ?? "",
   });

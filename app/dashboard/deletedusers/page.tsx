@@ -5,14 +5,7 @@ import { getDeletedUsers, deleteAppUser } from "@/lib/api";
 import type { AppUser } from "@/lib/store";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
 import RowActionButton from "@/app/dashboard/_components/RowActionButton";
-
-function fmtMonth(val: string): string {
-  if (!val) return "";
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const [y, m] = val.split("-");
-  const idx = parseInt(m) - 1;
-  return idx >= 0 && idx < 12 ? `${MONTHS[idx]} ${y}` : val;
-}
+import { fmtDate } from "@/lib/subscription";
 
 export default function DeletedUsersPage() {
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -74,7 +67,7 @@ export default function DeletedUsersPage() {
                 </div>
                 {(u.subscriptionFrom || u.subscriptionTo) && (
                   <div className="text-[10px] text-gray-400 mt-0.5">
-                    Sub: {fmtMonth(u.subscriptionFrom)} – {fmtMonth(u.subscriptionTo)}
+                    Sub: {fmtDate(u.subscriptionFrom)} – {fmtDate(u.subscriptionTo)}
                   </div>
                 )}
                 {u.deletedAt && (

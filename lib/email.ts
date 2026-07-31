@@ -1,4 +1,5 @@
 import type { EmailSettings, UserWriting, UserSubscription } from "./store";
+import { fmtDate } from "./subscription";
 
 declare global {
   interface Window {
@@ -113,14 +114,6 @@ export async function sendSignupEmails(
   if (errors.length) throw new Error(errors.join("; "));
 }
 
-function fmtMonth(val: string): string {
-  if (!val) return "";
-  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-  const [y, m] = val.split("-");
-  const idx = parseInt(m) - 1;
-  return idx >= 0 && idx < 12 ? `${MONTHS[idx]} ${y}` : val;
-}
-
 export async function sendSubscriptionReceipt(
   settings: EmailSettings,
   userName: string,
@@ -138,7 +131,7 @@ export async function sendSubscriptionReceipt(
   <div style="padding:24px;background:#fff;">
     <table style="width:100%;border-collapse:collapse;">
       <tr><td style="padding:8px 0;color:#666;font-size:13px;">Member</td><td style="padding:8px 0;text-align:right;font-weight:600;font-size:13px;">${userName}</td></tr>
-      <tr style="border-top:1px solid #f0f0f0;"><td style="padding:8px 0;color:#666;font-size:13px;">Subscription Period</td><td style="padding:8px 0;text-align:right;font-weight:600;font-size:13px;">${fmtMonth(sub.fromMonth)} – ${fmtMonth(sub.toMonth)}</td></tr>
+      <tr style="border-top:1px solid #f0f0f0;"><td style="padding:8px 0;color:#666;font-size:13px;">Subscription Period</td><td style="padding:8px 0;text-align:right;font-weight:600;font-size:13px;">${fmtDate(sub.fromMonth)} – ${fmtDate(sub.toMonth)}</td></tr>
       <tr style="border-top:1px solid #f0f0f0;"><td style="padding:8px 0;color:#666;font-size:13px;">Amount Paid</td><td style="padding:8px 0;text-align:right;font-weight:700;font-size:15px;color:#B08A3A;">AED ${sub.amountAed}</td></tr>
       ${sub.paidDate ? `<tr style="border-top:1px solid #f0f0f0;"><td style="padding:8px 0;color:#666;font-size:13px;">Payment Date</td><td style="padding:8px 0;text-align:right;font-size:13px;">${sub.paidDate}</td></tr>` : ""}
     </table>
@@ -159,7 +152,7 @@ export async function sendSubscriptionReceipt(
         settings.adminEmail,
         `Subscription Added — ${userName}`,
         `<p><b>${userName}</b> (${userEmail}) subscription added.</p>
-         <p>Period: ${fmtMonth(sub.fromMonth)} – ${fmtMonth(sub.toMonth)}</p>
+         <p>Period: ${fmtDate(sub.fromMonth)} – ${fmtDate(sub.toMonth)}</p>
          <p>Amount: AED ${sub.amountAed}</p>
          ${sub.paidDate ? `<p>Paid: ${sub.paidDate}</p>` : ""}`
       );

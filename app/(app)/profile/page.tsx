@@ -6,18 +6,7 @@ import { useBookmarks } from "@/lib/bookmarks";
 import { LogoBar } from "@/components/TopBar";
 import BottomNav from "@/components/BottomNav";
 import { getAppUser, clearAppUser, type StoredUser } from "@/lib/auth";
-
-function daysLeft(to: string): number {
-  return Math.ceil((new Date(to).getTime() - Date.now()) / 86_400_000);
-}
-
-function subStatus(to: string) {
-  if (!to) return "none";
-  const d = daysLeft(to);
-  if (d < 0) return "expired";
-  if (d <= 30) return "expiring";
-  return "active";
-}
+import { subStatus, daysLeft, fmtDate } from "@/lib/subscription";
 
 const SUB_COLORS = {
   active:   { badge: "bg-green-50 text-green-700 border border-green-200", label: "Active" },
@@ -128,8 +117,8 @@ export default function ProfilePage() {
             <span className="text-[10px] font-semibold text-gold uppercase tracking-wider">Subscription</span>
           </div>
           <Row label="Status" value={stMeta.label} />
-          <Row label="From" value={user.subscriptionFrom} />
-          <Row label="Expiry" value={user.subscriptionTo} />
+          <Row label="From" value={fmtDate(user.subscriptionFrom)} />
+          <Row label="Expiry" value={fmtDate(user.subscriptionTo)} />
           {dl !== null && st === "active" && (
             <Row label="Days Left" value={`${dl} days`} />
           )}
