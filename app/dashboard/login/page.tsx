@@ -6,17 +6,17 @@ import { loginAdmin } from "@/lib/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = async () => {
-    if (!email || !password) { setError("Please enter email and password."); return; }
-    const ok = await loginAdmin(email, password);
+    if (!identifier || !password) { setError("Please enter your email/mobile and password."); return; }
+    const ok = await loginAdmin(identifier, password);
     if (ok) {
       router.push("/dashboard");
     } else {
-      setError("Invalid email or password.");
+      setError("Invalid email/mobile or password.");
     }
   };
 
@@ -33,12 +33,12 @@ export default function AdminLoginPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-[12px] font-medium text-gray-600 mb-1.5">Email</label>
+              <label className="block text-[12px] font-medium text-gray-600 mb-1.5">Email or Mobile</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                placeholder="admin@gulfsathyadhara.com"
+                type="text"
+                value={identifier}
+                onChange={(e) => { setIdentifier(e.target.value); setError(""); }}
+                placeholder="admin@gulfsathyadhara.com or mobile number"
                 className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all"
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               />

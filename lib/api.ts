@@ -208,10 +208,10 @@ export const getEditorial = (magazineId?: string | null) =>
 export const saveEditorial = (e: any) => post("/editorial", e);
 
 // ── Auth ──────────────────────────────────────────────────
-export async function loginAdmin(email: string, password: string): Promise<boolean> {
+export async function loginAdmin(identifier: string, password: string): Promise<boolean> {
   const res = await fetch("/api/auth", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, password }),
   });
   if (res.ok) {
     const admin = await res.json(); // { id, email, role }

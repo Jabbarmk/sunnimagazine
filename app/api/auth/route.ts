@@ -3,12 +3,15 @@ import bcrypt from "bcryptjs";
 import db from "@/lib/db";
 
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
-  if (!email || !password) {
+  const { identifier, password } = await req.json();
+  if (!identifier || !password) {
     return NextResponse.json({ error: "Required" }, { status: 400 });
   }
 
-  const [rows] = await db.query("SELECT * FROM admins WHERE email=?", [email]);
+  const [rows] = await db.query(
+    "SELECT * FROM admins WHERE email=? OR mobile=?",
+    [identifier, identifier]
+  );
   const admin = (rows as any[])[0];
   if (!admin) return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
 

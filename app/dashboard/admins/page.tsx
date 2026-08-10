@@ -6,9 +6,9 @@ import { getAdmins, saveAdmin, deleteAdmin } from "@/lib/api";
 import { getDashboardAdmin, DashboardAdmin } from "@/lib/auth";
 import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 
-type Admin = { id: number; email: string; role: "super_admin" | "admin" };
+type Admin = { id: number; email: string; mobile: string | null; role: "super_admin" | "admin" };
 
-const EMPTY = { id: 0, email: "", password: "", role: "admin" as "super_admin" | "admin" };
+const EMPTY = { id: 0, email: "", mobile: "", password: "", role: "admin" as "super_admin" | "admin" };
 
 export default function AdminsPage() {
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function AdminsPage() {
 
   const handleEdit = (a: Admin) => {
     setEditId(a.id);
-    setForm({ id: a.id, email: a.email, password: "", role: a.role });
+    setForm({ id: a.id, email: a.email, mobile: a.mobile || "", password: "", role: a.role });
     setError("");
   };
 
@@ -50,6 +50,7 @@ export default function AdminsPage() {
       await saveAdmin({
         id: editId || undefined,
         email,
+        mobile: form.mobile.trim() || undefined,
         password: form.password.trim() || undefined,
         role: form.role,
       });
@@ -94,6 +95,18 @@ export default function AdminsPage() {
               value={form.email}
               onChange={(e) => { setForm((f) => ({ ...f, email: e.target.value })); setError(""); }}
               placeholder="name@example.com"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400"
+            />
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-gray-700 mb-1.5">
+              Mobile <span className="text-gray-400 font-normal">(optional — can be used to sign in instead of email)</span>
+            </label>
+            <input
+              type="tel"
+              value={form.mobile}
+              onChange={(e) => { setForm((f) => ({ ...f, mobile: e.target.value })); setError(""); }}
+              placeholder="971501234567"
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400"
             />
           </div>
@@ -147,6 +160,7 @@ export default function AdminsPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[13px] text-gray-800 truncate">{a.email}</div>
+              {a.mobile && <div className="text-[12px] text-gray-400 truncate">{a.mobile}</div>}
               {a.role === "super_admin" && (
                 <span className="inline-block mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#B08A3A] bg-[#B08A3A]/10 px-1.5 py-0.5 rounded">
                   Super Admin
