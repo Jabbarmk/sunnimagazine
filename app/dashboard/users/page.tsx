@@ -21,8 +21,26 @@ type FilterTab = "all" | SubStatus;
 function validateMobile(v: string): string | null {
   if (!v) return null;
   const c = v.replace(/[\s\-\(\)]/g, "");
-  if (!/^(\+?971)\d{9}$/.test(c)) return "Must start with 971 (e.g. 971501234567)";
+  if (!/^0\d{9}$/.test(c)) return "Must start with 0 (e.g. 0501234567)";
   return null;
+}
+
+// Local UAE format (0501234567) -> WhatsApp international format (971501234567).
+function toWhatsapp(mobile: string): string {
+  const c = mobile.replace(/[\s\-\(\)]/g, "");
+  if (/^0\d{9}$/.test(c)) return "971" + c.slice(1);
+  return "";
+}
+
+// WhatsApp number to use for the wa.me link — prefers the whatsapp field,
+// falls back to mobile for records saved before this field existed
+// (older mobile values are already in international format).
+function whatsappNumber(u: { mobile?: string; whatsapp?: string }): string {
+  if (u.whatsapp) return u.whatsapp.replace(/\D/g, "");
+  const m = (u.mobile || "").replace(/\D/g, "");
+  if (m.startsWith("971")) return m;
+  if (m.startsWith("0")) return "971" + m.slice(1);
+  return m;
 }
 
 function printReceipt(user: AppUser, sub: UserSubscription) {
@@ -136,9 +154,9 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
   return (
     <div className="border-t border-gray-100 bg-gray-50 px-4 py-4 space-y-3">
       {/* WhatsApp button for expiring/expired */}
-      {latestSub && (subStatus(user.subscriptionTo) === "expiring" || subStatus(user.subscriptionTo) === "expired") && user.mobile && (
+      {latestSub && (subStatus(user.subscriptionTo) === "expiring" || subStatus(user.subscriptionTo) === "expired") && whatsappNumber(user) && (
         <a
-          href={`https://wa.me/${user.mobile.replace(/\D/g, "")}?text=${encodeURIComponent(buildWaMsg(latestSub))}`}
+          href={`https://wa.me/${whatsappNumber(user)}?text=${encodeURIComponent(buildWaMsg(latestSub))}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500 text-white rounded-lg text-[12px] font-medium hover:bg-green-600 transition-colors"
@@ -322,7 +340,7 @@ function NotifyExpiryPanel({ type, onClose }: { type: "expired" | "expiring"; on
 // ─── Empty form ───────────────────────────────────────────────────────────────
 
 const EMPTY: Omit<AppUser, "id" | "isActive" | "deletedAt"> = {
-  name: "", email: "", password: "", mobile: "", location: "",
+  name: "", email: "", password: "", mobile: "", whatsapp: "", location: "",
   photo: "", emirates: "", subscriptionFrom: "", subscriptionTo: "",
   referredBy: "", referralMobile: "",
 };
@@ -364,13 +382,19 @@ export default function UsersPage() {
   const handleEdit = (u: AppUser) => {
     setEditId(u.id);
     setForm({
-      name: u.name, email: u.email, password: "", mobile: u.mobile,
+      name: u.name, email: u.email, password: "", mobile: u.mobile, whatsapp: u.whatsapp ?? "",
       location: u.location, photo: u.photo, emirates: u.emirates ?? "",
       subscriptionFrom: u.subscriptionFrom, subscriptionTo: u.subscriptionTo,
       referredBy: u.referredBy ?? "", referralMobile: u.referralMobile ?? "",
     });
     setFe({}); setSaveError(""); setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const mobile = e.target.value;
+    setForm((f) => ({ ...f, mobile, whatsapp: toWhatsapp(mobile) || f.whatsapp }));
+    setFe((p) => { const n = { ...p }; delete n.mobile; return n; });
   };
 
   const set = (k: keyof typeof EMPTY) =>
@@ -396,7 +420,7 @@ export default function UsersPage() {
       await saveAppUser({
         id, name: form.name.trim(), email: form.email.trim(),
         password: form.password.trim() || existing?.password || "",
-        mobile: form.mobile.trim(), location: form.location.trim(),
+        mobile: form.mobile.trim(), whatsapp: form.whatsapp.trim(), location: form.location.trim(),
         photo: form.photo, emirates: form.emirates,
         subscriptionFrom: form.subscriptionFrom,
         subscriptionTo: form.subscriptionTo,
@@ -528,11 +552,18 @@ export default function UsersPage() {
             </div>
             <div>
               <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Mobile</label>
-              <input value={form.mobile} onChange={set("mobile")} placeholder="971501234567" className={inp("mobile")} />
+              <input value={form.mobile} onChange={handleMobileChange} placeholder="0501234567" className={inp("mobile")} />
               {fe.mobile
                 ? <p className="text-[11px] text-red-500 mt-1">{fe.mobile}</p>
-                : <p className="text-[10px] text-gray-400 mt-1">e.g. 971501234567</p>
+                : <p className="text-[10px] text-gray-400 mt-1">e.g. 0501234567</p>
               }
+            </div>
+            <div>
+              <label className="block text-[12px] font-medium text-gray-700 mb-1.5">
+                WhatsApp <span className="text-gray-400 font-normal">(auto-filled from Mobile)</span>
+              </label>
+              <input value={form.whatsapp} onChange={set("whatsapp")} placeholder="971501234567" className={inp("whatsapp")} />
+              <p className="text-[10px] text-gray-400 mt-1">e.g. 971501234567 — used for the WhatsApp reminder link</p>
             </div>
             <div>
               <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Emirate <span className="text-red-400">*</span></label>
@@ -556,10 +587,10 @@ export default function UsersPage() {
             </div>
             <div>
               <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Referral Mobile No.</label>
-              <input value={form.referralMobile} onChange={set("referralMobile")} placeholder="971501234567" className={inp("referralMobile")} />
+              <input value={form.referralMobile} onChange={set("referralMobile")} placeholder="0501234567" className={inp("referralMobile")} />
               {fe.referralMobile
                 ? <p className="text-[11px] text-red-500 mt-1">{fe.referralMobile}</p>
-                : <p className="text-[10px] text-gray-400 mt-1">e.g. 971501234567</p>
+                : <p className="text-[10px] text-gray-400 mt-1">e.g. 0501234567</p>
               }
             </div>
           </div>

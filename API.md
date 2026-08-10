@@ -1,6 +1,6 @@
 # Gulf Sathyadhara — API Reference
 
-**Base URL:** `https://smartflix.cloud`
+**Base URL:** `https://api.gulf-sathyadhara.com` (`https://smartflix.cloud` also still works for now, being phased out)
 
 All request/response bodies are JSON unless noted. Successful mutations return `{ "ok": true }`.
 
@@ -27,6 +27,7 @@ Articles are ordered by id ascending (`a1, a2, a11…`, smallest first).
 ## Table of Contents
 
 - [Authentication](#authentication)
+- [Admins](#admins)
 - [App Users](#app-users)
 - [User Subscriptions](#user-subscriptions)
 - [Magazines](#magazines)
@@ -54,13 +55,20 @@ Articles are ordered by id ascending (`a1, a2, a11…`, smallest first).
 ### Admin Login
 `POST /api/auth`
 
+Dashboard admin login only — separate accounts from app users, see [Admins](#admins).
+
 | Field | Type | Required |
 |---|---|---|
-| `email` | string | ✓ |
+| `identifier` | string | ✓ — email or mobile number |
 | `password` | string | ✓ |
 
-**Response:** `{ "ok": true }`
-**Errors:** `401 { "error": "Invalid credentials" }`
+**Response:**
+```json
+{ "id": 1, "email": "admin@example.com", "role": "super_admin | admin" }
+```
+**Errors:** `400 Required` · `401 Invalid credentials`
+
+Passwords are bcrypt-hashed; legacy plaintext passwords are checked directly and silently upgraded to a hash on next successful login (no migration step needed).
 
 ---
 
@@ -83,11 +91,32 @@ Articles are ordered by id ascending (`a1, a2, a11…`, smallest first).
   "photo": "string",
   "subscriptionFrom": "string",
   "subscriptionTo": "string",
+  "isExpired": "boolean",
   "referredBy": "string",
   "referralMobile": "string"
 }
 ```
 **Errors:** `400 Required` · `401 Invalid credentials`
+
+`subscriptionFrom`/`subscriptionTo` always reflect the **latest** entry in that user's subscription history (see [User Subscriptions](#user-subscriptions)), not a cached value — falls back to the user record's own fields only if no history entry exists at all.
+
+`isExpired` is `true` if `subscriptionTo` is in the past **or** if the user has no subscription at all (never subscribed counts the same as lapsed here). It's a snapshot computed at login time, not pushed live — re-fetch (e.g. re-login) to get a fresh value if the client stays open past the expiry date.
+
+Same bcrypt + legacy-plaintext self-heal behavior as Admin Login above.
+
+---
+
+### App User Change Password
+`POST /api/app-change-password`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | string | ✓ — logged-in user's id |
+| `currentPassword` | string | ✓ |
+| `newPassword` | string | ✓ — min 6 characters |
+
+**Response:** `{ "ok": true }`
+**Errors:** `400 Required` · `400 New password must be at least 6 characters` · `401 Current password is incorrect` · `404 User not found`
 
 ---
 
@@ -124,6 +153,45 @@ Self-service account deletion for a signed-in app user. Soft delete — sets `de
 
 ---
 
+## Admins
+
+Dashboard admin accounts (not app users). Only a `super_admin` should manage these — enforced **client-side only** (page/nav gating in the dashboard); these endpoints themselves don't check the caller's role, since the dashboard has no server-side session/auth on any route.
+
+### List Admins
+`GET /api/admins`
+
+**Response:**
+```json
+[{ "id": 1, "email": "string", "mobile": "string | null", "role": "super_admin | admin" }]
+```
+
+---
+
+### Create / Update Admin
+`POST /api/admins`
+
+| Field | Type | Required |
+|---|---|---|
+| `id` | number | Omit to create, pass to update |
+| `email` | string | ✓ |
+| `mobile` | string | Optional — lets this admin log in with it instead of email |
+| `password` | string | ✓ on create; on update, leave blank/omit to keep the current password |
+| `role` | `"super_admin" \| "admin"` | Default `"admin"` |
+
+**Response:** `{ "ok": true, "id": number }`
+**Errors:** `400 Email is required` · `400 Password is required` (create only) · `409 An admin with this email already exists` · `409 An admin with this mobile number already exists`
+
+---
+
+### Delete Admin
+`DELETE /api/admins/[id]?requesterId={id}`
+
+`requesterId` is self-reported by the client (the currently logged-in admin's id) — not cryptographically verified, but used for two hard safeguards enforced server-side regardless:
+
+**Errors:** `400 You can't delete your own account while logged in.` (when `requesterId` matches the id being deleted) · `400 Can't delete the last Super Admin.` · `404 Admin not found`
+
+---
+
 ## App Users
 
 ### List Users
@@ -141,6 +209,7 @@ Self-service account deletion for a signed-in app user. Soft delete — sets `de
   "email": "string",
   "password": "string",
   "mobile": "string",
+  "whatsapp": "string",
   "location": "string",
   "photo": "string | null",
   "subscriptionFrom": "string",
@@ -151,6 +220,8 @@ Self-service account deletion for a signed-in app user. Soft delete — sets `de
   "deletedAt": "string | null"
 }]
 ```
+
+`mobile` is local UAE format (`0501234567`); `whatsapp` is international format (`971501234567`), auto-derived from `mobile` in the dashboard UI but stored/editable separately — used for the "Send WhatsApp Reminder" link.
 
 ---
 
@@ -163,7 +234,8 @@ Self-service account deletion for a signed-in app user. Soft delete — sets `de
 | `name` | string | ✓ |
 | `email` | string | ✓ |
 | `password` | string | |
-| `mobile` | string | |
+| `mobile` | string | Local UAE format, e.g. `0501234567` |
+| `whatsapp` | string | International format, e.g. `971501234567` |
 | `location` | string | |
 | `photo` | string \| null | |
 | `subscriptionFrom` | string \| null | |
@@ -282,6 +354,8 @@ Also syncs `subscriptionFrom` / `subscriptionTo` on the user record.
 
 ### Delete Subscription
 `DELETE /api/user-subscriptions/[id]`
+
+Also resyncs `subscriptionFrom`/`subscriptionTo` on the user record to whichever entry is now latest (or clears both if none remain) — so those cached fields never point at a deleted history row.
 
 ---
 
