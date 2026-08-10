@@ -210,6 +210,7 @@ Dashboard admin accounts (not app users). Only a `super_admin` should manage the
   "password": "string",
   "mobile": "string",
   "whatsapp": "string",
+  "code": "string",
   "location": "string",
   "photo": "string | null",
   "subscriptionFrom": "string",
@@ -221,7 +222,7 @@ Dashboard admin accounts (not app users). Only a `super_admin` should manage the
 }]
 ```
 
-`mobile` is local UAE format (`0501234567`); `whatsapp` is international format (`971501234567`), auto-derived from `mobile` in the dashboard UI but stored/editable separately — used for the "Send WhatsApp Reminder" link.
+`mobile` is local UAE format (`0501234567`); `whatsapp` is international format (`971501234567`), auto-derived from `mobile` in the dashboard UI but stored/editable separately — used for the "Send WhatsApp Reminder" link. `code` is a free-text optional field (e.g. member/agent code).
 
 ---
 
@@ -236,6 +237,7 @@ Dashboard admin accounts (not app users). Only a `super_admin` should manage the
 | `password` | string | |
 | `mobile` | string | Local UAE format, e.g. `0501234567` |
 | `whatsapp` | string | International format, e.g. `971501234567` |
+| `code` | string | Optional free text, e.g. member/agent code |
 | `location` | string | |
 | `photo` | string \| null | |
 | `subscriptionFrom` | string \| null | |
@@ -270,6 +272,31 @@ Blocked if subscription is still active. Error: `400 Cannot delete user with act
 
 ### Hard Delete User
 `DELETE /api/users/[id]`
+
+---
+
+### Download Import Template
+`GET /api/users/import/template`
+
+Returns a `.xlsx` file (`Content-Disposition: attachment`) with the required header row and one example row: `Name, Email, Mobile, WhatsApp, Code, Emirate, Location, Subscription From, Subscription To, Amount Paid (AED), Paid Date, Referred By, Referral Mobile`. `Mobile`/`Referral Mobile` are local UAE format (`0501234567`); dates are `DD/MM/YYYY` text.
+
+---
+
+### Bulk Import Users
+`POST /api/users/import` · `multipart/form-data`
+
+| Field | Type | Required |
+|---|---|---|
+| `file` | File | ✓ — `.xlsx`, matching the template's header row (column order doesn't matter, header names do — don't rename them) |
+| `defaultPassword` | string | ✓ — assigned to every imported user (plaintext at import, same as manual Add User; self-heals to bcrypt on first login) |
+
+Rows with a `name`/`email` matching an existing user are **skipped, never overwritten**. If both `Subscription From` and `Subscription To` are present and valid, also creates a `user_subscriptions` history row (so it participates in the [latest-history login logic](#app-user-login)) — partial/missing subscription dates leave the user with no subscription at all rather than a half-set one.
+
+**Response:**
+```json
+{ "ok": true, "createdCount": 1, "created": ["email@example.com"], "skipped": [{ "row": 2, "email": "string", "reason": "string" }] }
+```
+**Errors:** `400 No file provided` · `400 Default password is required` · `400 Could not read file — please upload a valid .xlsx file` · `400 Name and Email columns not found — ...`
 
 ---
 
@@ -348,7 +375,7 @@ Max 50 MB, PDF only. **Response:** `{ "url": "/uploads/pdfs/mag_xxx.pdf" }`
 | `toMonth` | string (YYYY-MM) | ✓ |
 | `paidDate` | string \| null | |
 
-Also syncs `subscriptionFrom` / `subscriptionTo` on the user record.
+Pass an existing `id` to edit that record in place (e.g. correct an amount or date) rather than creating a new one. After saving, resyncs `subscriptionFrom`/`subscriptionTo` on the user record to whichever entry is now actually latest (by `paidDate`, then `createdAt`) — not just whatever was posted, so editing an older record doesn't make it look like the current one.
 
 ---
 

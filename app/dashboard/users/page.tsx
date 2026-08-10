@@ -91,6 +91,7 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
   const [subs, setSubs] = useState<UserSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ amountAed: "", fromMonth: "", toMonth: "", paidDate: new Date().toISOString().split("T")[0] });
   const [sending, setSending] = useState<string | null>(null);
   const [msg, setMsg] = useState("");
@@ -103,13 +104,33 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
 
   useEffect(() => { reload(); }, [reload]);
 
+  const resetForm = () => {
+    setForm({ amountAed: "", fromMonth: "", toMonth: "", paidDate: new Date().toISOString().split("T")[0] });
+    setEditingId(null);
+    setShowForm(false);
+    setMsg("");
+  };
+
+  const handleEditClick = (s: UserSubscription) => {
+    setEditingId(s.id);
+    setForm({
+      amountAed: String(s.amountAed),
+      fromMonth: s.fromMonth,
+      toMonth: s.toMonth,
+      paidDate: s.paidDate || "",
+    });
+    setShowForm(true);
+    setMsg("");
+  };
+
   const handleAdd = async () => {
     if (!form.amountAed || !form.fromMonth || !form.toMonth) {
       setMsg("Amount, From and To are required"); return;
     }
+    const isEdit = !!editingId;
     try {
       const sub: UserSubscription = {
-        id: "sub_" + Date.now(),
+        id: editingId ?? "sub_" + Date.now(),
         userId: user.id,
         amountAed: parseFloat(form.amountAed),
         fromMonth: form.fromMonth,
@@ -118,11 +139,11 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
       };
       setSending("save");
       await saveUserSubscription(sub);
-      setForm({ amountAed: "", fromMonth: "", toMonth: "", paidDate: new Date().toISOString().split("T")[0] });
-      setShowForm(false);
-      setMsg("Subscription added");
-      // Send email receipt
-      if (emailSettings?.host && user.email) {
+      resetForm();
+      setMsg(isEdit ? "Subscription updated" : "Subscription added");
+      // Send email receipt — only for new subscriptions, not edits, so
+      // correcting a typo doesn't re-send a receipt to the user.
+      if (!isEdit && emailSettings?.host && user.email) {
         try {
           await sendSubscriptionReceipt(emailSettings, user.name, user.email, sub);
           setMsg("Subscription added & receipt sent");
@@ -192,6 +213,8 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
                   <td className="py-2 text-gray-500">{s.paidDate || "—"}</td>
                   <td className="py-2">
                     <div className="flex gap-2 justify-end">
+                      <button onClick={() => handleEditClick(s)}
+                        className="text-[11px] text-gray-500 hover:text-gray-700">Edit</button>
                       <button onClick={() => printReceipt(user, s)}
                         className="text-[11px] text-blue-500 hover:text-blue-700">Print</button>
                       <button onClick={() => handleDelete(s.id)}
@@ -209,10 +232,12 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
         <p className={`text-[12px] font-medium ${msg.includes("failed") ? "text-red-500" : "text-green-600"}`}>{msg}</p>
       )}
 
-      {/* Add subscription form */}
+      {/* Add/Edit subscription form */}
       {showForm ? (
         <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-          <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">New Subscription</div>
+          <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+            {editingId ? "Edit Subscription" : "New Subscription"}
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-[11px] font-medium text-gray-600 mb-1">Amount (AED) <span className="text-red-400">*</span></label>
@@ -243,13 +268,13 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
           <div className="flex gap-2 items-center">
             <button onClick={handleAdd} disabled={!!sending}
               className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[12px] font-medium hover:bg-blue-700 disabled:opacity-50">
-              {sending === "save" ? "Saving…" : "Save Subscription"}
+              {sending === "save" ? "Saving…" : editingId ? "Save Changes" : "Save Subscription"}
             </button>
-            <button onClick={() => { setShowForm(false); setMsg(""); }}
+            <button onClick={resetForm}
               className="px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-[12px] hover:bg-gray-50">
               Cancel
             </button>
-            {emailSettings?.host && user.email && (
+            {!editingId && emailSettings?.host && user.email && (
               <span className="text-[11px] text-gray-400">Receipt will be emailed to {user.email}</span>
             )}
           </div>
@@ -259,6 +284,107 @@ function SubscriptionPanel({ user, emailSettings, waTemplate }: {
           className="text-[12px] text-blue-500 hover:text-blue-700 font-medium">
           + Add Subscription
         </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Import Users panel ─────────────────────────────────────────────────────
+
+type ImportResult = {
+  createdCount: number;
+  created: string[];
+  skipped: { row: number; email: string; reason: string }[];
+};
+
+function ImportUsersPanel({ onClose, onImported }: { onClose: () => void; onImported: () => void }) {
+  const [defaultPassword, setDefaultPassword] = useState("Welcome@123");
+  const [file, setFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<ImportResult | null>(null);
+
+  const handleImport = async () => {
+    if (!file) { setError("Choose a .xlsx file first."); return; }
+    if (!defaultPassword.trim()) { setError("Default password is required."); return; }
+    setImporting(true);
+    setError("");
+    setResult(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("defaultPassword", defaultPassword.trim());
+      const res = await fetch("/api/users/import", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Import failed");
+      setResult(data);
+      if (data.createdCount > 0) onImported();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Import Users</div>
+        <button onClick={onClose} className="text-[12px] text-gray-400 hover:text-gray-600">✕ Close</button>
+      </div>
+
+      <p className="text-[12px] text-gray-500">
+        Rows with an email that already exists are skipped, never overwritten. Download the template, fill it in,
+        then upload it below.
+      </p>
+
+      <a
+        href="/api/users/import/template"
+        download
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-gray-700 rounded-lg text-[12px] font-medium hover:bg-gray-50"
+      >
+        ⬇ Download Template (.xlsx)
+      </a>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[12px] font-medium text-gray-700 mb-1.5">
+            Default Password <span className="text-gray-400 font-normal">(given to every imported user)</span>
+          </label>
+          <input value={defaultPassword} onChange={(e) => setDefaultPassword(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
+        </div>
+        <div>
+          <label className="block text-[12px] font-medium text-gray-700 mb-1.5">File (.xlsx)</label>
+          <input type="file" accept=".xlsx"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full text-[12px] text-gray-600 file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-600 file:text-[12px] file:font-medium" />
+        </div>
+      </div>
+
+      {error && <p className="text-[13px] text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+
+      <button onClick={handleImport} disabled={importing}
+        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700 disabled:opacity-50">
+        {importing ? "Importing…" : "Import"}
+      </button>
+
+      {result && (
+        <div className="space-y-2 border-t border-gray-100 pt-3">
+          <p className="text-[13px] font-medium text-green-700">
+            {result.createdCount} user(s) imported successfully.
+          </p>
+          {result.skipped.length > 0 && (
+            <div>
+              <p className="text-[12px] font-medium text-amber-600 mb-1">{result.skipped.length} row(s) skipped:</p>
+              <div className="max-h-40 overflow-y-auto text-[12px] text-gray-500 space-y-0.5">
+                {result.skipped.map((s, i) => (
+                  <div key={i}>Row {s.row}{s.email ? ` (${s.email})` : ""}: {s.reason}</div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -340,7 +466,7 @@ function NotifyExpiryPanel({ type, onClose }: { type: "expired" | "expiring"; on
 // ─── Empty form ───────────────────────────────────────────────────────────────
 
 const EMPTY: Omit<AppUser, "id" | "isActive" | "deletedAt"> = {
-  name: "", email: "", password: "", mobile: "", whatsapp: "", location: "",
+  name: "", email: "", password: "", mobile: "", whatsapp: "", code: "", location: "",
   photo: "", emirates: "", subscriptionFrom: "", subscriptionTo: "",
   referredBy: "", referralMobile: "",
 };
@@ -358,6 +484,7 @@ export default function UsersPage() {
   const [fe, setFe] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState("");
   const [notifyPanel, setNotifyPanel] = useState<"expired" | "expiring" | null>(null);
+  const [showImport, setShowImport] = useState(false);
   const [tab, setTab] = useState<FilterTab>("all");
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -382,7 +509,7 @@ export default function UsersPage() {
   const handleEdit = (u: AppUser) => {
     setEditId(u.id);
     setForm({
-      name: u.name, email: u.email, password: "", mobile: u.mobile, whatsapp: u.whatsapp ?? "",
+      name: u.name, email: u.email, password: "", mobile: u.mobile, whatsapp: u.whatsapp ?? "", code: u.code ?? "",
       location: u.location, photo: u.photo, emirates: u.emirates ?? "",
       subscriptionFrom: u.subscriptionFrom, subscriptionTo: u.subscriptionTo,
       referredBy: u.referredBy ?? "", referralMobile: u.referralMobile ?? "",
@@ -420,7 +547,7 @@ export default function UsersPage() {
       await saveAppUser({
         id, name: form.name.trim(), email: form.email.trim(),
         password: form.password.trim() || existing?.password || "",
-        mobile: form.mobile.trim(), whatsapp: form.whatsapp.trim(), location: form.location.trim(),
+        mobile: form.mobile.trim(), whatsapp: form.whatsapp.trim(), code: form.code.trim(), location: form.location.trim(),
         photo: form.photo, emirates: form.emirates,
         subscriptionFrom: form.subscriptionFrom,
         subscriptionTo: form.subscriptionTo,
@@ -474,6 +601,10 @@ export default function UsersPage() {
             className="px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-[12px] hover:bg-gray-50">
             Deleted Users
           </a>
+          <button onClick={() => setShowImport((v) => !v)}
+            className="px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-[12px] hover:bg-gray-50">
+            ⬆ Import Users
+          </button>
           {!showForm && (
             <button onClick={() => setShowForm(true)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700">
@@ -515,6 +646,8 @@ export default function UsersPage() {
       </div>
 
       {notifyPanel && <NotifyExpiryPanel type={notifyPanel} onClose={() => setNotifyPanel(null)} />}
+
+      {showImport && <ImportUsersPanel onClose={() => setShowImport(false)} onImported={reload} />}
 
       {/* Form */}
       {showForm && (
@@ -576,6 +709,12 @@ export default function UsersPage() {
                 {EMIRATES_WITH_GLOBAL.map((e) => <option key={e} value={e}>{e}</option>)}
               </select>
               {fe.emirates && <p className="text-[11px] text-red-500 mt-1">{fe.emirates}</p>}
+            </div>
+            <div>
+              <label className="block text-[12px] font-medium text-gray-700 mb-1.5">
+                Code <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input value={form.code} onChange={set("code")} placeholder="e.g. member/agent code" className={inp("code")} />
             </div>
             <div className="col-span-2">
               <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Location</label>
@@ -666,6 +805,7 @@ export default function UsersPage() {
                       {u.mobile && <span className="text-[11px] text-gray-400">{u.mobile}</span>}
                       {u.location && <span className="text-[11px] text-gray-400">{u.location}</span>}
                       {u.emirates && <span className="text-[11px] text-amber-600 font-medium">📍 {u.emirates}</span>}
+                      {u.code && <span className="text-[11px] text-gray-400">Code: {u.code}</span>}
                     </div>
                     {(u.subscriptionFrom || u.subscriptionTo) && (
                       <div className="text-[10px] text-gray-400 mt-0.5">
