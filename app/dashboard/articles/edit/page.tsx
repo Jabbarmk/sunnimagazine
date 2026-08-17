@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getArticle, saveArticle, getMagazines, getCategories, getAuthors } from "@/lib/api";
+import { getArticle, saveArticle, getMagazinesList, getCategories, getAuthors } from "@/lib/api";
 import type { Category, Author } from "@/lib/store";
 import type { Magazine, PullQuote } from "@/lib/data";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
@@ -26,7 +26,7 @@ function EditArticleForm() {
   const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
-    getMagazines().then(setMagazines);
+    getMagazinesList().then(setMagazines);
     getCategories().then(setCategories);
     getAuthors().then(setAuthors);
     getArticle(id).then((a) => {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { saveArticle, getMagazines, getCategories, getAuthors, getArticlesList } from "@/lib/api";
+import { saveArticle, getMagazinesList, getCategories, getAuthors, getArticlesList } from "@/lib/api";
 import type { Category, Author } from "@/lib/store";
 import type { Magazine, PullQuote } from "@/lib/data";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
@@ -43,7 +43,7 @@ export default function NewArticlePage() {
   useEffect(() => {
     const today = new Date();
     const formatted = today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    Promise.all([getMagazines(), getArticlesList()]).then(([mags, all]) => {
+    Promise.all([getMagazinesList(), getArticlesList()]).then(([mags, all]) => {
       setMagazines(mags);
       setAllArticles(all);
       const firstMag = mags[0];

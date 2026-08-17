@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   getArts, saveArt, deleteArt,
-  getMagazines, getArtCategories, getAuthors,
+  getMagazinesList, getArtCategories, getAuthors,
 } from "@/lib/api";
 import type { Art } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
@@ -26,7 +26,7 @@ export default function ArtPage() {
 
   const reload = () => {
     getArts().then(setArts);
-    getMagazines().then(setMagazines);
+    getMagazinesList().then(setMagazines);
     getArtCategories().then(setArtCats);
     getAuthors().then(setAuthors);
   };
