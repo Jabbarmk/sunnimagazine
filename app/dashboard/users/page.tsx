@@ -486,6 +486,7 @@ export default function UsersPage() {
   const [notifyPanel, setNotifyPanel] = useState<"expired" | "expiring" | null>(null);
   const [showImport, setShowImport] = useState(false);
   const [tab, setTab] = useState<FilterTab>("all");
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<{ id: string; msg: string } | null>(null);
@@ -583,7 +584,14 @@ export default function UsersPage() {
 
   const counts = { active: 0, expiring: 0, expired: 0, none: 0 };
   users.forEach((u) => { counts[subStatus(u.subscriptionTo)]++; });
-  const filtered = tab === "all" ? users : users.filter((u) => subStatus(u.subscriptionTo) === tab);
+  const q = search.trim().toLowerCase();
+  const filtered = (tab === "all" ? users : users.filter((u) => subStatus(u.subscriptionTo) === tab))
+    .filter((u) =>
+      !q ||
+      u.name.toLowerCase().includes(q) ||
+      (u.email || "").toLowerCase().includes(q) ||
+      (u.mobile || "").toLowerCase().includes(q)
+    );
 
   const inp = (k: string) =>
     `w-full px-3 py-2 border rounded-lg text-[13px] outline-none ${fe[k] ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-blue-400"}`;
@@ -747,6 +755,30 @@ export default function UsersPage() {
         </div>
       )}
 
+      {/* Search */}
+      {!loading && users.length > 0 && (
+        <div className="relative mb-3">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, email or mobile…"
+            className="w-full pl-9 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-[13px] outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-[14px] leading-none"
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Filter tabs */}
       {!loading && users.length > 0 && (
         <div className="flex gap-2 mb-3 flex-wrap">
@@ -770,7 +802,9 @@ export default function UsersPage() {
         <div className="space-y-2">
           {filtered.length === 0 && (
             <div className="bg-white rounded-xl border border-gray-200 px-4 py-10 text-center text-[13px] text-gray-400">
-              {users.length === 0 ? "No users yet. Add one above." : "No users in this category."}
+              {users.length === 0 ? "No users yet. Add one above."
+                : q ? `No users match “${search.trim()}”.`
+                : "No users in this category."}
             </div>
           )}
           {filtered.map((u) => {
