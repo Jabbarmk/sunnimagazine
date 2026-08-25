@@ -110,6 +110,16 @@ export const getAppUsers = () => get<any[]>("/users");
 export const getDeletedUsers = () => get<any[]>("/users?deleted=1");
 export const saveAppUser = (u: any) => post("/users", u);
 export const toggleUserActive = (id: string, isActive: boolean) => put(`/users/${id}`, { isActive });
+// Pending list must always be fresh — approving/rejecting changes it immediately.
+export async function getPendingUsers(): Promise<any[]> {
+  const res = await fetch(`${base}/api/users/pending`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`GET /users/pending failed: ${res.status}`);
+  return res.json();
+}
+export const approveUser = (p: { userId: string; amountAed: number; fromMonth: string; toMonth: string; paidDate?: string }) =>
+  postJson<{ ok: true; subscriptionId: string; generatedPassword: string | null; user: { id: string; name: string; email: string; mobile: string } }>(
+    "/users/approve", p
+  );
 export const softDeleteUser = (id: string) => put(`/users/${id}`, { softDelete: true });
 export const deleteAppUser = (id: string) => del(`/users/${id}`);
 

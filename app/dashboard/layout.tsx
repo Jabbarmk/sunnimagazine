@@ -133,6 +133,13 @@ const ShieldIcon = () => (
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
   </svg>
 );
+const UserCheckIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+    <circle cx="8.5" cy="7" r="4"/>
+    <polyline points="17 11 19 13 23 9"/>
+  </svg>
+);
 const LogOutIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -157,6 +164,7 @@ const nav = [
   { href: "/dashboard/notifications", label: "Notifications", Icon: BellIcon },
   { href: "/dashboard/artcategories", label: "Art Categories", Icon: PaletteIcon },
   { href: "/dashboard/art", label: "Art", Icon: BrushIcon },
+  { href: "/dashboard/approvals", label: "Approvals", Icon: UserCheckIcon },
   { href: "/dashboard/users", label: "Users", Icon: UsersIcon },
   { href: "/dashboard/deletedusers", label: "Deleted Users", Icon: TrashIcon },
   { href: "/dashboard/userwritings", label: "User Writings", Icon: EditIcon },

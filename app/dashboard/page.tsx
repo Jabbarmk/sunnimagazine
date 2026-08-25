@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getArticlesList, getMagazines, getCategories } from "@/lib/api";
+import ApprovalsList from "@/components/ApprovalsList";
 
 const FileTextIcon = () => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -34,6 +35,7 @@ const ArrowRightIcon = () => (
 
 export default function DashboardPage() {
   const [counts, setCounts] = useState({ articles: 0, magazines: 0, categories: 0 });
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
 
   useEffect(() => {
     Promise.all([getArticlesList(), getMagazines(), getCategories()]).then(([a, m, c]) => {
@@ -136,6 +138,24 @@ export default function DashboardPage() {
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* New Registrations — hidden entirely once the queue is empty */}
+      <div className={pendingCount === 0 ? "hidden" : "mb-10"}>
+        <div className="mb-4 flex items-center justify-between">
+          <span className="text-[11px] font-bold text-[#9A9A9E] uppercase tracking-widest">
+            New Registrations
+            {pendingCount !== null && pendingCount > 0 && (
+              <span className="ml-2 normal-case tracking-normal text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                {pendingCount} pending
+              </span>
+            )}
+          </span>
+          <Link href="/dashboard/approvals" className="text-[12px] font-medium hover:underline" style={{ color: "#B08A3A" }}>
+            Open Approvals →
+          </Link>
+        </div>
+        <ApprovalsList limit={5} showViewAll onCountChange={setPendingCount} />
       </div>
 
       {/* Quick Actions */}
