@@ -117,9 +117,11 @@ export async function getPendingUsers(): Promise<any[]> {
   return res.json();
 }
 export const approveUser = (p: { userId: string; amountAed: number; fromMonth: string; toMonth: string; paidDate?: string }) =>
-  postJson<{ ok: true; subscriptionId: string; generatedPassword: string | null; user: { id: string; name: string; email: string; mobile: string } }>(
-    "/users/approve", p
-  );
+  postJson<{
+    ok: true; subscriptionId: string; generatedPassword: string | null;
+    emails: { receiptSent: boolean; credentialsSent: boolean; error: string | null };
+    user: { id: string; name: string; email: string; mobile: string };
+  }>("/users/approve", p);
 export const softDeleteUser = (id: string) => put(`/users/${id}`, { softDelete: true });
 export const deleteAppUser = (id: string) => del(`/users/${id}`);
 

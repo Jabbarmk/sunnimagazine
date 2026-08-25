@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { getPendingUsers, approveUser, toggleUserActive, getEmailSettings } from "@/lib/api";
-import { sendSubscriptionReceipt, sendCredentialsEmail } from "@/lib/email";
 import { fmtDate } from "@/lib/subscription";
-import type { EmailSettings, UserSubscription } from "@/lib/store";
+import type { EmailSettings } from "@/lib/store";
 
 export type PendingUser = {
   id: string;
@@ -59,24 +58,15 @@ function ApproveModal({ user, emailSettings, onDone, onClose }: {
         paidDate: form.paidDate,
       });
 
-      let emailMsg = "No email sent (user has no email or SMTP not configured).";
-      if (emailSettings?.host && user.email) {
-        const sub: UserSubscription = {
-          id: res.subscriptionId,
-          userId: user.id,
-          amountAed: parseFloat(form.amountAed),
-          fromMonth: form.fromMonth,
-          toMonth: form.toMonth,
-          paidDate: form.paidDate,
-        };
-        const failed: string[] = [];
-        try { await sendSubscriptionReceipt(emailSettings, user.name, user.email, sub); }
-        catch { failed.push("receipt"); }
-        try { await sendCredentialsEmail(emailSettings, user.name, user.email, user.mobile || user.email, res.generatedPassword); }
-        catch { failed.push("credentials"); }
-        emailMsg = failed.length === 0
-          ? `Receipt and login details emailed to ${user.email}.`
-          : `Approved, but the ${failed.join(" and ")} email failed to send.`;
+      // Emails are sent server-side by the approve API; it reports what went out.
+      const em = res.emails;
+      let emailMsg: string;
+      if (em?.receiptSent && em?.credentialsSent) {
+        emailMsg = `Receipt and login details emailed to ${user.email}.`;
+      } else if (em?.receiptSent || em?.credentialsSent) {
+        emailMsg = `Approved, but only the ${em.receiptSent ? "receipt" : "login details"} email was sent (${em.error || "other email failed"}).`;
+      } else {
+        emailMsg = `Approved. No emails sent${em?.error ? ` (${em.error})` : ""}.`;
       }
 
       setResult({ generatedPassword: res.generatedPassword, emailMsg });
