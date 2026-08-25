@@ -1,23 +1,11 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import nodemailer from "nodemailer";
 import db from "@/lib/db";
 import { fmtDate } from "@/lib/subscription";
+import { generatePassword } from "@/lib/password";
 
 export const dynamic = "force-dynamic";
-
-// No ambiguous characters (0/O, 1/l/I) — the password gets read out of an
-// email or over WhatsApp, so every character must be unmistakable.
-const PASSWORD_CHARSET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
-
-function generatePassword(length = 8): string {
-  let out = "";
-  for (let i = 0; i < length; i++) {
-    out += PASSWORD_CHARSET[crypto.randomInt(PASSWORD_CHARSET.length)];
-  }
-  return out;
-}
 
 function receiptHtml(userName: string, amountAed: number, fromMonth: string, toMonth: string, paidDate: string | null) {
   return `

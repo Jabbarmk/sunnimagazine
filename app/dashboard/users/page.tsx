@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getAppUsers, saveAppUser, softDeleteUser, toggleUserActive,
   getUserSubscriptions, saveUserSubscription, deleteUserSubscription,
-  getEmailSettings, notifyExpiry,
+  getEmailSettings, notifyExpiry, sendUserDetailsEmail,
 } from "@/lib/api";
 import type { AppUser, UserSubscription, EmailSettings } from "@/lib/store";
 import ImageUpload from "@/app/dashboard/_components/ImageUpload";
@@ -490,6 +490,7 @@ export default function UsersPage() {
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<{ id: string; msg: string } | null>(null);
+  const [emailingId, setEmailingId] = useState<string | null>(null);
 
   const reload = async () => {
     setLoading(true);
@@ -563,6 +564,31 @@ export default function UsersPage() {
   const handleToggleActive = async (u: AppUser) => {
     await toggleUserActive(u.id, !u.isActive);
     reload();
+  };
+
+  const handleSendDetailsEmail = async (u: AppUser) => {
+    if (!u.email) {
+      setActionMsg({ id: u.id, msg: "This user has no email address." });
+      setTimeout(() => setActionMsg(null), 4000);
+      return;
+    }
+    const stored = u.password || "";
+    const isHashed = stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$");
+    const resetNote = !stored || isHashed
+      ? "\n\nTheir password can't be read back, so it will be RESET to a new one included in the email."
+      : "";
+    if (!confirm(`Email account & subscription details to ${u.email}?${resetNote}`)) return;
+    setEmailingId(u.id);
+    try {
+      const res = await sendUserDetailsEmail(u.id);
+      setActionMsg({ id: u.id, msg: `✓ Details emailed to ${res.sentTo}${res.passwordReset ? " (password was reset)" : ""}` });
+      if (res.passwordReset) reload();
+    } catch (e: unknown) {
+      setActionMsg({ id: u.id, msg: e instanceof Error ? e.message : "Email failed" });
+    } finally {
+      setEmailingId(null);
+      setTimeout(() => setActionMsg(null), 6000);
+    }
   };
 
   const handleDelete = async (u: AppUser) => {
@@ -856,7 +882,9 @@ export default function UsersPage() {
                       </div>
                     )}
                     {actionMsg?.id === u.id && (
-                      <div className="text-[11px] text-red-500 mt-1 font-medium">{actionMsg.msg}</div>
+                      <div className={`text-[11px] mt-1 font-medium ${actionMsg.msg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
+                        {actionMsg.msg}
+                      </div>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1.5 flex-shrink-0 justify-end max-w-[220px]">
@@ -867,6 +895,13 @@ export default function UsersPage() {
                       {isExpanded ? "▲ Close" : "▼ Subscription"}
                     </RowActionButton>
                     <RowActionButton onClick={() => handleEdit(u)}>Edit</RowActionButton>
+                    <RowActionButton
+                      variant="primary"
+                      disabled={emailingId === u.id}
+                      onClick={() => handleSendDetailsEmail(u)}
+                    >
+                      {emailingId === u.id ? "Sending…" : "✉ Send Email"}
+                    </RowActionButton>
                     <RowActionButton
                       variant={u.isActive ? "warning" : "success"}
                       onClick={() => handleToggleActive(u)}

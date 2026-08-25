@@ -116,6 +116,8 @@ export async function getPendingUsers(): Promise<any[]> {
   if (!res.ok) throw new Error(`GET /users/pending failed: ${res.status}`);
   return res.json();
 }
+export const sendUserDetailsEmail = (userId: string) =>
+  postJson<{ ok: true; passwordReset: boolean; sentTo: string }>("/users/send-details", { userId });
 export const approveUser = (p: { userId: string; amountAed: number; fromMonth: string; toMonth: string; paidDate?: string }) =>
   postJson<{
     ok: true; subscriptionId: string; generatedPassword: string | null;
