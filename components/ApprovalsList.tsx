@@ -161,9 +161,10 @@ function ApproveModal({ user, emailSettings, onDone, onClose }: {
   );
 }
 
-export default function ApprovalsList({ limit, showViewAll, onCountChange }: {
+export default function ApprovalsList({ limit, showViewAll, searchable, onCountChange }: {
   limit?: number;
   showViewAll?: boolean;
+  searchable?: boolean;
   onCountChange?: (count: number) => void;
 }) {
   const [users, setUsers] = useState<PendingUser[]>([]);
@@ -171,6 +172,7 @@ export default function ApprovalsList({ limit, showViewAll, onCountChange }: {
   const [emailSettings, setEmailSettings] = useState<EmailSettings | null>(null);
   const [approving, setApproving] = useState<PendingUser | null>(null);
   const [rejecting, setRejecting] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -211,7 +213,11 @@ export default function ApprovalsList({ limit, showViewAll, onCountChange }: {
     }
   };
 
-  const visible = limit ? users.slice(0, limit) : users;
+  const q = search.trim().toLowerCase();
+  const matched = q
+    ? users.filter((u) => u.name.toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q))
+    : users;
+  const visible = limit ? matched.slice(0, limit) : matched;
 
   if (loading) {
     return (
@@ -238,6 +244,35 @@ export default function ApprovalsList({ limit, showViewAll, onCountChange }: {
 
   return (
     <div className="space-y-2">
+      {searchable && (
+        <div className="relative mb-3">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or email…"
+            className="w-full pl-9 pr-9 py-2.5 bg-white border border-[#E8E6DF] rounded-xl text-[13px] outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-[14px] leading-none"
+              aria-label="Clear search"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      )}
+
+      {matched.length === 0 && (
+        <div className="bg-white rounded-2xl border border-[#E8E6DF] px-4 py-8 text-center text-[13px] text-gray-400">
+          No pending registrations match “{search.trim()}”.
+        </div>
+      )}
+
       {visible.map((u) => (
         <div key={u.id} className="bg-white rounded-2xl border border-[#E8E6DF] p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[14px] font-semibold flex-shrink-0" style={{ background: "#B08A3A" }}>

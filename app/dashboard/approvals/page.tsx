@@ -23,7 +23,7 @@ export default function ApprovalsPage() {
         </p>
       </div>
 
-      <ApprovalsList onCountChange={setCount} />
+      <ApprovalsList searchable onCountChange={setCount} />
     </div>
   );
 }
