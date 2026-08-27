@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import db from "@/lib/db";
 import nodemailer from "nodemailer";
 
@@ -52,27 +53,39 @@ async function sendSignupEmails(name: string, email: string, mobile: string) {
 }
 
 export async function POST(req: Request) {
-  const { name, email, mobile, emirates } = await req.json();
+  const { name, email, mobile, emirates, password } = await req.json();
   if (!name?.trim() || !email?.trim())
     return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
   // emirates is optional at the API level so older app builds that don't send it
   // keep working; empty emirate = the user sees only Global content until it's set.
 
-  const [dupEmail] = await db.query("SELECT id FROM app_users WHERE email=?", [email]);
+  // Soft-deleted accounts don't block re-registration — only live rows do.
+  const [dupEmail] = await db.query(
+    "SELECT id FROM app_users WHERE email=? AND deleted_at IS NULL",
+    [email.trim()]
+  );
   if ((dupEmail as any[]).length > 0)
     return NextResponse.json({ error: "Email already registered" }, { status: 409 });
 
   if (mobile?.trim()) {
-    const [dupMobile] = await db.query("SELECT id FROM app_users WHERE mobile=?", [mobile]);
+    const [dupMobile] = await db.query(
+      "SELECT id FROM app_users WHERE mobile=? AND deleted_at IS NULL",
+      [mobile.trim()]
+    );
     if ((dupMobile as any[]).length > 0)
       return NextResponse.json({ error: "Mobile number already registered" }, { status: 409 });
   }
+
+  // Newer app builds collect a password at signup; store it hashed so it
+  // works after approval. Older builds send nothing → NULL, and approval
+  // generates one as before.
+  const passwordHash = password?.trim() ? await bcrypt.hash(String(password).trim(), 10) : null;
 
   const id = "usr_" + Date.now();
   await db.query(
     `INSERT INTO app_users (id,name,email,mobile,password,is_active,location,photo,emirates)
      VALUES (?,?,?,?,?,1,'',NULL,?)`,
-    [id, name.trim(), email.trim(), mobile?.trim() || null, null, emirates?.trim() || ""]
+    [id, name.trim(), email.trim(), mobile?.trim() || null, passwordHash, emirates?.trim() || ""]
   );
 
   try {
