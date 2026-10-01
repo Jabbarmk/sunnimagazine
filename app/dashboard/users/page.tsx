@@ -491,6 +491,7 @@ export default function UsersPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<{ id: string; msg: string } | null>(null);
   const [emailingId, setEmailingId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const reload = async () => {
     setLoading(true);
@@ -619,6 +620,30 @@ export default function UsersPage() {
       (u.mobile || "").toLowerCase().includes(q)
     );
 
+  // Exports the currently filtered list (tab + search); password is never sent.
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const payload = filtered.map(({ password: _pw, photo, ...rest }) => ({ ...rest, photo: photo ? "yes" : "" }));
+      const res = await fetch("/api/users/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ users: payload }),
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `users_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const inp = (k: string) =>
     `w-full px-3 py-2 border rounded-lg text-[13px] outline-none ${fe[k] ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-blue-400"}`;
 
@@ -635,6 +660,10 @@ export default function UsersPage() {
             className="px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-[12px] hover:bg-gray-50">
             Deleted Users
           </a>
+          <button onClick={handleExport} disabled={exporting || loading || filtered.length === 0}
+            className="px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-[12px] hover:bg-gray-50 disabled:opacity-50">
+            {exporting ? "Exporting…" : `⬇ Export Excel (${filtered.length})`}
+          </button>
           <button onClick={() => setShowImport((v) => !v)}
             className="px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-[12px] hover:bg-gray-50">
             ⬆ Import Users
