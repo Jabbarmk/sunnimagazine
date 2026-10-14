@@ -117,7 +117,7 @@ export default function NewMagazinePage() {
                     style={{ aspectRatio: "3/4" }} />
                 </div>
               )}
-              <ImageUpload value={cover} onChange={setCover} />
+              <ImageUpload value={cover} onChange={setCover} crop />
             </Row>
           </div>
         </div>

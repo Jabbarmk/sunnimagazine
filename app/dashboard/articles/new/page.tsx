@@ -242,16 +242,16 @@ export default function NewArticlePage() {
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
             </Row>
             <Row label="Hero Image" hint="Leave blank for placeholder">
-              <ImageUpload value={form.hero} onChange={setVal("hero")} />
+              <ImageUpload value={form.hero} onChange={setVal("hero")} crop />
             </Row>
             <Row label="Inline Image" hint="Optional">
-              <ImageUpload value={form.inlineImage} onChange={setVal("inlineImage")} />
+              <ImageUpload value={form.inlineImage} onChange={setVal("inlineImage")} crop />
             </Row>
             <Row label="Inline Image 2" hint="Optional">
-              <ImageUpload value={form.inlineImage2} onChange={setVal("inlineImage2")} />
+              <ImageUpload value={form.inlineImage2} onChange={setVal("inlineImage2")} crop />
             </Row>
             <Row label="Bottom Image" hint="Optional">
-              <ImageUpload value={form.bottomImage} onChange={setVal("bottomImage")} />
+              <ImageUpload value={form.bottomImage} onChange={setVal("bottomImage")} crop />
             </Row>
           </div>
         </div>
