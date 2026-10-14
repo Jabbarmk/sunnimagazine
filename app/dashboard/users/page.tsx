@@ -512,9 +512,9 @@ export default function UsersPage() {
   const handleEdit = (u: AppUser) => {
     setEditId(u.id);
     setForm({
-      name: u.name, email: u.email, password: "", mobile: u.mobile, whatsapp: u.whatsapp ?? "", code: u.code ?? "",
-      location: u.location, photo: u.photo, emirates: u.emirates ?? "",
-      subscriptionFrom: u.subscriptionFrom, subscriptionTo: u.subscriptionTo,
+      name: u.name ?? "", email: u.email ?? "", password: "", mobile: u.mobile ?? "", whatsapp: u.whatsapp ?? "", code: u.code ?? "",
+      location: u.location ?? "", photo: u.photo ?? "", emirates: u.emirates ?? "",
+      subscriptionFrom: u.subscriptionFrom ?? "", subscriptionTo: u.subscriptionTo ?? "",
       referredBy: u.referredBy ?? "", referralMobile: u.referralMobile ?? "",
     });
     setFe({}); setSaveError(""); setShowForm(true);
