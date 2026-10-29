@@ -140,6 +140,12 @@ const UserCheckIcon = () => (
     <polyline points="17 11 19 13 23 9"/>
   </svg>
 );
+const TruckIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+    <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+  </svg>
+);
 const LogOutIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -166,6 +172,7 @@ const nav = [
   { href: "/dashboard/art", label: "Art", Icon: BrushIcon },
   { href: "/dashboard/approvals", label: "Approvals", Icon: UserCheckIcon },
   { href: "/dashboard/users", label: "Users", Icon: UsersIcon },
+  { href: "/dashboard/distribution", label: "Distribution", Icon: TruckIcon },
   { href: "/dashboard/deletedusers", label: "Deleted Users", Icon: TrashIcon },
   { href: "/dashboard/userwritings", label: "User Writings", Icon: EditIcon },
   { href: "/dashboard/editorial", label: "Editorial", Icon: NewspaperFoldIcon },
