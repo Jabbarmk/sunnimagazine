@@ -59,7 +59,7 @@ export default function DistributionPage() {
   const [distFilter, setDistFilter] = useState("");
   const [status, setStatus] = useState<StatusFilter>("active");
   const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [detailCode, setDetailCode] = useState<number | null>(null);
 
   const [distForm, setDistForm] = useState<(typeof emptyDist & { isNew: boolean }) | null>(null);
   const [subForm, setSubForm] = useState<typeof emptySub | null>(null);
@@ -123,10 +123,7 @@ export default function DistributionPage() {
   }, [distributors, byDist, distFilter, status, q, now]);
 
   const shownRows = groups.reduce((n, g) => n + g.rows.length, 0);
-  const forceOpen = !!q || !!distFilter;
-  const isOpen = (code: number) => forceOpen || expanded.has(code);
-  const toggle = (code: number) =>
-    setExpanded((p) => { const n = new Set(p); if (n.has(code)) n.delete(code); else n.add(code); return n; });
+  const detail = detailCode == null ? null : distributors.find((d) => d.code === detailCode) ?? null;
 
   const exportHref = `/api/distribution/export?${new URLSearchParams({
     ...(distFilter ? { distributor: distFilter } : {}),
@@ -163,6 +160,7 @@ export default function DistributionPage() {
     if (!confirm(`Delete distributor ${d.code} · ${d.name}${n ? ` and its ${n} subscriber(s)` : ""}? This cannot be undone.`)) return;
     try {
       await api(`/distributors?code=${d.code}`, { method: "DELETE" });
+      setDetailCode(null);
       await reload();
     } catch (e: unknown) { alert(e instanceof Error ? e.message : "Delete failed"); }
   };
@@ -204,12 +202,12 @@ export default function DistributionPage() {
   };
 
   return (
-    <div className="max-w-6xl">
+    <div className="max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
         <div>
-          <h1 className="text-[22px] font-semibold text-gray-900">Distribution Management</h1>
-          <p className="text-[13px] text-gray-500 mt-0.5">
+          <h1 className="text-[26px] font-semibold text-gray-900">Distribution Management</h1>
+          <p className="text-[15px] text-gray-500 mt-0.5">
             {loading ? "Loading…" : `${distributors.length} distributors · ${totals.active} copies on the active list`}
           </p>
         </div>
@@ -243,9 +241,9 @@ export default function DistributionPage() {
         ] as [StatusFilter, number, string, string][]).map(([key, count, label, cls]) => (
           <button key={key}
             onClick={() => setStatus(key)}
-            className={`rounded-xl border p-3 text-left transition-all ${cls} ${status === key ? "ring-2 ring-blue-400" : ""}`}>
-            <div className="text-[22px] font-semibold leading-none">{count}</div>
-            <div className="text-[11px] mt-1">{label}</div>
+            className={`rounded-2xl border p-4 text-left transition-all ${cls} ${status === key ? "ring-2 ring-blue-400" : ""}`}>
+            <div className="text-[34px] font-bold leading-none">{count}</div>
+            <div className="text-[14px] font-medium mt-2">{label}</div>
           </button>
         ))}
       </div>
@@ -253,7 +251,7 @@ export default function DistributionPage() {
       {/* Filters */}
       <div className="flex gap-2 mb-3 flex-wrap">
         <select value={distFilter} onChange={(e) => setDistFilter(e.target.value)}
-          className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-[13px] outline-none focus:border-blue-400 max-w-[280px]">
+          className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-[15px] outline-none focus:border-blue-400 max-w-[320px]">
           <option value="">All distributors</option>
           {distributors.map((d) => <option key={d.code} value={d.code}>{d.code} · {d.name}</option>)}
         </select>
@@ -263,7 +261,7 @@ export default function DistributionPage() {
           </svg>
           <input value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name, phone, address, code or distributor…"
-            className="w-full pl-9 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-[13px] outline-none focus:border-blue-400" />
+            className="w-full pl-9 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-[15px] outline-none focus:border-blue-400" />
           {search && (
             <button onClick={() => setSearch("")} aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-[14px] leading-none">✕</button>
@@ -273,18 +271,11 @@ export default function DistributionPage() {
       <div className="flex gap-2 mb-4 flex-wrap items-center">
         {FILTERS.map((f) => (
           <button key={f.key} onClick={() => setStatus(f.key)}
-            className={`px-3 py-1 rounded-full text-[12px] border transition-colors ${
+            className={`px-4 py-1.5 rounded-full text-[13.5px] border transition-colors ${
               status === f.key ? "bg-slate-800 text-white border-slate-800" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>
             {f.label}
           </button>
         ))}
-        {!forceOpen && groups.length > 0 && (
-          <button
-            onClick={() => setExpanded(expanded.size ? new Set() : new Set(groups.map((g) => g.d.code)))}
-            className="ml-auto text-[12px] text-blue-600 hover:text-blue-800">
-            {expanded.size ? "Collapse all" : "Expand all"}
-          </button>
-        )}
       </div>
 
       {/* Distributors */}
@@ -297,110 +288,69 @@ export default function DistributionPage() {
             : "No subscribers match the current filters."}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {groups.map(({ d, all, rows }) => {
             const sum = summarize(all, d.archivedRemoved, now);
-            const open = isOpen(d.code);
+            const filtered = !!q || status !== "active";
             return (
-              <div key={d.code} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                {/* Distributor strip */}
-                <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 border-b border-gray-200 flex-wrap">
-                  <button onClick={() => toggle(d.code)} className="flex items-center gap-3 flex-1 min-w-[260px] text-left" disabled={forceOpen}>
-                    <span className="text-gray-400 text-[11px] w-3">{open ? "▼" : "▶"}</span>
-                    <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Distributor {d.code}</span>
-                    <span className="text-[14px] font-semibold text-gray-800">{d.name}</span>
-                    <span className="text-[12px] text-gray-500">{d.phone}</span>
-                    <span className="text-[12px] text-gray-400">{[d.state, d.area].filter(Boolean).join(" · ")}</span>
-                  </button>
-                  <span className="text-[12px] font-semibold text-gray-700">Total Copy: {sum.active}</span>
-                  <div className="flex gap-1.5">
-                    <RowActionButton variant="primary" onClick={() => { openNewSubscriber(d); }}>+ Subscriber</RowActionButton>
-                    <RowActionButton onClick={() => openEditDistributor(d)}>Edit</RowActionButton>
-                    <RowActionButton variant="danger" onClick={() => deleteDistributor(d)}>Delete</RowActionButton>
+              <div key={d.code} onClick={() => setDetailCode(d.code)} role="button" tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter") setDetailCode(d.code); }}
+                className="bg-white rounded-2xl border border-gray-200 p-5 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all">
+                <div className="flex items-start gap-4">
+                  <div className="shrink-0 w-14 h-14 rounded-xl bg-slate-800 text-white flex items-center justify-center text-[20px] font-bold">{d.code}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[19px] font-semibold text-gray-900 leading-snug">{d.name}</div>
+                    <div className="text-[14.5px] text-gray-600 mt-0.5">{d.phone || "—"}</div>
+                    <div className="text-[13.5px] text-gray-400">{[d.state, d.area].filter(Boolean).join(" · ")}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-[34px] font-bold text-gray-900 leading-none">{sum.active}</div>
+                    <div className="text-[12px] text-gray-500 mt-1">Total Copy</div>
                   </div>
                 </div>
 
-                {open && (
-                  <>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-[12.5px]">
-                        <thead>
-                          <tr className="text-left text-gray-500 bg-gray-50/60 border-b border-gray-200">
-                            <th className="px-3 py-2 w-10 font-semibold">No</th>
-                            <th className="px-3 py-2 w-16 font-semibold">Code</th>
-                            <th className="px-3 py-2 font-semibold">Subscriber</th>
-                            <th className="px-3 py-2 font-semibold">Delivery Address</th>
-                            <th className="px-3 py-2 w-28 font-semibold">Subscription</th>
-                            <th className="px-3 py-2 w-48 font-semibold">Status</th>
-                            <th className="px-3 py-2 w-28" />
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {rows.length === 0 && (
-                            <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-400">
-                              {all.length === 0 ? "No subscribers on this list yet." : "No subscribers match the current filters."}
-                            </td></tr>
-                          )}
-                          {rows.map((s, i) => {
-                            const st = distStatus(s.expiryMonth, now);
-                            const meta = STATUS_META[st];
-                            const left = monthsLeft(s.expiryMonth, now);
-                            const txt = distStatusText(s.expiryMonth, now);
-                            return (
-                              <tr key={s.id} className={`border-b border-gray-100 last:border-0 align-top ${meta.row}`}>
-                                <td className="px-3 py-2 text-gray-400">{i + 1}</td>
-                                <td className="px-3 py-2 text-gray-600">{s.subCode}</td>
-                                <td className="px-3 py-2">
-                                  <div className="font-medium text-gray-800">{s.name}</div>
-                                  <div className="text-[11.5px] text-gray-500">{s.phone}</div>
-                                </td>
-                                <td className="px-3 py-2 text-gray-600">{s.address}</td>
-                                <td className="px-3 py-2 whitespace-nowrap">
-                                  <div className="text-gray-600">{fmtMonth(s.startMonth)}{s.years != null && <span className="text-gray-400"> · {s.years}</span>}</div>
-                                  <div className="font-medium text-gray-800">{fmtMonth(s.expiryMonth)}{left !== null && <span className="text-gray-400 font-normal"> · {left}</span>}</div>
-                                </td>
-                                <td className="px-3 py-2">
-                                  {txt && <span className={`inline-block text-[11px] px-2 py-0.5 rounded-full border font-medium ${meta.badge}`}>{txt}</span>}
-                                </td>
-                                <td className="px-3 py-2">
-                                  <div className="flex gap-1.5 justify-end">
-                                    <button onClick={() => openEditSubscriber(s)} className="text-[12px] text-gray-500 hover:text-gray-800">Edit</button>
-                                    <button onClick={() => deleteSubscriber(s)} className="text-[12px] text-red-400 hover:text-red-600">Remove</button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                <div className="grid grid-cols-5 gap-2 mt-4">
+                  {([
+                    ["Safe", sum.safe, STATUS_META.safe.card],
+                    ["Near", sum.near, STATUS_META.near.card],
+                    ["Grace", sum.grace, STATUS_META.grace.card],
+                    ["Over Due", sum.overdue, STATUS_META.overdue.card],
+                    ["Removed", sum.removed, STATUS_META.removed.card],
+                  ] as [string, number, string][]).map(([label, n, cls]) => (
+                    <div key={label} className={`rounded-xl border py-2 text-center ${cls} ${n === 0 ? "opacity-50" : ""}`}>
+                      <div className="text-[22px] font-bold leading-none">{n}</div>
+                      <div className="text-[12px] mt-1">{label}</div>
                     </div>
-                    {/* Footer summary, same columns as the report */}
-                    <div className="grid grid-cols-7 text-center border-t border-gray-200 bg-gray-50 text-[11px]">
-                      {([
-                        ["Safe", sum.safe], ["Near Expiry", sum.near], ["Grace Period", sum.grace], ["Over Due", sum.overdue],
-                        ["Removed", sum.removed], ["Total", sum.total], ["Active", sum.active],
-                      ] as [string, number][]).map(([label, n]) => (
-                        <div key={label} className="py-2 border-r border-gray-200 last:border-r-0">
-                          <div className="text-gray-400">{label}</div>
-                          <div className="text-[14px] font-semibold text-gray-800">{n}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
+                  ))}
+                </div>
 
-                {!open && (
-                  <div className="px-4 py-2 text-[11.5px] text-gray-500 flex gap-4 flex-wrap">
-                    <span>Safe {sum.safe}</span>
-                    <span className={sum.near ? "text-amber-600 font-medium" : ""}>Near Expiry {sum.near}</span>
-                    <span className={sum.grace + sum.overdue ? "text-red-500 font-medium" : ""}>Grace / Over Due {sum.grace + sum.overdue}</span>
-                    <span>Removed {sum.removed}</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between mt-4 text-[13.5px]">
+                  <span className="text-gray-500">
+                    {filtered ? <><b className="text-gray-800">{rows.length}</b> matching · </> : null}Total {sum.total}
+                  </span>
+                  <span className="text-blue-600 font-medium">View details →</span>
+                </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Full-screen distributor detail */}
+      {detail && (
+        <DistributorDetail
+          d={detail}
+          subs={byDist.get(detail.code) ?? []}
+          now={now}
+          initialStatus={status}
+          initialSearch={search}
+          onClose={() => setDetailCode(null)}
+          onAddSub={() => openNewSubscriber(detail)}
+          onEditSub={openEditSubscriber}
+          onDeleteSub={deleteSubscriber}
+          onEditDist={() => openEditDistributor(detail)}
+          onDeleteDist={() => deleteDistributor(detail)}
+        />
       )}
 
       {/* Distributor form */}
@@ -469,6 +419,155 @@ export default function DistributionPage() {
           <FormFooter error={formError} saving={saving} onSave={saveSubscriber} onCancel={() => setSubForm(null)} />
         </Modal>
       )}
+    </div>
+  );
+}
+
+// ─── Full-screen detail ───────────────────────────────────────────────────────
+
+function DistributorDetail({ d, subs, now, initialStatus, initialSearch, onClose, onAddSub, onEditSub, onDeleteSub, onEditDist, onDeleteDist }: {
+  d: Distributor; subs: DistSubscriber[]; now: Date; initialStatus: StatusFilter; initialSearch: string;
+  onClose: () => void; onAddSub: () => void; onEditSub: (s: DistSubscriber) => void; onDeleteSub: (s: DistSubscriber) => void;
+  onEditDist: () => void; onDeleteDist: () => void;
+}) {
+  const [status, setStatus] = useState<StatusFilter>(initialStatus);
+  const [search, setSearch] = useState(initialSearch);
+  const sum = summarize(subs, d.archivedRemoved, now);
+  const q = search.trim().toLowerCase();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+
+  const rows = subs.filter((s) => {
+    if (!matchesStatus(status, distStatus(s.expiryMonth, now))) return false;
+    if (!q) return true;
+    return [s.name, s.phone, s.address, String(s.subCode)].some((v) => (v || "").toLowerCase().includes(q));
+  });
+
+  const exportHref = `/api/distribution/export?${new URLSearchParams({
+    distributor: String(d.code),
+    ...(status !== "all" ? { status } : {}),
+    ...(q ? { q } : {}),
+  }).toString()}`;
+
+  return (
+    <div className="fixed inset-0 z-40 bg-gray-50 flex flex-col">
+      {/* Top bar */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4 flex-wrap">
+        <button onClick={onClose} className="px-3 py-2 border border-gray-200 rounded-lg text-[14px] text-gray-600 hover:bg-gray-50">← Back</button>
+        <div className="w-12 h-12 rounded-xl bg-slate-800 text-white flex items-center justify-center text-[18px] font-bold">{d.code}</div>
+        <div className="flex-1 min-w-[220px]">
+          <div className="text-[22px] font-semibold text-gray-900 leading-tight">{d.name}</div>
+          <div className="text-[14px] text-gray-500">{[d.phone, d.state, d.area].filter(Boolean).join(" · ")}</div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <a href={exportHref} download className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">⬇ Export</a>
+          <button onClick={onAddSub} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700">+ Subscriber</button>
+          <button onClick={onEditDist} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">Edit</button>
+          <button onClick={onDeleteDist} className="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-[14px] hover:bg-red-50">Delete</button>
+          <button onClick={onClose} aria-label="Close" className="px-3 py-2 text-gray-400 hover:text-gray-700 text-[20px] leading-none">✕</button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-[1400px] mx-auto p-6">
+          {/* Summary */}
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-5">
+            {([
+              ["Active", sum.active, "bg-white border-gray-200 text-gray-800", "active"],
+              ["Safe", sum.safe, STATUS_META.safe.card, "safe"],
+              ["Near Expiry", sum.near, STATUS_META.near.card, "near"],
+              ["Grace Period", sum.grace, STATUS_META.grace.card, "grace"],
+              ["Over Due", sum.overdue, STATUS_META.overdue.card, "overdue"],
+              ["Removed", sum.removed, STATUS_META.removed.card, null],
+              ["Total", sum.total, "bg-white border-gray-200 text-gray-800", "all"],
+            ] as [string, number, string, StatusFilter | null][]).map(([label, n, cls, key]) => (
+              <button key={label} disabled={!key} onClick={() => key && setStatus(key)}
+                className={`rounded-2xl border p-4 text-left ${cls} ${key && status === key ? "ring-2 ring-blue-400" : ""}`}>
+                <div className="text-[34px] font-bold leading-none">{n}</div>
+                <div className="text-[14px] font-medium mt-2">{label}</div>
+              </button>
+            ))}
+          </div>
+
+          {/* Filters */}
+          <div className="flex gap-2 mb-4 flex-wrap items-center">
+            <div className="relative flex-1 min-w-[240px] max-w-md">
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, phone, address, code…"
+                className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-[15px] outline-none focus:border-blue-400" />
+            </div>
+            {FILTERS.map((f) => (
+              <button key={f.key} onClick={() => setStatus(f.key)}
+                className={`px-4 py-1.5 rounded-full text-[13.5px] border transition-colors ${
+                  status === f.key ? "bg-slate-800 text-white border-slate-800" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>
+                {f.label}
+              </button>
+            ))}
+            <span className="ml-auto text-[14px] text-gray-500">{rows.length} of {subs.length} shown</span>
+          </div>
+
+          {/* Subscribers */}
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-[15px]">
+                <thead>
+                  <tr className="text-left text-gray-500 bg-gray-50 border-b border-gray-200 text-[13px] uppercase tracking-wide">
+                    <th className="px-4 py-3 w-12 font-semibold">No</th>
+                    <th className="px-4 py-3 w-20 font-semibold">Code</th>
+                    <th className="px-4 py-3 font-semibold">Subscriber</th>
+                    <th className="px-4 py-3 font-semibold">Delivery Address</th>
+                    <th className="px-4 py-3 w-36 font-semibold">Subscription</th>
+                    <th className="px-4 py-3 w-52 font-semibold">Status</th>
+                    <th className="px-4 py-3 w-28" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.length === 0 && (
+                    <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400">
+                      {subs.length === 0 ? "No subscribers on this list yet." : "No subscribers match the current filters."}
+                    </td></tr>
+                  )}
+                  {rows.map((s, i) => {
+                    const st = distStatus(s.expiryMonth, now);
+                    const meta = STATUS_META[st];
+                    const left = monthsLeft(s.expiryMonth, now);
+                    const txt = distStatusText(s.expiryMonth, now);
+                    return (
+                      <tr key={s.id} className={`border-b border-gray-100 last:border-0 align-top ${meta.row}`}>
+                        <td className="px-4 py-3 text-gray-400">{i + 1}</td>
+                        <td className="px-4 py-3 text-gray-600">{s.subCode}</td>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-gray-900">{s.name}</div>
+                          <div className="text-[13.5px] text-gray-500">{s.phone}</div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-700">{s.address}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="text-gray-600">{fmtMonth(s.startMonth)}{s.years != null && <span className="text-gray-400"> · {s.years}</span>}</div>
+                          <div className="font-semibold text-gray-900">{fmtMonth(s.expiryMonth)}{left !== null && <span className="text-gray-400 font-normal"> · {left}</span>}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {txt && <span className={`inline-block text-[13px] px-2.5 py-1 rounded-full border font-medium ${meta.badge}`}>{txt}</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-3 justify-end text-[14px]">
+                            <button onClick={() => onEditSub(s)} className="text-gray-500 hover:text-gray-900">Edit</button>
+                            <button onClick={() => onDeleteSub(s)} className="text-red-400 hover:text-red-600">Remove</button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
