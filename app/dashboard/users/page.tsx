@@ -463,6 +463,120 @@ function NotifyExpiryPanel({ type, onClose }: { type: "expired" | "expiring"; on
   );
 }
 
+// ─── Avatar + full-screen detail ──────────────────────────────────────────────
+
+function Avatar({ user, size }: { user: AppUser; size: string }) {
+  return user.photo ? (
+    <img src={user.photo} alt={user.name} className={`${size} rounded-full object-cover flex-shrink-0 border-2 border-gray-100`} />
+  ) : (
+    <div className={`${size} rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center text-slate-400 font-semibold border border-gray-200`}>
+      {(user.name || "?").charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+function UserDetail({ u, emailSettings, waTemplate, actionMsg, emailing, onClose, onEdit, onEmail, onToggle, onDelete }: {
+  u: AppUser; emailSettings: EmailSettings | null; waTemplate: string; actionMsg: string; emailing: boolean;
+  onClose: () => void; onEdit: () => void; onEmail: () => void; onToggle: () => void; onDelete: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+
+  const st = subStatus(u.subscriptionTo);
+  const meta = STATUS_META[st];
+  const dl = u.subscriptionTo ? daysLeft(u.subscriptionTo) : null;
+
+  const info: [string, string][] = [
+    ["Email", u.email], ["Mobile", u.mobile], ["WhatsApp", u.whatsapp], ["Emirate", u.emirates],
+    ["Location", u.location], ["Code", u.code], ["Referred By", u.referredBy], ["Referral Mobile", u.referralMobile],
+  ];
+
+  return (
+    <div className="fixed inset-0 z-40 bg-gray-50 flex flex-col">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4 flex-wrap">
+        <button onClick={onClose} className="px-3 py-2 border border-gray-200 rounded-lg text-[14px] text-gray-600 hover:bg-gray-50">← Back</button>
+        <Avatar user={u} size="w-14 h-14 text-[20px]" />
+        <div className="flex-1 min-w-[220px]">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[22px] font-semibold text-gray-900 leading-tight">{u.name}</span>
+            <span className={`text-[13px] px-3 py-1 rounded-full border font-medium ${meta.badge}`}>{meta.label}</span>
+            {!u.isActive && <span className="text-[12px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 font-medium">Inactive</span>}
+          </div>
+          <div className="text-[14px] text-gray-500">{u.email}</div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={onEdit} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">Edit</button>
+          <button onClick={onEmail} disabled={emailing} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700 disabled:opacity-50">
+            {emailing ? "Sending…" : "✉ Send Email"}
+          </button>
+          <button onClick={onToggle}
+            className={`px-3 py-2 border rounded-lg text-[14px] ${u.isActive ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-green-200 text-green-700 hover:bg-green-50"}`}>
+            {u.isActive ? "Deactivate" : "Activate"}
+          </button>
+          <button onClick={onDelete} className="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-[14px] hover:bg-red-50">Delete</button>
+          <button onClick={onClose} aria-label="Close" className="px-3 py-2 text-gray-400 hover:text-gray-700 text-[20px] leading-none">✕</button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-[1200px] mx-auto p-6 space-y-5">
+          {actionMsg && (
+            <div className={`text-[14px] font-medium px-4 py-3 rounded-xl border ${actionMsg.startsWith("✓") ? "text-green-700 bg-green-50 border-green-200" : "text-red-600 bg-red-50 border-red-200"}`}>
+              {actionMsg}
+            </div>
+          )}
+
+          {/* Subscription summary */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className={`rounded-2xl border p-4 ${meta.badge}`}>
+              <div className="text-[28px] font-bold leading-none">{meta.label}</div>
+              <div className="text-[14px] font-medium mt-2">Status</div>
+            </div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-4">
+              <div className="text-[28px] font-bold leading-none text-gray-800">{u.subscriptionFrom ? fmtDate(u.subscriptionFrom) : "—"}</div>
+              <div className="text-[14px] font-medium mt-2 text-gray-500">From</div>
+            </div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-4">
+              <div className="text-[28px] font-bold leading-none text-gray-800">{u.subscriptionTo ? fmtDate(u.subscriptionTo) : "—"}</div>
+              <div className="text-[14px] font-medium mt-2 text-gray-500">To</div>
+            </div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-4">
+              <div className={`text-[28px] font-bold leading-none ${st === "expired" ? "text-red-500" : st === "expiring" ? "text-amber-600" : "text-gray-800"}`}>
+                {dl === null ? "—" : dl >= 0 ? `${dl} days` : `${Math.abs(dl)} days ago`}
+              </div>
+              <div className="text-[14px] font-medium mt-2 text-gray-500">{dl !== null && dl < 0 ? "Expired" : "Remaining"}</div>
+            </div>
+          </div>
+
+          {/* Details */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <div className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider mb-4">Member details</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+              {info.map(([label, v]) => (
+                <div key={label}>
+                  <div className="text-[13px] text-gray-400">{label}</div>
+                  <div className="text-[16px] text-gray-900 break-words">{v || "—"}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Subscription history */}
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="px-5 pt-5 text-[13px] font-semibold text-gray-400 uppercase tracking-wider">Subscriptions</div>
+            <SubscriptionPanel user={u} emailSettings={emailSettings} waTemplate={waTemplate} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Empty form ───────────────────────────────────────────────────────────────
 
 const EMPTY: Omit<AppUser, "id" | "isActive" | "deletedAt"> = {
@@ -488,7 +602,7 @@ export default function UsersPage() {
   const [tab, setTab] = useState<FilterTab>("all");
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<{ id: string; msg: string } | null>(null);
   const [emailingId, setEmailingId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -592,22 +706,27 @@ export default function UsersPage() {
     }
   };
 
-  const handleDelete = async (u: AppUser) => {
+  // Resolves true when the user was deleted.
+  const handleDelete = async (u: AppUser): Promise<boolean> => {
     const st = subStatus(u.subscriptionTo);
     if (st === "active" || st === "expiring") {
       setActionMsg({ id: u.id, msg: `Cannot delete: subscription active until ${fmtDate(u.subscriptionTo)}` });
       setTimeout(() => setActionMsg(null), 4000);
-      return;
+      return false;
     }
-    if (!confirm(`Delete ${u.name}? This will move them to Deleted Users history.`)) return;
+    if (!confirm(`Delete ${u.name}? This will move them to Deleted Users history.`)) return false;
     try {
       await softDeleteUser(u.id);
       reload();
+      return true;
     } catch (e: unknown) {
       setActionMsg({ id: u.id, msg: e instanceof Error ? e.message : "Delete failed" });
       setTimeout(() => setActionMsg(null), 4000);
+      return false;
     }
   };
+
+  const detailUser = detailId ? users.find((u) => u.id === detailId) ?? null : null;
 
   const counts = { active: 0, expiring: 0, expired: 0, none: 0 };
   users.forEach((u) => { counts[subStatus(u.subscriptionTo)]++; });
@@ -648,12 +767,12 @@ export default function UsersPage() {
     `w-full px-3 py-2 border rounded-lg text-[13px] outline-none ${fe[k] ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-blue-400"}`;
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-[22px] font-semibold text-gray-900">Users</h1>
-          <p className="text-[13px] text-gray-500 mt-0.5">{loading ? "Loading…" : `${users.length} members`}</p>
+          <h1 className="text-[26px] font-semibold text-gray-900">Users</h1>
+          <p className="text-[15px] text-gray-500 mt-0.5">{loading ? "Loading…" : `${users.length} members`}</p>
         </div>
         <div className="flex items-center gap-2">
           <a href="/dashboard/deletedusers"
@@ -686,9 +805,9 @@ export default function UsersPage() {
           ["expired",  counts.expired,  "Expired",       "bg-red-50 border-red-200 text-red-600"],
         ] as [FilterTab, number, string, string][]).map(([key, count, label, cls]) => (
           <button key={key} onClick={() => setTab(key)}
-            className={`rounded-xl border p-3 text-left transition-all ${cls} ${tab === key ? "ring-2 ring-blue-400" : ""}`}>
-            <div className="text-[22px] font-semibold leading-none">{count}</div>
-            <div className="text-[11px] mt-1">{label}</div>
+            className={`rounded-2xl border p-4 text-left transition-all ${cls} ${tab === key ? "ring-2 ring-blue-400" : ""}`}>
+            <div className="text-[34px] font-bold leading-none">{count}</div>
+            <div className="text-[14px] font-medium mt-2">{label}</div>
           </button>
         ))}
       </div>
@@ -820,7 +939,7 @@ export default function UsersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, email or mobile…"
-            className="w-full pl-9 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-[13px] outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all"
+            className="w-full pl-9 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-[15px] outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all"
           />
           {search && (
             <button
@@ -839,7 +958,7 @@ export default function UsersPage() {
         <div className="flex gap-2 mb-3 flex-wrap">
           {(["all", "active", "expiring", "expired", "none"] as FilterTab[]).map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-3 py-1 rounded-full text-[12px] border transition-colors capitalize ${
+              className={`px-4 py-1.5 rounded-full text-[13.5px] border transition-colors capitalize ${
                 tab === t ? "bg-slate-800 text-white border-slate-800" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
               }`}>
               {t === "all" ? `All (${users.length})` :
@@ -854,9 +973,9 @@ export default function UsersPage() {
       {loading ? (
         <SkeletonRows count={4} hasImage />
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {filtered.length === 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 px-4 py-10 text-center text-[13px] text-gray-400">
+            <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-200 px-4 py-10 text-center text-[15px] text-gray-400">
               {users.length === 0 ? "No users yet. Add one above."
                 : q ? `No users match “${search.trim()}”.`
                 : "No users in this category."}
@@ -866,87 +985,68 @@ export default function UsersPage() {
             const st = subStatus(u.subscriptionTo);
             const meta = STATUS_META[st];
             const dl = u.subscriptionTo ? daysLeft(u.subscriptionTo) : null;
-            const isExpanded = expandedId === u.id;
             return (
-              <div key={u.id} className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${meta.row}`}>
-                <div className="flex items-center gap-3 p-3">
-                  {u.photo ? (
-                    <img src={u.photo} alt={u.name} className="w-11 h-11 rounded-full object-cover flex-shrink-0 border-2 border-gray-100" />
-                  ) : (
-                    <div className="w-11 h-11 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center text-slate-400 text-[15px] font-semibold border border-gray-200">
-                      {u.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+              <div key={u.id} onClick={() => setDetailId(u.id)} role="button" tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter") setDetailId(u.id); }}
+                className={`bg-white rounded-2xl border border-gray-200 p-5 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all ${meta.row} ${u.isActive ? "" : "opacity-70"}`}>
+                <div className="flex items-start gap-4">
+                  <Avatar user={u} size="w-16 h-16 text-[22px]" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[13px] font-semibold text-gray-800">{u.name}</span>
+                      <span className="text-[19px] font-semibold text-gray-900 leading-snug">{u.name}</span>
                       {!u.isActive && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 font-medium">Inactive</span>
+                        <span className="text-[12px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 font-medium">Inactive</span>
                       )}
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${meta.badge}`}>
-                        {meta.label}
-                      </span>
-                      {dl !== null && st === "expiring" && <span className="text-[10px] text-amber-600 font-medium">{dl}d left</span>}
-                      {dl !== null && st === "expired"  && <span className="text-[10px] text-red-500 font-medium">{Math.abs(dl)}d ago</span>}
                     </div>
-                    <div className="text-[11px] text-gray-400 mt-0.5 truncate">{u.email}</div>
-                    <div className="flex gap-3 mt-0.5 flex-wrap">
-                      {u.mobile && <span className="text-[11px] text-gray-400">{u.mobile}</span>}
-                      {u.location && <span className="text-[11px] text-gray-400">{u.location}</span>}
-                      {u.emirates && <span className="text-[11px] text-amber-600 font-medium">📍 {u.emirates}</span>}
-                      {u.code && <span className="text-[11px] text-gray-400">Code: {u.code}</span>}
+                    <div className="text-[14.5px] text-gray-500 truncate">{u.email}</div>
+                    <div className="flex gap-x-4 gap-y-0.5 mt-0.5 flex-wrap text-[14px] text-gray-500">
+                      {u.mobile && <span>{u.mobile}</span>}
+                      {u.emirates && <span className="text-amber-600 font-medium">📍 {u.emirates}</span>}
+                      {u.code && <span className="text-gray-400">Code: {u.code}</span>}
                     </div>
-                    {(u.subscriptionFrom || u.subscriptionTo) && (
-                      <div className="text-[10px] text-gray-400 mt-0.5">
-                        {u.subscriptionFrom && <>From: {fmtDate(u.subscriptionFrom)}</>}
-                        {u.subscriptionFrom && u.subscriptionTo && " · "}
-                        {u.subscriptionTo && <>To: {fmtDate(u.subscriptionTo)}</>}
-                      </div>
-                    )}
-                    {(u.referredBy || u.referralMobile) && (
-                      <div className="text-[10px] text-blue-500 mt-0.5">
-                        {u.referredBy && <>Ref: {u.referredBy}</>}
-                        {u.referredBy && u.referralMobile && " · "}
-                        {u.referralMobile}
-                      </div>
-                    )}
-                    {actionMsg?.id === u.id && (
-                      <div className={`text-[11px] mt-1 font-medium ${actionMsg.msg.startsWith("✓") ? "text-green-600" : "text-red-500"}`}>
-                        {actionMsg.msg}
-                      </div>
-                    )}
                   </div>
-                  <div className="flex flex-wrap gap-1.5 flex-shrink-0 justify-end max-w-[220px]">
-                    <RowActionButton
-                      variant={isExpanded ? "primary" : "default"}
-                      onClick={() => setExpandedId(isExpanded ? null : u.id)}
-                    >
-                      {isExpanded ? "▲ Close" : "▼ Subscription"}
-                    </RowActionButton>
-                    <RowActionButton onClick={() => handleEdit(u)}>Edit</RowActionButton>
-                    <RowActionButton
-                      variant="primary"
-                      disabled={emailingId === u.id}
-                      onClick={() => handleSendDetailsEmail(u)}
-                    >
-                      {emailingId === u.id ? "Sending…" : "✉ Send Email"}
-                    </RowActionButton>
-                    <RowActionButton
-                      variant={u.isActive ? "warning" : "success"}
-                      onClick={() => handleToggleActive(u)}
-                    >
-                      {u.isActive ? "Deactivate" : "Activate"}
-                    </RowActionButton>
-                    <RowActionButton variant="danger" onClick={() => handleDelete(u)}>Delete</RowActionButton>
+                  <div className="text-right shrink-0">
+                    <span className={`inline-block text-[13px] px-3 py-1 rounded-full border font-medium ${meta.badge}`}>{meta.label}</span>
+                    {dl !== null && st === "expiring" && <div className="text-[22px] font-bold text-amber-600 leading-none mt-2">{dl}d <span className="text-[12px] font-medium">left</span></div>}
+                    {dl !== null && st === "expired" && <div className="text-[22px] font-bold text-red-500 leading-none mt-2">{Math.abs(dl)}d <span className="text-[12px] font-medium">ago</span></div>}
                   </div>
                 </div>
-                {isExpanded && (
-                  <SubscriptionPanel user={u} emailSettings={emailSettings} waTemplate={waTemplate} />
-                )}
+
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 px-3 py-2">
+                    <div className="text-[12px] text-gray-400">From</div>
+                    <div className="text-[16px] font-semibold text-gray-800">{u.subscriptionFrom ? fmtDate(u.subscriptionFrom) : "—"}</div>
+                  </div>
+                  <div className="rounded-xl bg-gray-50 border border-gray-100 px-3 py-2">
+                    <div className="text-[12px] text-gray-400">To</div>
+                    <div className="text-[16px] font-semibold text-gray-800">{u.subscriptionTo ? fmtDate(u.subscriptionTo) : "—"}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between mt-4 text-[13.5px]">
+                  <span className="text-blue-500">{(u.referredBy || u.referralMobile) ? `Ref: ${[u.referredBy, u.referralMobile].filter(Boolean).join(" · ")}` : ""}</span>
+                  <span className="text-blue-600 font-medium">View details →</span>
+                </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Full-screen user detail */}
+      {detailUser && (
+        <UserDetail
+          u={detailUser}
+          emailSettings={emailSettings}
+          waTemplate={waTemplate}
+          actionMsg={actionMsg?.id === detailUser.id ? actionMsg.msg : ""}
+          emailing={emailingId === detailUser.id}
+          onClose={() => setDetailId(null)}
+          onEdit={() => { setDetailId(null); handleEdit(detailUser); }}
+          onEmail={() => handleSendDetailsEmail(detailUser)}
+          onToggle={() => handleToggleActive(detailUser)}
+          onDelete={async () => { if (await handleDelete(detailUser)) setDetailId(null); }}
+        />
       )}
     </div>
   );
