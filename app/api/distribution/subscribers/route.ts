@@ -27,17 +27,18 @@ export async function POST(req: Request) {
   const vals = [
     distributorCode, subCode, name, b.phone?.trim() || null, b.address?.trim() || null,
     b.startMonth || null, b.expiryMonth, Number.isFinite(years as number) ? years : null,
+    String(b.remark || "").trim().slice(0, 255) || null,
   ];
   if (b.id) {
     await db.query(
       `UPDATE distribution_subscribers SET distributor_code=?, sub_code=?, name=?, phone=?, address=?,
-         start_month=?, expiry_month=?, years=? WHERE id=?`,
+         start_month=?, expiry_month=?, years=?, remark=? WHERE id=?`,
       [...vals, b.id]
     );
   } else {
     await db.query(
-      `INSERT INTO distribution_subscribers (distributor_code,sub_code,name,phone,address,start_month,expiry_month,years)
-       VALUES (?,?,?,?,?,?,?,?)`,
+      `INSERT INTO distribution_subscribers (distributor_code,sub_code,name,phone,address,start_month,expiry_month,years,remark)
+       VALUES (?,?,?,?,?,?,?,?,?)`,
       vals
     );
   }

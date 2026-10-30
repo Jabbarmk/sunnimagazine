@@ -66,6 +66,10 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
+        <p className="text-center text-[12px] text-gray-500 mt-5">
+          Distributor? <a href="/distributor" className="text-blue-600 hover:underline">Sign in here</a>
+        </p>
+
         <p className="text-center text-[11px] text-gray-400 mt-6">
           Gulf Sathyadhara Admin · Internal use only
         </p>

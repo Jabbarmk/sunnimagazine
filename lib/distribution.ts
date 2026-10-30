@@ -9,6 +9,10 @@ export type Distributor = {
   state: string;
   area: string;
   archivedRemoved: number;
+  username?: string;      // login username ("" = login not set up)
+  isActive?: boolean;     // false = login disabled
+  hasPassword?: boolean;
+  lastLogin?: string;
 };
 
 export type DistSubscriber = {
@@ -21,6 +25,8 @@ export type DistSubscriber = {
   startMonth: string;   // YYYY-MM
   expiryMonth: string;  // YYYY-MM
   years: number | null;
+  remark?: string;
+  updatedAt?: string;
 };
 
 export type DistStatus = "safe" | "near" | "grace" | "overdue" | "removed";

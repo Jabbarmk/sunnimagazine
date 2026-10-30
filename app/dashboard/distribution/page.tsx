@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { isSuperAdmin } from "@/lib/auth";
 import SkeletonRows from "@/app/dashboard/_components/SkeletonRows";
 import RowActionButton from "@/app/dashboard/_components/RowActionButton";
 import {
@@ -36,8 +37,8 @@ function matchesStatus(f: StatusFilter, st: DistStatus) {
   return st === f;
 }
 
-const emptyDist = { code: "", name: "", phone: "", state: "DUBAI", area: "" };
-const emptySub = { id: 0, distributorCode: "", subCode: "", name: "", phone: "", address: "", startMonth: "", expiryMonth: "", years: "" };
+const emptyDist = { code: "", name: "", phone: "", state: "DUBAI", area: "", username: "", password: "", isActive: true };
+const emptySub = { id: 0, distributorCode: "", subCode: "", name: "", phone: "", address: "", startMonth: "", expiryMonth: "", years: "", remark: "" };
 
 const inp = "w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400";
 
@@ -53,6 +54,7 @@ async function api(path: string, init?: RequestInit) {
 export default function DistributionPage() {
   const [distributors, setDistributors] = useState<Distributor[]>([]);
   const [subscribers, setSubscribers] = useState<DistSubscriber[]>([]);
+  const [superAdmin, setSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -81,6 +83,7 @@ export default function DistributionPage() {
   }, []);
 
   useEffect(() => { reload(); }, [reload]);
+  useEffect(() => { setSuperAdmin(isSuperAdmin()); }, []);
 
   const now = useMemo(() => new Date(), []);
   const q = search.trim().toLowerCase();
@@ -139,7 +142,10 @@ export default function DistributionPage() {
   };
   const openEditDistributor = (d: Distributor) => {
     setFormError("");
-    setDistForm({ code: String(d.code), name: d.name, phone: d.phone, state: d.state, area: d.area, isNew: false });
+    setDistForm({
+      code: String(d.code), name: d.name, phone: d.phone, state: d.state, area: d.area, isNew: false,
+      username: d.username ?? "", password: "", isActive: d.isActive !== false,
+    });
   };
   const saveDistributor = async () => {
     if (!distForm) return;
@@ -176,7 +182,7 @@ export default function DistributionPage() {
     setSubForm({
       id: s.id, distributorCode: String(s.distributorCode), subCode: String(s.subCode), name: s.name,
       phone: s.phone, address: s.address, startMonth: s.startMonth, expiryMonth: s.expiryMonth,
-      years: s.years == null ? "" : String(s.years),
+      years: s.years == null ? "" : String(s.years), remark: s.remark ?? "",
     });
   };
   const saveSubscriber = async () => {
@@ -216,10 +222,12 @@ export default function DistributionPage() {
             className={`px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-[12px] hover:bg-gray-50 ${loading || shownRows === 0 ? "pointer-events-none opacity-50" : ""}`}>
             ⬇ Export Excel ({shownRows})
           </a>
-          <button onClick={openNewDistributor}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700">
-            + Add Distributor
-          </button>
+          {superAdmin && (
+            <button onClick={openNewDistributor}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700">
+              + Add Distributor
+            </button>
+          )}
         </div>
       </div>
 
@@ -302,6 +310,13 @@ export default function DistributionPage() {
                     <div className="text-[19px] font-semibold text-gray-900 leading-snug">{d.name}</div>
                     <div className="text-[14.5px] text-gray-600 mt-0.5">{d.phone || "—"}</div>
                     <div className="text-[13.5px] text-gray-400">{[d.state, d.area].filter(Boolean).join(" · ")}</div>
+                    <div className="mt-1.5">
+                      {d.username
+                        ? <span className={`inline-block text-[12px] px-2 py-0.5 rounded-full border ${d.isActive === false ? "bg-gray-100 text-gray-500 border-gray-200" : "bg-blue-50 text-blue-700 border-blue-200"}`}>
+                            🔑 {d.username}{d.isActive === false ? " · disabled" : ""}
+                          </span>
+                        : <span className="inline-block text-[12px] px-2 py-0.5 rounded-full border border-gray-200 text-gray-400">No login</span>}
+                    </div>
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-[34px] font-bold text-gray-900 leading-none">{sum.active}</div>
@@ -344,6 +359,7 @@ export default function DistributionPage() {
           now={now}
           initialStatus={status}
           initialSearch={search}
+          canManage={superAdmin}
           onClose={() => setDetailCode(null)}
           onAddSub={() => openNewSubscriber(detail)}
           onEditSub={openEditSubscriber}
@@ -375,6 +391,27 @@ export default function DistributionPage() {
                 <input className={inp} value={distForm.area} onChange={(e) => setDistForm({ ...distForm, area: e.target.value })} placeholder="e.g. DEIRA" />
               </Field>
             </div>
+          </div>
+
+          <div className="mt-5 pt-4 border-t border-gray-100">
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Distributor login</div>
+            <p className="text-[12px] text-gray-500 mb-3">
+              Lets this distributor sign in at <b>/distributor</b> or in the mobile app and update their own subscribers. Leave the username empty to disable login.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Username">
+                <input className={inp} value={distForm.username} autoComplete="off"
+                  onChange={(e) => setDistForm({ ...distForm, username: e.target.value.replace(/\s/g, "") })} placeholder="e.g. dist12" />
+              </Field>
+              <Field label={distForm.isNew ? "Password" : "New password (blank = keep)"}>
+                <input className={inp} type="text" value={distForm.password} autoComplete="new-password"
+                  onChange={(e) => setDistForm({ ...distForm, password: e.target.value })} placeholder="min 6 characters" />
+              </Field>
+            </div>
+            <label className="flex items-center gap-2 mt-3 text-[13px] text-gray-700 cursor-pointer">
+              <input type="checkbox" checked={distForm.isActive} onChange={(e) => setDistForm({ ...distForm, isActive: e.target.checked })} />
+              Login enabled
+            </label>
           </div>
           <FormFooter error={formError} saving={saving} onSave={saveDistributor} onCancel={() => setDistForm(null)} />
         </Modal>
@@ -409,6 +446,11 @@ export default function DistributionPage() {
                 <input className={inp} value={subForm.address} onChange={(e) => setSubForm({ ...subForm, address: e.target.value })} />
               </Field>
             </div>
+            <div className="col-span-2">
+              <Field label="Remark">
+                <input className={inp} value={subForm.remark} maxLength={255} onChange={(e) => setSubForm({ ...subForm, remark: e.target.value })} placeholder="optional note" />
+              </Field>
+            </div>
             <Field label="Start Month">
               <input type="month" className={inp} value={subForm.startMonth} onChange={(e) => setSubForm({ ...subForm, startMonth: e.target.value })} />
             </Field>
@@ -425,8 +467,8 @@ export default function DistributionPage() {
 
 // ─── Full-screen detail ───────────────────────────────────────────────────────
 
-function DistributorDetail({ d, subs, now, initialStatus, initialSearch, onClose, onAddSub, onEditSub, onDeleteSub, onEditDist, onDeleteDist }: {
-  d: Distributor; subs: DistSubscriber[]; now: Date; initialStatus: StatusFilter; initialSearch: string;
+function DistributorDetail({ d, subs, now, initialStatus, initialSearch, canManage, onClose, onAddSub, onEditSub, onDeleteSub, onEditDist, onDeleteDist }: {
+  d: Distributor; subs: DistSubscriber[]; now: Date; initialStatus: StatusFilter; initialSearch: string; canManage: boolean;
   onClose: () => void; onAddSub: () => void; onEditSub: (s: DistSubscriber) => void; onDeleteSub: (s: DistSubscriber) => void;
   onEditDist: () => void; onDeleteDist: () => void;
 }) {
@@ -463,13 +505,13 @@ function DistributorDetail({ d, subs, now, initialStatus, initialSearch, onClose
         <div className="w-12 h-12 rounded-xl bg-slate-800 text-white flex items-center justify-center text-[18px] font-bold">{d.code}</div>
         <div className="flex-1 min-w-[220px]">
           <div className="text-[22px] font-semibold text-gray-900 leading-tight">{d.name}</div>
-          <div className="text-[14px] text-gray-500">{[d.phone, d.state, d.area].filter(Boolean).join(" · ")}</div>
+          <div className="text-[14px] text-gray-500">{[d.phone, d.state, d.area].filter(Boolean).join(" · ")}{d.username ? ` · 🔑 ${d.username}` : ""}</div>
         </div>
         <div className="flex gap-2 flex-wrap">
           <a href={exportHref} download className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">⬇ Export</a>
           <button onClick={onAddSub} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700">+ Subscriber</button>
-          <button onClick={onEditDist} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">Edit</button>
-          <button onClick={onDeleteDist} className="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-[14px] hover:bg-red-50">Delete</button>
+          {canManage && <button onClick={onEditDist} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">Edit</button>}
+          {canManage && <button onClick={onDeleteDist} className="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-[14px] hover:bg-red-50">Delete</button>}
           <button onClick={onClose} aria-label="Close" className="px-3 py-2 text-gray-400 hover:text-gray-700 text-[20px] leading-none">✕</button>
         </div>
       </div>
@@ -545,7 +587,7 @@ function DistributorDetail({ d, subs, now, initialStatus, initialSearch, onClose
                           <div className="font-semibold text-gray-900">{s.name}</div>
                           <div className="text-[13.5px] text-gray-500">{s.phone}</div>
                         </td>
-                        <td className="px-4 py-3 text-gray-700">{s.address}</td>
+                        <td className="px-4 py-3 text-gray-700">{s.address}{s.remark && <div className="text-[13px] text-blue-600 mt-0.5">📝 {s.remark}</div>}</td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <div className="text-gray-600">{fmtMonth(s.startMonth)}{s.years != null && <span className="text-gray-400"> · {s.years}</span>}</div>
                           <div className="font-semibold text-gray-900">{fmtMonth(s.expiryMonth)}{left !== null && <span className="text-gray-400 font-normal"> · {left}</span>}</div>
