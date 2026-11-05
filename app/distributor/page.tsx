@@ -83,7 +83,7 @@ function Login({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
-    if (!username.trim() || !password) { setError("Enter your username and password."); return; }
+    if (!username.trim() || !password) { setError("Enter your distributor ID and password."); return; }
     setBusy(true); setError("");
     try {
       const res = await fetch("/api/distributor/login", {
@@ -109,7 +109,7 @@ function Login({ onDone }: { onDone: () => void }) {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 space-y-4">
           <h1 className="text-[22px] font-semibold text-gray-900">Sign in</h1>
           <div>
-            <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Username</label>
+            <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Distributor ID</label>
             <input className={inp} value={username} autoCapitalize="none" autoComplete="username"
               onChange={(e) => { setUsername(e.target.value); setError(""); }}
               onKeyDown={(e) => e.key === "Enter" && submit()} />
