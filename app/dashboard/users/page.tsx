@@ -493,7 +493,7 @@ function UserDetail({ u, emailSettings, waTemplate, actionMsg, emailing, onClose
 
   const info: [string, string][] = [
     ["Email", u.email], ["Mobile", u.mobile], ["WhatsApp", u.whatsapp], ["Emirate", u.emirates],
-    ["Location", u.location], ["Code", u.code], ["Referred By", u.referredBy], ["Referral Mobile", u.referralMobile],
+    ["User Type", u.userType ?? ""], ["Location", u.location], ["Code", u.code], ["Referred By", u.referredBy], ["Referral Mobile", u.referralMobile],
   ];
 
   return (
@@ -580,7 +580,7 @@ function UserDetail({ u, emailSettings, waTemplate, actionMsg, emailing, onClose
 // ─── Empty form ───────────────────────────────────────────────────────────────
 
 const EMPTY: Omit<AppUser, "id" | "isActive" | "deletedAt"> = {
-  name: "", email: "", password: "", mobile: "", whatsapp: "", code: "", location: "",
+  name: "", email: "", password: "", mobile: "", whatsapp: "", code: "", userType: "", location: "",
   photo: "", emirates: "", subscriptionFrom: "", subscriptionTo: "",
   referredBy: "", referralMobile: "",
 };
@@ -626,7 +626,7 @@ export default function UsersPage() {
   const handleEdit = (u: AppUser) => {
     setEditId(u.id);
     setForm({
-      name: u.name ?? "", email: u.email ?? "", password: "", mobile: u.mobile ?? "", whatsapp: u.whatsapp ?? "", code: u.code ?? "",
+      name: u.name ?? "", email: u.email ?? "", password: "", mobile: u.mobile ?? "", whatsapp: u.whatsapp ?? "", code: u.code ?? "", userType: u.userType ?? "",
       location: u.location ?? "", photo: u.photo ?? "", emirates: u.emirates ?? "",
       subscriptionFrom: u.subscriptionFrom ?? "", subscriptionTo: u.subscriptionTo ?? "",
       referredBy: u.referredBy ?? "", referralMobile: u.referralMobile ?? "",
@@ -664,7 +664,7 @@ export default function UsersPage() {
       await saveAppUser({
         id, name: form.name.trim(), email: form.email.trim(),
         password: form.password.trim() || existing?.password || "",
-        mobile: form.mobile.trim(), whatsapp: form.whatsapp.trim(), code: form.code.trim(), location: form.location.trim(),
+        mobile: form.mobile.trim(), whatsapp: form.whatsapp.trim(), code: form.code.trim(), userType: form.userType, location: form.location.trim(),
         photo: form.photo, emirates: form.emirates,
         subscriptionFrom: form.subscriptionFrom,
         subscriptionTo: form.subscriptionTo,
@@ -898,6 +898,17 @@ export default function UsersPage() {
               </label>
               <input value={form.code} onChange={set("code")} placeholder="e.g. member/agent code" className={inp("code")} />
             </div>
+            <div>
+              <label className="block text-[12px] font-medium text-gray-700 mb-1.5">
+                User Type <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <select value={form.userType ?? ""} onChange={(e) => setForm((f) => ({ ...f, userType: e.target.value }))} className={inp("userType") + " bg-white"}>
+                <option value="">Not set</option>
+                <option value="Subscriber">Subscriber</option>
+                <option value="Distributor">Distributor</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
             <div className="col-span-2">
               <label className="block text-[12px] font-medium text-gray-700 mb-1.5">Location</label>
               <input value={form.location} onChange={set("location")} placeholder="City, Country" className={inp("location")} />
@@ -994,6 +1005,9 @@ export default function UsersPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[19px] font-semibold text-gray-900 leading-snug">{u.name}</span>
+                      {u.userType && (
+                        <span className="text-[12px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-medium">{u.userType}</span>
+                      )}
                       {!u.isActive && (
                         <span className="text-[12px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 font-medium">Inactive</span>
                       )}

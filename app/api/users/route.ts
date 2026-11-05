@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 
+const USER_TYPES = ["Subscriber", "Distributor", "Admin"];
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const deleted = searchParams.get("deleted") === "1";
@@ -16,6 +18,7 @@ export async function GET(req: Request) {
     mobile: r.mobile,
     whatsapp: r.whatsapp ?? "",
     code: r.code ?? "",
+    userType: r.user_type ?? "",
     location: r.location,
     photo: r.photo,
     emirates: r.emirates ?? "",
@@ -44,13 +47,13 @@ export async function POST(req: Request) {
   }
 
   await db.query(
-    `INSERT INTO app_users (id,name,email,password,mobile,whatsapp,code,location,photo,emirates,subscription_from,subscription_to,referred_by,referral_mobile,is_active)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)
+    `INSERT INTO app_users (id,name,email,password,mobile,whatsapp,code,user_type,location,photo,emirates,subscription_from,subscription_to,referred_by,referral_mobile,is_active)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)
      ON DUPLICATE KEY UPDATE name=VALUES(name),email=VALUES(email),password=VALUES(password),
-       mobile=VALUES(mobile),whatsapp=VALUES(whatsapp),code=VALUES(code),location=VALUES(location),photo=VALUES(photo),emirates=VALUES(emirates),
+       mobile=VALUES(mobile),whatsapp=VALUES(whatsapp),code=VALUES(code),user_type=VALUES(user_type),location=VALUES(location),photo=VALUES(photo),emirates=VALUES(emirates),
        subscription_from=VALUES(subscription_from),subscription_to=VALUES(subscription_to),
        referred_by=VALUES(referred_by),referral_mobile=VALUES(referral_mobile)`,
-    [b.id, b.name, b.email, b.password, b.mobile, b.whatsapp || null, b.code || null, b.location, b.photo ?? null, b.emirates ?? "",
+    [b.id, b.name, b.email, b.password, b.mobile, b.whatsapp || null, b.code || null, USER_TYPES.includes(b.userType) ? b.userType : null, b.location, b.photo ?? null, b.emirates ?? "",
      b.subscriptionFrom || null, b.subscriptionTo || null, b.referredBy || null, b.referralMobile || null]
   );
   return NextResponse.json({ ok: true });

@@ -37,6 +37,7 @@ export type AppUser = {
   mobile: string;
   whatsapp: string;
   code: string;
+  userType?: string;
   location: string;
   photo: string;
   subscriptionFrom: string;
