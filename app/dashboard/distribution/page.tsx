@@ -65,6 +65,7 @@ export default function DistributionPage() {
 
   const [distForm, setDistForm] = useState<(typeof emptyDist & { isNew: boolean }) | null>(null);
   const [subForm, setSubForm] = useState<typeof emptySub | null>(null);
+  const [loginForm, setLoginForm] = useState<{ code: number; name: string; phone: string; state: string; area: string; username: string; password: string; isActive: boolean } | null>(null);
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -169,6 +170,35 @@ export default function DistributionPage() {
       setDetailCode(null);
       await reload();
     } catch (e: unknown) { alert(e instanceof Error ? e.message : "Delete failed"); }
+  };
+
+  // ── Login credential actions ──
+  const openLoginForm = (d: Distributor) => {
+    setFormError("");
+    setLoginForm({ code: d.code, name: d.name, phone: d.phone, state: d.state, area: d.area, username: d.username ?? "", password: "", isActive: d.isActive !== false });
+  };
+  const saveLogin = async () => {
+    if (!loginForm) return;
+    setSaving(true); setFormError("");
+    try {
+      await api("/distributors", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: loginForm.code,
+          name: loginForm.name,
+          phone: loginForm.phone,
+          state: loginForm.state,
+          area: loginForm.area,
+          username: loginForm.username,
+          password: loginForm.password,
+          isActive: loginForm.isActive,
+        }),
+      });
+      setLoginForm(null);
+      await reload();
+    } catch (e: unknown) {
+      setFormError(e instanceof Error ? e.message : "Save failed");
+    } finally { setSaving(false); }
   };
 
   // ── Subscriber actions ──
@@ -310,12 +340,19 @@ export default function DistributionPage() {
                     <div className="text-[19px] font-semibold text-gray-900 leading-snug">{d.name}</div>
                     <div className="text-[14.5px] text-gray-600 mt-0.5">{d.phone || "—"}</div>
                     <div className="text-[13.5px] text-gray-400">{[d.state, d.area].filter(Boolean).join(" · ")}</div>
-                    <div className="mt-1.5">
+                    <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                       {d.username
                         ? <span className={`inline-block text-[12px] px-2 py-0.5 rounded-full border ${d.isActive === false ? "bg-gray-100 text-gray-500 border-gray-200" : "bg-blue-50 text-blue-700 border-blue-200"}`}>
                             🔑 {d.username}{d.isActive === false ? " · disabled" : ""}
                           </span>
                         : <span className="inline-block text-[12px] px-2 py-0.5 rounded-full border border-gray-200 text-gray-400">No login</span>}
+                      {superAdmin && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openLoginForm(d); }}
+                          className="inline-block text-[11px] px-2 py-0.5 rounded-full border border-dashed border-gray-300 text-gray-500 hover:border-blue-400 hover:text-blue-600">
+                          {d.username ? "Change login" : "Set login"}
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
@@ -366,6 +403,7 @@ export default function DistributionPage() {
           onDeleteSub={deleteSubscriber}
           onEditDist={() => openEditDistributor(detail)}
           onDeleteDist={() => deleteDistributor(detail)}
+          onSetLogin={() => openLoginForm(detail)}
         />
       )}
 
@@ -414,6 +452,33 @@ export default function DistributionPage() {
             </label>
           </div>
           <FormFooter error={formError} saving={saving} onSave={saveDistributor} onCancel={() => setDistForm(null)} />
+        </Modal>
+      )}
+
+      {/* Login credentials form */}
+      {loginForm && (
+        <Modal title={`${loginForm.username ? "Change Login" : "Set Login"} · ${loginForm.name}`} onClose={() => setLoginForm(null)}>
+          <p className="text-[13px] text-gray-500 mb-4">
+            Lets distributor <b>{loginForm.code}</b> sign in at <b>/distributor</b> or in the mobile app. Leave username empty to remove login access.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Username">
+              <input className={inp} value={loginForm.username} autoComplete="off"
+                onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value.replace(/\s/g, "") })}
+                placeholder="e.g. dist12" />
+            </Field>
+            <Field label={loginForm.username ? "New password (blank = keep)" : "Password"}>
+              <input className={inp} type="text" value={loginForm.password} autoComplete="new-password"
+                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                placeholder="min 6 characters" />
+            </Field>
+          </div>
+          <label className="flex items-center gap-2 mt-3 text-[13px] text-gray-700 cursor-pointer">
+            <input type="checkbox" checked={loginForm.isActive}
+              onChange={(e) => setLoginForm({ ...loginForm, isActive: e.target.checked })} />
+            Login enabled
+          </label>
+          <FormFooter error={formError} saving={saving} onSave={saveLogin} onCancel={() => setLoginForm(null)} />
         </Modal>
       )}
 
@@ -467,10 +532,10 @@ export default function DistributionPage() {
 
 // ─── Full-screen detail ───────────────────────────────────────────────────────
 
-function DistributorDetail({ d, subs, now, initialStatus, initialSearch, canManage, onClose, onAddSub, onEditSub, onDeleteSub, onEditDist, onDeleteDist }: {
+function DistributorDetail({ d, subs, now, initialStatus, initialSearch, canManage, onClose, onAddSub, onEditSub, onDeleteSub, onEditDist, onDeleteDist, onSetLogin }: {
   d: Distributor; subs: DistSubscriber[]; now: Date; initialStatus: StatusFilter; initialSearch: string; canManage: boolean;
   onClose: () => void; onAddSub: () => void; onEditSub: (s: DistSubscriber) => void; onDeleteSub: (s: DistSubscriber) => void;
-  onEditDist: () => void; onDeleteDist: () => void;
+  onEditDist: () => void; onDeleteDist: () => void; onSetLogin: () => void;
 }) {
   const [status, setStatus] = useState<StatusFilter>(initialStatus);
   const [search, setSearch] = useState(initialSearch);
@@ -511,6 +576,7 @@ function DistributorDetail({ d, subs, now, initialStatus, initialSearch, canMana
           <a href={exportHref} download className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">⬇ Export</a>
           <button onClick={onAddSub} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[14px] font-medium hover:bg-blue-700">+ Subscriber</button>
           {canManage && <button onClick={onEditDist} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">Edit</button>}
+          {canManage && <button onClick={onSetLogin} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">🔑 {d.username ? "Change Login" : "Set Login"}</button>}
           {canManage && <button onClick={onDeleteDist} className="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-[14px] hover:bg-red-50">Delete</button>}
           <button onClick={onClose} aria-label="Close" className="px-3 py-2 text-gray-400 hover:text-gray-700 text-[20px] leading-none">✕</button>
         </div>
