@@ -3,6 +3,23 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { fmtMonth, type DistStatus, type DistSummary } from "@/lib/distribution";
 
+// Current YYYY-MM
+function thisMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function prevMonth(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function fmtMonthLabel(ym: string): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(ym || "");
+  if (!m) return ym;
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return `${MONTHS[Number(m[2]) - 1]} ${m[1]}`;
+}
+
 // Distributor portal: a distributor signs in with the username/password the super admin
 // gave them, sees only their own subscriber list, and updates a subscriber's status
 // (expiry/renewal), contact details and remark. Every call carries a signed token that the
@@ -143,6 +160,7 @@ function Portal({ onLogout }: { onLogout: () => void }) {
   const [editId, setEditId] = useState<number | null>(null);
   const [showPw, setShowPw] = useState(false);
   const [toast, setToast] = useState("");
+  const [tab, setTab] = useState<"list" | "delivery">("list");
 
   const load = useCallback(async () => {
     try {
@@ -180,71 +198,91 @@ function Portal({ onLogout }: { onLogout: () => void }) {
         <button onClick={onLogout} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">Logout</button>
       </div>
 
-      <div className="max-w-[1200px] mx-auto p-6">
-        {error && <div className="mb-4 text-[14px] text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">{error}</div>}
-
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-5">
+      {/* Tab bar */}
+      <div className="bg-white border-b border-gray-200 px-6">
+        <div className="flex gap-1 max-w-[1200px] mx-auto">
           {([
-            ["Active", sum?.active, "bg-white border-gray-200 text-gray-800", "active"],
-            ["Safe", sum?.safe, META.safe.card, "safe"],
-            ["Near Expiry", sum?.near, META.near.card, "near"],
-            ["Grace", sum?.grace, META.grace.card, "grace"],
-            ["Over Due", sum?.overdue, META.overdue.card, "overdue"],
-            ["Removed", sum?.removed, META.removed.card, null],
-            ["Total", sum?.total, "bg-white border-gray-200 text-gray-800", "all"],
-          ] as [string, number | undefined, string, StatusFilter | null][]).map(([label, n, cls, key]) => (
-            <button key={label} disabled={!key} onClick={() => key && setStatus(key)}
-              className={`rounded-2xl border p-4 text-left ${cls} ${key && status === key ? "ring-2 ring-blue-400" : ""}`}>
-              <div className="text-[32px] font-bold leading-none">{n ?? "–"}</div>
-              <div className="text-[13.5px] font-medium mt-2">{label}</div>
+            ["list", "Subscribers"],
+            ["delivery", "Monthly Delivery Report"],
+          ] as ["list" | "delivery", string][]).map(([key, label]) => (
+            <button key={key} onClick={() => setTab(key)}
+              className={`px-4 py-3 text-[14px] font-medium border-b-2 transition-colors ${
+                tab === key ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-800"}`}>
+              {label}
             </button>
           ))}
         </div>
-
-        <div className="flex gap-2 mb-4 flex-wrap items-center">
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, phone, address, code…"
-            className="flex-1 min-w-[220px] max-w-md px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-[15px] outline-none focus:border-blue-400" />
-          {FILTERS.map((f) => (
-            <button key={f.key} onClick={() => setStatus(f.key)}
-              className={`px-4 py-1.5 rounded-full text-[13.5px] border ${status === f.key ? "bg-slate-800 text-white border-slate-800" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>
-              {f.label}
-            </button>
-          ))}
-          <span className="ml-auto text-[14px] text-gray-500">{rows.length} shown</span>
-        </div>
-
-        {loading ? (
-          <div className="text-center text-gray-400 py-16 text-[15px]">Loading…</div>
-        ) : rows.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 py-12 text-center text-[15px] text-gray-400">No subscribers match the current filters.</div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {rows.map((s) => {
-              const m = META[s.status];
-              return (
-                <div key={s.id} onClick={() => setEditId(s.id)} role="button" tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === "Enter") setEditId(s.id); }}
-                  className={`bg-white rounded-2xl border border-gray-200 p-4 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all ${m.row}`}>
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[17px] font-semibold text-gray-900 leading-snug">{s.name}</div>
-                      <div className="text-[14px] text-gray-500">{s.phone || "—"} · Code {s.subCode}</div>
-                      <div className="text-[14px] text-gray-600 mt-0.5">{s.address}</div>
-                      {s.remark && <div className="text-[13px] text-blue-600 mt-1">📝 {s.remark}</div>}
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className={`inline-block text-[12.5px] px-2.5 py-1 rounded-full border font-medium ${m.badge}`}>{m.label}</span>
-                      <div className="text-[17px] font-bold text-gray-900 mt-2">{fmtMonth(s.expiryMonth)}</div>
-                      <div className="text-[12px] text-gray-400">expiry</div>
-                    </div>
-                  </div>
-                  <div className="text-right text-[13px] text-blue-600 font-medium mt-2">Edit →</div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
+
+      {tab === "delivery" ? (
+        <DeliveryReport onAuthLost={onLogout} />
+      ) : (
+        <div className="max-w-[1200px] mx-auto p-6">
+          {error && <div className="mb-4 text-[14px] text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">{error}</div>}
+
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-5">
+            {([
+              ["Active", sum?.active, "bg-white border-gray-200 text-gray-800", "active"],
+              ["Safe", sum?.safe, META.safe.card, "safe"],
+              ["Near Expiry", sum?.near, META.near.card, "near"],
+              ["Grace", sum?.grace, META.grace.card, "grace"],
+              ["Over Due", sum?.overdue, META.overdue.card, "overdue"],
+              ["Removed", sum?.removed, META.removed.card, null],
+              ["Total", sum?.total, "bg-white border-gray-200 text-gray-800", "all"],
+            ] as [string, number | undefined, string, StatusFilter | null][]).map(([label, n, cls, key]) => (
+              <button key={label} disabled={!key} onClick={() => key && setStatus(key)}
+                className={`rounded-2xl border p-4 text-left ${cls} ${key && status === key ? "ring-2 ring-blue-400" : ""}`}>
+                <div className="text-[32px] font-bold leading-none">{n ?? "–"}</div>
+                <div className="text-[13.5px] font-medium mt-2">{label}</div>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-2 mb-4 flex-wrap items-center">
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, phone, address, code…"
+              className="flex-1 min-w-[220px] max-w-md px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-[15px] outline-none focus:border-blue-400" />
+            {FILTERS.map((f) => (
+              <button key={f.key} onClick={() => setStatus(f.key)}
+                className={`px-4 py-1.5 rounded-full text-[13.5px] border ${status === f.key ? "bg-slate-800 text-white border-slate-800" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"}`}>
+                {f.label}
+              </button>
+            ))}
+            <span className="ml-auto text-[14px] text-gray-500">{rows.length} shown</span>
+          </div>
+
+          {loading ? (
+            <div className="text-center text-gray-400 py-16 text-[15px]">Loading…</div>
+          ) : rows.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 py-12 text-center text-[15px] text-gray-400">No subscribers match the current filters.</div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              {rows.map((s) => {
+                const m = META[s.status];
+                return (
+                  <div key={s.id} onClick={() => setEditId(s.id)} role="button" tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter") setEditId(s.id); }}
+                    className={`bg-white rounded-2xl border border-gray-200 p-4 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all ${m.row}`}>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[17px] font-semibold text-gray-900 leading-snug">{s.name}</div>
+                        <div className="text-[14px] text-gray-500">{s.phone || "—"} · Code {s.subCode}</div>
+                        <div className="text-[14px] text-gray-600 mt-0.5">{s.address}</div>
+                        {s.remark && <div className="text-[13px] text-blue-600 mt-1">📝 {s.remark}</div>}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className={`inline-block text-[12.5px] px-2.5 py-1 rounded-full border font-medium ${m.badge}`}>{m.label}</span>
+                        <div className="text-[17px] font-bold text-gray-900 mt-2">{fmtMonth(s.expiryMonth)}</div>
+                        <div className="text-[12px] text-gray-400">expiry</div>
+                      </div>
+                    </div>
+                    <div className="text-right text-[13px] text-blue-600 font-medium mt-2">Edit →</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {editing && (
         <EditPanel sub={editing} onClose={() => setEditId(null)}
@@ -393,6 +431,170 @@ function PasswordModal({ onClose, onDone, onAuthLost }: { onClose: () => void; o
           <button onClick={onClose} className="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-[14px] hover:bg-gray-50">Cancel</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Monthly delivery report ──────────────────────────────────────────────────
+
+type DeliveryItem = { id: number; subCode: number; name: string; phone: string; address: string; delivered: boolean; issue: string };
+type DeliveryData = { month: string; submitted: boolean; submittedAt: string | null; note: string; subscribers: DeliveryItem[] };
+
+function DeliveryReport({ onAuthLost }: { onAuthLost: () => void }) {
+  const cur = thisMonth();
+  const prev = prevMonth();
+  const [month, setMonth] = useState(cur);
+  const [data, setData] = useState<DeliveryData | null>(null);
+  const [items, setItems] = useState<DeliveryItem[]>([]);
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
+
+  const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3500); };
+
+  const load = useCallback(async (m: string) => {
+    setLoading(true); setError("");
+    try {
+      const d: DeliveryData = await call(`/delivery?month=${m}`);
+      setData(d);
+      setItems(d.subscribers.map((s) => ({ ...s, delivered: s.delivered ?? true, issue: s.issue ?? "" })));
+      setNote(d.note ?? "");
+    } catch (e: unknown) {
+      if (e instanceof AuthError) { onAuthLost(); return; }
+      setError(e instanceof Error ? e.message : "Failed to load");
+    } finally { setLoading(false); }
+  }, [onAuthLost]);
+
+  useEffect(() => { load(month); }, [month, load]);
+
+  const toggle = (id: number) => setItems((prev) => prev.map((s) => s.id === id ? { ...s, delivered: !s.delivered, issue: s.delivered ? s.issue : "" } : s));
+  const setIssue = (id: number, v: string) => setItems((prev) => prev.map((s) => s.id === id ? { ...s, issue: v } : s));
+
+  const submit = async () => {
+    setSaving(true); setError("");
+    try {
+      await call("/delivery", {
+        method: "POST",
+        body: JSON.stringify({
+          month,
+          note,
+          items: items.map((s) => ({ subId: s.id, delivered: s.delivered, issue: s.issue })),
+        }),
+      });
+      flash("Report submitted successfully");
+      await load(month);
+    } catch (e: unknown) {
+      if (e instanceof AuthError) { onAuthLost(); return; }
+      setError(e instanceof Error ? e.message : "Submit failed");
+    } finally { setSaving(false); }
+  };
+
+  const undelivered = items.filter((s) => !s.delivered);
+
+  return (
+    <div className="max-w-[900px] mx-auto p-6">
+      {/* Month selector */}
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
+        <div className="text-[18px] font-semibold text-gray-900">Monthly Delivery Report</div>
+        <div className="flex gap-2 ml-auto">
+          {[cur, prev].map((m) => (
+            <button key={m} onClick={() => setMonth(m)}
+              className={`px-4 py-2 rounded-lg border text-[14px] font-medium transition-colors ${month === m ? "bg-slate-800 text-white border-slate-800" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"}`}>
+              {fmtMonthLabel(m)}{m === cur ? " (current)" : ""}
+            </button>
+          ))}
+          <input type="month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-blue-400 bg-white" />
+        </div>
+      </div>
+
+      {/* Submission status */}
+      {data && (
+        <div className={`mb-4 px-4 py-3 rounded-xl border text-[14px] flex items-center gap-3 ${data.submitted ? "bg-green-50 border-green-200 text-green-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+          <span className="text-[20px]">{data.submitted ? "✓" : "○"}</span>
+          <div>
+            <span className="font-semibold">{data.submitted ? "Report submitted" : "Not yet submitted"}</span>
+            {data.submittedAt && <span className="ml-2 text-[13px] opacity-75">· Last updated {new Date(data.submittedAt).toLocaleString()}</span>}
+            {!data.submitted && <div className="text-[13px] mt-0.5">Fill in the delivery status below and submit before the end of the month.</div>}
+          </div>
+        </div>
+      )}
+
+      {error && <div className="mb-4 text-[14px] text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">{error}</div>}
+
+      {loading ? (
+        <div className="text-center text-gray-400 py-16">Loading…</div>
+      ) : items.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-200 py-12 text-center text-[15px] text-gray-400">No active subscribers for {fmtMonthLabel(month)}.</div>
+      ) : (
+        <>
+          {/* Summary bar */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
+              <div className="text-[32px] font-bold text-gray-900">{items.length}</div>
+              <div className="text-[13px] text-gray-500 mt-1">Total Subscribers</div>
+            </div>
+            <div className="bg-green-50 rounded-2xl border border-green-200 p-4 text-center">
+              <div className="text-[32px] font-bold text-green-700">{items.length - undelivered.length}</div>
+              <div className="text-[13px] text-green-600 mt-1">Delivered</div>
+            </div>
+            <div className={`rounded-2xl border p-4 text-center ${undelivered.length > 0 ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-200"}`}>
+              <div className={`text-[32px] font-bold ${undelivered.length > 0 ? "text-red-600" : "text-gray-400"}`}>{undelivered.length}</div>
+              <div className={`text-[13px] mt-1 ${undelivered.length > 0 ? "text-red-500" : "text-gray-400"}`}>Not Delivered</div>
+            </div>
+          </div>
+
+          {/* Subscriber list */}
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-4">
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 text-[12px] font-semibold text-gray-500 uppercase tracking-wider flex gap-4">
+              <span className="w-8">#</span>
+              <span className="flex-1">Subscriber</span>
+              <span className="w-28 text-center">Delivered?</span>
+              <span className="w-48">Issue / Note</span>
+            </div>
+            {items.map((s, i) => (
+              <div key={s.id} className={`flex items-center gap-4 px-4 py-3 border-b border-gray-100 last:border-0 ${!s.delivered ? "bg-red-50/50" : ""}`}>
+                <span className="w-8 text-[13px] text-gray-400">{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[15px] font-medium text-gray-900">{s.name}</div>
+                  <div className="text-[13px] text-gray-500">{s.phone || "—"} · Code {s.subCode}</div>
+                  <div className="text-[13px] text-gray-500">{s.address}</div>
+                </div>
+                <div className="w-28 flex justify-center">
+                  <button onClick={() => toggle(s.id)}
+                    className={`px-3 py-1.5 rounded-full text-[13px] font-medium border transition-colors ${s.delivered ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"}`}>
+                    {s.delivered ? "✓ Delivered" : "✗ Not Delivered"}
+                  </button>
+                </div>
+                <div className="w-48">
+                  {!s.delivered && (
+                    <input value={s.issue} onChange={(e) => setIssue(s.id, e.target.value)} maxLength={500}
+                      placeholder="Reason / address issue…"
+                      className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-[13px] outline-none focus:border-blue-400" />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* General note */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-4">
+            <label className="block text-[13px] font-medium text-gray-700 mb-2">General note (optional)</label>
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} rows={2}
+              placeholder="Any general remarks about this month's delivery…"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-blue-400 resize-none" />
+          </div>
+
+          <button onClick={submit} disabled={saving}
+            className="w-full py-3 bg-blue-600 text-white rounded-xl text-[15px] font-semibold hover:bg-blue-700 disabled:opacity-50">
+            {saving ? "Submitting…" : data?.submitted ? "Update Report" : "Submit Report"}
+          </button>
+        </>
+      )}
+
+      {toast && <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-slate-800 text-white text-[14px] px-5 py-2.5 rounded-full shadow-lg">{toast}</div>}
     </div>
   );
 }

@@ -9,6 +9,17 @@ import {
   type Distributor, type DistSubscriber, type DistStatus,
 } from "@/lib/distribution";
 
+function thisMonth(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function fmtMonthLabel(ym: string): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(ym || "");
+  if (!m) return ym;
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return `${MONTHS[Number(m[2]) - 1]} ${m[1]}`;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 type StatusFilter = "active" | "all" | DistStatus;
@@ -63,6 +74,7 @@ export default function DistributionPage() {
   const [search, setSearch] = useState("");
   const [detailCode, setDetailCode] = useState<number | null>(null);
 
+  const [tab, setTab] = useState<"list" | "delivery">("list");
   const [distForm, setDistForm] = useState<(typeof emptyDist & { isNew: boolean }) | null>(null);
   const [subForm, setSubForm] = useState<typeof emptySub | null>(null);
   const [loginForm, setLoginForm] = useState<{ code: number; name: string; phone: string; state: string; area: string; username: string; password: string; isActive: boolean } | null>(null);
@@ -240,7 +252,7 @@ export default function DistributionPage() {
   return (
     <div className="max-w-7xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <div>
           <h1 className="text-[26px] font-semibold text-gray-900">Distribution Management</h1>
           <p className="text-[15px] text-gray-500 mt-0.5">
@@ -248,18 +260,36 @@ export default function DistributionPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <a href={exportHref} download
-            className={`px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-[12px] hover:bg-gray-50 ${loading || shownRows === 0 ? "pointer-events-none opacity-50" : ""}`}>
-            ⬇ Export Excel ({shownRows})
-          </a>
-          {superAdmin && (
-            <button onClick={openNewDistributor}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700">
-              + Add Distributor
-            </button>
+          {tab === "list" && (
+            <>
+              <a href={exportHref} download
+                className={`px-3 py-1.5 border border-gray-200 text-gray-500 rounded-lg text-[12px] hover:bg-gray-50 ${loading || shownRows === 0 ? "pointer-events-none opacity-50" : ""}`}>
+                ⬇ Export Excel ({shownRows})
+              </a>
+              {superAdmin && (
+                <button onClick={openNewDistributor}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-[13px] font-medium hover:bg-blue-700">
+                  + Add Distributor
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 border-b border-gray-200 mb-5">
+        {([["list", "Subscriber Lists"], ["delivery", "Delivery Reports"]] as ["list" | "delivery", string][]).map(([key, label]) => (
+          <button key={key} onClick={() => setTab(key)}
+            className={`px-5 py-2.5 text-[14px] font-medium border-b-2 transition-colors ${tab === key ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-800"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "delivery" && <AdminDeliveryView distributors={distributors} />}
+
+      <div className={tab === "list" ? "" : "hidden"}>
 
       {loadError && (
         <div className="mb-4 text-[13px] text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">
@@ -526,6 +556,7 @@ export default function DistributionPage() {
           <FormFooter error={formError} saving={saving} onSave={saveSubscriber} onCancel={() => setSubForm(null)} />
         </Modal>
       )}
+      </div>{/* end tab=list */}
     </div>
   );
 }
@@ -676,6 +707,222 @@ function DistributorDetail({ d, subs, now, initialStatus, initialSearch, canMana
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Small UI pieces ──────────────────────────────────────────────────────────
+
+// ─── Admin delivery report view ───────────────────────────────────────────────
+
+type AdminDeliveryRow = {
+  code: number; name: string; phone: string; activeSubs: number;
+  submitted: boolean; submittedAt: string | null;
+  deliveredCount: number | null; totalReported: number | null; note: string;
+};
+type AdminDeliveryDetail = {
+  distributor: { code: number; name: string; phone: string };
+  month: string; submitted: boolean; submittedAt: string | null; note: string;
+  subscribers: { id: number; subCode: number; name: string; phone: string; address: string; delivered: boolean | null; issue: string }[];
+};
+
+function AdminDeliveryView({ distributors }: { distributors: Distributor[] }) {
+  const [month, setMonth] = useState(thisMonth());
+  const [rows, setRows] = useState<AdminDeliveryRow[]>([]);
+  const [detail, setDetail] = useState<AdminDeliveryDetail | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async (m: string) => {
+    setLoading(true); setError("");
+    try {
+      const data = await api(`/delivery?month=${m}`);
+      setRows(data.distributors);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load");
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(month); }, [month, load]);
+
+  const openDetail = async (code: number) => {
+    setDetailLoading(true);
+    try {
+      const data = await api(`/delivery?month=${month}&code=${code}`);
+      setDetail(data);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed to load");
+    } finally { setDetailLoading(false); }
+  };
+
+  const submitted = rows.filter((r) => r.submitted).length;
+  const pending = rows.length - submitted;
+
+  return (
+    <div>
+      {/* Controls */}
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
+        <div className="flex gap-2">
+          <button onClick={() => { const d = new Date(); setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-[13px] text-gray-600 hover:bg-gray-50">This month</button>
+          <button onClick={() => { const d = new Date(); d.setMonth(d.getMonth() - 1); setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`); }}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-[13px] text-gray-600 hover:bg-gray-50">Last month</button>
+        </div>
+        <input type="month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)}
+          className="px-3 py-2 border border-gray-200 rounded-lg text-[14px] outline-none focus:border-blue-400 bg-white" />
+        <span className="text-[14px] text-gray-500 ml-auto">{fmtMonthLabel(month)}</span>
+      </div>
+
+      {error && <div className="mb-4 text-[13px] text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">{error}</div>}
+
+      {/* Summary */}
+      {!loading && rows.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
+            <div className="text-[32px] font-bold text-gray-900">{rows.length}</div>
+            <div className="text-[13px] text-gray-500 mt-1">Total Distributors</div>
+          </div>
+          <div className="bg-green-50 rounded-2xl border border-green-200 p-4 text-center">
+            <div className="text-[32px] font-bold text-green-700">{submitted}</div>
+            <div className="text-[13px] text-green-600 mt-1">Submitted</div>
+          </div>
+          <div className={`rounded-2xl border p-4 text-center ${pending > 0 ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-200"}`}>
+            <div className={`text-[32px] font-bold ${pending > 0 ? "text-amber-700" : "text-gray-400"}`}>{pending}</div>
+            <div className={`text-[13px] mt-1 ${pending > 0 ? "text-amber-600" : "text-gray-400"}`}>Pending</div>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <SkeletonRows count={4} />
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <table className="w-full text-[14px]">
+            <thead>
+              <tr className="text-left text-gray-500 bg-gray-50 border-b border-gray-200 text-[12px] uppercase tracking-wide">
+                <th className="px-4 py-3 font-semibold">Distributor</th>
+                <th className="px-4 py-3 font-semibold text-center">Active Subs</th>
+                <th className="px-4 py-3 font-semibold text-center">Status</th>
+                <th className="px-4 py-3 font-semibold text-center">Delivered</th>
+                <th className="px-4 py-3 font-semibold">Submitted</th>
+                <th className="px-4 py-3 font-semibold">Note</th>
+                <th className="px-4 py-3 w-20" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 && (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400">
+                  {distributors.length === 0 ? "No distributors yet." : "No delivery data for this month yet."}
+                </td></tr>
+              )}
+              {rows.map((r) => (
+                <tr key={r.code} className="border-b border-gray-100 last:border-0">
+                  <td className="px-4 py-3">
+                    <div className="font-semibold text-gray-900">{r.code} · {r.name}</div>
+                    <div className="text-[13px] text-gray-500">{r.phone}</div>
+                  </td>
+                  <td className="px-4 py-3 text-center text-gray-700">{r.activeSubs}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`inline-block text-[12px] px-2.5 py-1 rounded-full border font-medium ${r.submitted ? "bg-green-50 text-green-700 border-green-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                      {r.submitted ? "Submitted" : "Pending"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {r.submitted && r.totalReported != null ? (
+                      <span className={r.deliveredCount !== r.totalReported ? "text-red-600 font-semibold" : "text-green-700 font-semibold"}>
+                        {r.deliveredCount}/{r.totalReported}
+                      </span>
+                    ) : <span className="text-gray-400">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-[13px] text-gray-500">
+                    {r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-[13px] text-gray-500 max-w-[200px] truncate">{r.note || "—"}</td>
+                  <td className="px-4 py-3">
+                    {r.submitted && (
+                      <button onClick={() => openDetail(r.code)} disabled={detailLoading}
+                        className="text-blue-600 text-[13px] hover:underline">View</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Detail panel */}
+      {detail && (
+        <div className="fixed inset-0 z-40 bg-gray-50 flex flex-col">
+          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4 flex-wrap">
+            <button onClick={() => setDetail(null)} className="px-3 py-2 border border-gray-200 rounded-lg text-[14px] text-gray-600 hover:bg-gray-50">← Back</button>
+            <div className="flex-1">
+              <div className="text-[20px] font-semibold text-gray-900">{detail.distributor.code} · {detail.distributor.name}</div>
+              <div className="text-[14px] text-gray-500">Delivery report · {fmtMonthLabel(detail.month)}{detail.submittedAt ? ` · Submitted ${new Date(detail.submittedAt).toLocaleString()}` : ""}</div>
+            </div>
+            <button onClick={() => setDetail(null)} className="text-gray-400 hover:text-gray-700 text-[20px] leading-none">✕</button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-[900px] mx-auto p-6">
+              {detail.note && (
+                <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-[14px] text-blue-800">
+                  <span className="font-semibold">Note: </span>{detail.note}
+                </div>
+              )}
+              <div className="grid grid-cols-3 gap-3 mb-5">
+                <div className="bg-white rounded-2xl border border-gray-200 p-4 text-center">
+                  <div className="text-[28px] font-bold text-gray-900">{detail.subscribers.length}</div>
+                  <div className="text-[13px] text-gray-500 mt-1">Total</div>
+                </div>
+                <div className="bg-green-50 rounded-2xl border border-green-200 p-4 text-center">
+                  <div className="text-[28px] font-bold text-green-700">{detail.subscribers.filter((s) => s.delivered !== false).length}</div>
+                  <div className="text-[13px] text-green-600 mt-1">Delivered</div>
+                </div>
+                <div className="bg-red-50 rounded-2xl border border-red-200 p-4 text-center">
+                  <div className="text-[28px] font-bold text-red-600">{detail.subscribers.filter((s) => s.delivered === false).length}</div>
+                  <div className="text-[13px] text-red-500 mt-1">Not Delivered</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <table className="w-full text-[14px]">
+                  <thead>
+                    <tr className="text-left text-gray-500 bg-gray-50 border-b border-gray-200 text-[12px] uppercase tracking-wide">
+                      <th className="px-4 py-3 w-10">#</th>
+                      <th className="px-4 py-3">Subscriber</th>
+                      <th className="px-4 py-3">Address</th>
+                      <th className="px-4 py-3 text-center w-28">Status</th>
+                      <th className="px-4 py-3">Issue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detail.subscribers.map((s, i) => (
+                      <tr key={s.id} className={`border-b border-gray-100 last:border-0 ${s.delivered === false ? "bg-red-50/50" : ""}`}>
+                        <td className="px-4 py-3 text-gray-400">{i + 1}</td>
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-gray-900">{s.name}</div>
+                          <div className="text-[13px] text-gray-500">{s.phone} · Code {s.subCode}</div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{s.address}</td>
+                        <td className="px-4 py-3 text-center">
+                          {s.delivered === null ? (
+                            <span className="text-gray-400 text-[13px]">Not reported</span>
+                          ) : (
+                            <span className={`inline-block text-[12px] px-2.5 py-1 rounded-full border font-medium ${s.delivered ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-600 border-red-200"}`}>
+                              {s.delivered ? "✓ Delivered" : "✗ Not Delivered"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-[13px] text-gray-600">{s.issue || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
