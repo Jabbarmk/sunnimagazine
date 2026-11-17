@@ -28,3 +28,33 @@ export const mapDist = (r: any) => ({
   hasPassword: !!r.password,
   lastLogin: r.last_login ? new Date(r.last_login).toISOString() : "",
 });
+
+// Delivery-report tables (see migrate_delivery_report.sql). Created on first use so a server
+// where the migration was never run does not return 500 on the delivery routes.
+let deliveryTablesReady: Promise<void> | null = null;
+export function ensureDeliveryTables(): Promise<void> {
+  if (!deliveryTablesReady) {
+    deliveryTablesReady = (async () => {
+      const { default: db } = await import("@/lib/db");
+      await db.query(`CREATE TABLE IF NOT EXISTS distribution_delivery_reports (
+        id int(11) NOT NULL AUTO_INCREMENT,
+        distributor_code int(11) NOT NULL,
+        month char(7) NOT NULL,
+        note varchar(1000) DEFAULT NULL,
+        submitted_at datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_dist_month (distributor_code, month)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+      await db.query(`CREATE TABLE IF NOT EXISTS distribution_delivery_items (
+        id int(11) NOT NULL AUTO_INCREMENT,
+        report_id int(11) NOT NULL,
+        sub_id int(11) NOT NULL,
+        delivered tinyint(1) NOT NULL DEFAULT 1,
+        issue varchar(500) DEFAULT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY uq_report_sub (report_id, sub_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+    })().catch((e) => { deliveryTablesReady = null; throw e; });
+  }
+  return deliveryTablesReady;
+}

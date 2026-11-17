@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
-import { mapSub } from "@/lib/distributionDb";
+import { mapSub, ensureDeliveryTables } from "@/lib/distributionDb";
 import { distStatus } from "@/lib/distribution";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,7 @@ const YM = /^\d{4}-\d{2}$/;
 // Returns every distributor with their delivery report status for that month.
 // When ?code=N is added, returns the full item list for that distributor's report.
 export async function GET(req: Request) {
+  await ensureDeliveryTables();
   const params = new URL(req.url).searchParams;
   const month = params.get("month") || "";
   if (!YM.test(month)) return NextResponse.json({ error: "month required (YYYY-MM)" }, { status: 400 });

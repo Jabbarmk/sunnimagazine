@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 import { requireDistributor } from "@/lib/distributorAuth";
-import { mapSub } from "@/lib/distributionDb";
+import { mapSub, ensureDeliveryTables } from "@/lib/distributionDb";
 import { distStatus } from "@/lib/distribution";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +12,7 @@ const YM = /^\d{4}-\d{2}$/;
 // Returns the existing report for that month (if any) + the full active subscriber list
 // so the portal can pre-fill the form.
 export async function GET(req: Request) {
+  await ensureDeliveryTables();
   const auth = await requireDistributor(req);
   if ("error" in auth) return auth.error;
   const { row } = auth;
@@ -68,6 +69,7 @@ export async function GET(req: Request) {
 // Body: { month, note, items: [{ subId, delivered, issue }] }
 // Creates or replaces the report for that month.
 export async function POST(req: Request) {
+  await ensureDeliveryTables();
   const auth = await requireDistributor(req);
   if ("error" in auth) return auth.error;
   const { row } = auth;
