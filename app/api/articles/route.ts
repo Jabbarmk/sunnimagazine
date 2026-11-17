@@ -25,7 +25,11 @@ const byId = (a: { id: string }, b: { id: string }) =>
 const bySort = (a: { id: string; sortOrder?: number }, b: { id: string; sortOrder?: number }) =>
   ((a.sortOrder ?? 1e9) - (b.sortOrder ?? 1e9)) || byId(a, b);
 
-export async function GET(req: Request) {
+function safeJson(raw: any) {
+  try { return JSON.parse(raw || "[]"); } catch { return []; }
+}
+
+async function getHandler(req: Request) {
   const { searchParams } = new URL(req.url);
   const magazineId = searchParams.get("magazineId");
   const list = searchParams.get("list");
@@ -67,7 +71,7 @@ export async function GET(req: Request) {
   const articles = (rows as any[])
     .map((r) => ({
       ...r,
-      paragraphs: JSON.parse(r.paragraphs || "[]"),
+      paragraphs: safeJson(r.paragraphs),
       magazineId: r.magazine_id,
       readTime: r.read_time,
       inlineImage: r.inline_image,
@@ -80,7 +84,7 @@ export async function GET(req: Request) {
   return NextResponse.json(articles);
 }
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
   const b = await req.json();
   const pq = b.pullQuotes?.length ? JSON.stringify(b.pullQuotes) : null;
 
@@ -128,4 +132,23 @@ export async function POST(req: Request) {
      b.inlineImage || null, b.inlineImage2 || null, b.bottomImage || null, pq, nextOrder]
   );
   return NextResponse.json({ ok: true });
+}
+
+// Log the real cause server-side and return it so a 500 is diagnosable.
+export async function GET(req: Request) {
+  try {
+    return await getHandler(req);
+  } catch (e: any) {
+    console.error("GET /api/articles failed:", e);
+    return NextResponse.json({ error: e?.sqlMessage || e?.message || "Server error" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    return await postHandler(req);
+  } catch (e: any) {
+    console.error("POST /api/articles failed:", e);
+    return NextResponse.json({ error: e?.sqlMessage || e?.message || "Server error" }, { status: 500 });
+  }
 }
